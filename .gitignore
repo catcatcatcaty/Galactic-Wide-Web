@@ -20,5 +20,3 @@ resources/emojis/
 resources/planet_effect_icons/
 utils/dataclasses/config.py
 /.idea
-utils/dataclasses/config.py
-*.py
