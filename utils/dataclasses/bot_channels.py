@@ -10,7 +10,7 @@ class BotChannels:
     waste_bin_channel: TextChannel | None = None
     api_changes_channel: TextChannel | None = None
 
-    async def get_channels(self, bot: commands.AutoShardedInteractionBot):
+    async def get_channels(self, bot: commands.AutoShardedBot):
         channels = [
             ("moderator_channel", Config.MODERATION_CHANNEL_ID),
             ("waste_bin_channel", Config.WASTE_BIN_CHANNEL_ID),

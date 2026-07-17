@@ -10,6 +10,7 @@ from utils.bot import GalacticWideWebBot
 from utils.containers import DispatchContainer
 from utils.checks import wait_for_startup
 from utils.dbv2 import GWWGuild, GWWGuilds
+from utils.embeds.dispatch_embed import dispatch_embed
 from utils.interactables import DispatchStringSelect
 
 
@@ -72,9 +73,22 @@ class DispatchesCog(commands.Cog):
                         ]
                         for lang in unique_langs
                     }
+                    embeds = {
+                        lang: [
+                            dispatch_embed(
+                                dispatch_json=self.bot.json_dict["languages"][lang][
+                                    "containers"
+                                ]["DispatchContainer"],
+                                dispatch=self.bot.data.formatted_data.dispatches[lang][
+                                    index
+                                ],
+                            )
+                        ]
+                        for lang in unique_langs
+                    }
                     await self.bot.interface_handler.send_feature(
                         feature_type="war_announcements",
-                        content=containers,
+                        content=embeds,
                         announcement_type="dispatch",
                     )
                     self.bot.databases.war_info.dispatch_id = dispatch.id
@@ -215,6 +229,39 @@ class DispatchesCog(commands.Cog):
                 ),
             ]
         )
+
+###FLUXER
+
+
+    @wait_for_startup()
+    @commands.command("dispatch")
+    async def dispatch(
+            self,
+            ctx: commands.Context,
+    ) -> None:
+        if ctx.guild:
+            guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
+            if not guild:
+                self.bot.logger.error(
+                    f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
+                )
+                guild = GWWGuilds.add(ctx.guild.id, "en", [])
+        else:
+            guild = GWWGuild.default()
+        dispatch1 = [
+            d
+            for d in self.bot.data.formatted_data.dispatches[guild.language]
+            if d.id == self.bot.databases.war_info.dispatch_id
+        ][0]
+
+        embed = dispatch_embed(
+            dispatch_json=self.bot.json_dict["languages"][guild.language]["containers"][
+                "DispatchContainer"
+            ],
+            dispatch=dispatch1,
+            with_time=True,
+        )
+        await ctx.channel.send(embed=embed)
 
 
 def setup(bot: GalacticWideWebBot) -> None:

@@ -1,5 +1,5 @@
 from datetime import datetime, time
-from disnake import AppCmdInter, ApplicationInstallTypes, InteractionContextTypes
+from disnake import AppCmdInter, ApplicationInstallTypes, InteractionContextTypes, Embed
 from disnake.ext import commands, tasks
 from main import GalacticWideWebBot
 from typing import TYPE_CHECKING
@@ -254,6 +254,54 @@ class MajorOrderCog(commands.Cog):
                 components=[MOUnavailableContainer()],
                 ephemeral=public != "Yes",
             )
+
+###FLUXER
+
+
+    @wait_for_startup()
+    @commands.command("major_order")
+    async def major_order(
+            self,
+            ctx: commands.Context,
+    ) -> None:
+        if ctx.guild:
+            guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
+            if not guild:
+                self.bot.logger.error(
+                    f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
+                )
+                guild = GWWGuilds.add(ctx.guild.id, "en", [])
+        else:
+            guild = GWWGuild.default()
+        guild_language = self.bot.json_dict["languages"][guild.language]
+        if self.bot.data.formatted_data.assignments.get("en"):
+            embeds = []
+            for assignment in self.bot.data.formatted_data.assignments[guild.language]:
+                embed = Dashboard.MajorOrderEmbed(
+                    assignment=assignment,
+                    planets=self.bot.data.formatted_data.planets,
+                    gambit_planets=self.bot.data.formatted_data.gambit_planets,
+                    language_json=guild_language,
+                    json_dict=self.bot.json_dict,
+                )
+                briefings_list: list[GlobalEvent] = [
+                        ge
+                        for ge in self.bot.data.formatted_data.global_events[
+                            guild.language
+                        ]
+                        if ge.assignment_id == assignment.id
+                        and ge.title != ""
+                        and ge.message != ""
+                ]
+                if briefings_list != []:
+                    briefing = briefings_list[0]
+                    embed._add_briefing(briefing)
+                embeds.append(embed)
+            await ctx.channel.send(embeds=embeds)
+        else:
+            embed = Embed()
+            embed.add_field(f"Awaiting Major Order\nStand by for further orders from Super Earth High Command", "")
+            await ctx.channel.send(embed=embed)
 
 
 def setup(bot: GalacticWideWebBot) -> None:

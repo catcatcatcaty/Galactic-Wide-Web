@@ -1,6 +1,6 @@
 from asyncio import sleep
 from disnake import Embed, Forbidden, NotFound, PartialMessage, TextChannel, ui
-from disnake.ext.commands import AutoShardedInteractionBot
+from disnake.ext.commands import AutoShardedBot
 from utils.dbv2 import Feature, GWWGuilds, GWWGuild as GWWGuild
 from utils.interactables import WikiButton
 from utils.mixins import ReprMixin
@@ -10,7 +10,7 @@ WAIT_TIME = 0.001
 
 
 class InterfaceHandler:
-    def __init__(self, bot: AutoShardedInteractionBot):
+    def __init__(self, bot: AutoShardedBot):
         self.wait_time = WAIT_TIME
         self.bot = bot
         self.busy = False
@@ -294,7 +294,7 @@ class InterfaceHandler:
 
 
 class BaseFeatureInteractionHandler(list, ReprMixin):
-    def __init__(self, features: list[Feature], bot: AutoShardedInteractionBot):
+    def __init__(self, features: list[Feature], bot: AutoShardedBot):
         self.features = features
         self.bot = bot
 

@@ -12,10 +12,10 @@ from utils.maps import Maps
 from utils.api_wrapper.services.data_service import DataService
 
 
-class GalacticWideWebBot(commands.AutoShardedInteractionBot):
+class GalacticWideWebBot(commands.AutoShardedBot):
     def __init__(self) -> None:
         """The main Galactic Wide Web bot class"""
-        super().__init__(intents=Intents.default(), status=Status.idle)
+        super().__init__(intents=Intents.all(), status=Status.idle, command_prefix="!")
         self.MODE = GWWBotModes.LIVE
         self.logger: GWWLogger = GWWLogger()
         self.startup_time = datetime.now()
@@ -65,6 +65,10 @@ class GalacticWideWebBot(commands.AutoShardedInteractionBot):
     async def get_owner(self) -> None:
         max_retries = 10
         retries = 0
+        #hardcode owner id
+        self.owner_id = 1476515420739518568
+        self.owner = await self.fetch_user(1476515420739518568)
+        '''
         while not self.owner and retries < max_retries:
             if self.owners:
                 self.owner = list(self.owners)[0]
@@ -72,6 +76,7 @@ class GalacticWideWebBot(commands.AutoShardedInteractionBot):
                 owner_id = list(self.owner_ids)[0]
                 self.owner = self.get_user(owner_id) or await self.fetch_user(owner_id)
             retries += 1
+            '''
 
     def super_start(self) -> None:
         token_to_use = (

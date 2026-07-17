@@ -9,10 +9,14 @@ from disnake import (
     ui,
 )
 from disnake.ext import commands
+from disnake.ext.commands import Command
+
 from main import GalacticWideWebBot
 from utils.containers import PlanetContainers
 from utils.checks import wait_for_startup
 from utils.dbv2 import GWWGuild, GWWGuilds
+from utils.embeds.planet_embed import PlanetEmbed
+from utils.embeds.region_embed import RegionEmbed
 from utils.maps import Maps
 
 
@@ -154,6 +158,71 @@ class PlanetCog(commands.Cog):
             ephemeral=public != "Yes",
         )
 
+###FLUXER
+
+
+    @wait_for_startup()
+    @commands.command("planet", Command, rest_is_raw=True)
+    async def planet(
+            self,
+            ctx: commands.Context,
+            *,
+            arg
+    ) -> None:
+            guild = GWWGuild.default()
+            guild_language = self.bot.json_dict["languages"][guild.language]
+            if not arg:
+                await ctx.channel.send(
+                    f"No planet supplied!"
+                )
+                return
+            planet = arg[1:]
+            planet_data = None
+            if "-" not in planet:
+                planet_data_list = [
+                    p
+                    for p in self.bot.data.formatted_data.planets.values()
+                    if p.names.get("en-GB", str(p.index)).lower() == planet
+                ]
+                if planet_data_list:
+                    planet_data = planet_data_list[0]
+            else:
+                try:
+                    index = int(planet.split("-")[0])
+                except ValueError:
+                    await ctx.channel.send(
+                        f"The planet you supplied (`{planet}`) is in the incorrect format. Please choose a planet from the list."
+                    )
+                    return
+                planet_data = self.bot.data.formatted_data.planets.get(index)
+            if not planet_data:
+                await ctx.channel.send(
+                   "That planet is unavailable. Please select another planet from the list.")
+                return
+            if ctx.guild:
+                guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
+                if not guild:
+                    self.bot.logger.error(
+                        f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
+                    )
+                    guild = GWWGuilds.add(ctx.guild.id, "en", [])
+            else:
+                guild = GWWGuild.default()
+                guild_language = self.bot.json_dict["languages"][guild.language]
+            embed = PlanetEmbed(
+                planet=planet_data,
+                lang_code=guild_language["code_long"],
+                containers_json=guild_language["containers"]["PlanetContainers"]["PlanetContainer"],
+                faction_json=guild_language["factions"],
+                gambit_planets=self.bot.data.formatted_data.gambit_planets,
+            )
+            await ctx.channel.send(embed=embed)
+            embed = RegionEmbed(
+                planet=planet_data,
+                lang_code=guild_language["code_long"],
+                container_json=guild_language["containers"]["PlanetContainers"]["RegionContainer"],
+            )
+            await ctx.channel.send(embed=embed)
 
 def setup(bot: GalacticWideWebBot) -> None:
     bot.add_cog(PlanetCog(bot))

@@ -286,7 +286,6 @@ class Dashboard:
                 self._add_description()
 
             self._collect_completion_timestamps()
-
             task_handlers = {
                 1: self._add_type_1,
                 2: self._add_type_2,
@@ -328,7 +327,7 @@ class Dashboard:
             """Adds the description of the MO, if available. And sets the footer to the assignment ID"""
             if self.assignment.briefing:
                 self.add_field(
-                    name="",
+                    name="-",
                     value=f"-# {self.assignment.briefing}",
                     inline=False,
                 )
@@ -1641,7 +1640,7 @@ class Dashboard:
                 inline=False,
             )
             for index, chunk in enumerate(briefing.split_message[1:], 1):
-                self.insert_field_at(index, "", chunk, inline=False)
+                self.insert_field_at(index, "-", chunk, inline=False)
 
     class DSSEmbed(Embed, EmbedReprMixin):
         def __init__(

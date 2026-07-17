@@ -1,5 +1,7 @@
 from disnake import AppCmdInter, ApplicationInstallTypes, Embed, InteractionContextTypes
 from disnake.ext import commands
+from disnake.ext.commands import Command
+
 from main import GalacticWideWebBot
 from utils.checks import wait_for_startup
 from utils.dbv2 import GWWGuild, GWWGuilds
@@ -83,6 +85,69 @@ class WarfrontCog(commands.Cog):
             embed.set_image("https://i.imgur.com/cThNy4f.png")
         await inter.send(embeds=embeds)
 
+###FLUXER
+
+
+    @wait_for_startup()
+    @commands.command("warfront", Command, rest_is_raw=True)
+    async def warfront(
+            self,
+            ctx: commands.Context,
+            *,
+            arg) -> None:
+        if ctx.guild:
+            guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
+            if not guild:
+                self.bot.logger.error(
+                    f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
+                )
+                guild = GWWGuilds.add(ctx.guild.id, "en", [])
+        else:
+            guild = GWWGuild.default()
+
+        faction = arg[1]
+        if faction not in ["Automaton", "Terminids", "Illuminate"]:
+            await ctx.send(":warning: Value must be one of: Automaton, Terminids, Illuminate")
+            return
+        guild_language = self.bot.json_dict["languages"][guild.language]
+        eagle_storm = (
+            self.bot.data.formatted_data.dss.get_ta_by_name("EAGLE STORM")
+            if self.bot.data.formatted_data.dss
+            else None
+        )
+        defence_embed = Dashboard.DefenceEmbed(
+            planet_events=[
+                planet
+                for planet in self.bot.data.formatted_data.planet_events
+                if planet.event.faction.full_name == faction
+            ],
+            language_json=guild_language,
+            total_players=self.bot.data.formatted_data.total_players,
+            eagle_storm=eagle_storm,
+            gambit_planets=self.bot.data.formatted_data.gambit_planets,
+        )
+        attack_embed = Dashboard.AttackEmbed(
+            campaigns=[
+                campaign
+                for campaign in self.bot.data.formatted_data.campaigns
+                if campaign.faction.full_name == faction and not campaign.planet.event
+            ],
+            language_json=guild_language,
+            faction=faction,
+            total_players=self.bot.data.formatted_data.total_players,
+            planets=self.bot.data.formatted_data.planets,
+            gambit_planets=self.bot.data.formatted_data.gambit_planets,
+        )
+        all_planets_embed = WarfrontAllPlanetsEmbed(
+            planets=self.bot.data.formatted_data.planets, faction=faction
+        )
+        embeds: list[Embed] = [defence_embed, attack_embed, all_planets_embed]
+        for embed in embeds.copy():
+            if len(embed.fields) == 0:
+                embeds.remove(embed)
+                continue
+            embed.set_image("https://i.imgur.com/cThNy4f.png")
+        await ctx.send(embeds=embeds)
 
 def setup(bot: GalacticWideWebBot) -> None:
     bot.add_cog(WarfrontCog(bot))

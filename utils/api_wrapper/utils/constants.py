@@ -1,5 +1,7 @@
 from enum import Enum
 
+from utils.dataclasses import Config
+
 
 class RegionType(Enum):
     SETTLEMENT = 1
@@ -9,11 +11,11 @@ class RegionType(Enum):
 
 
 class EndpointBase(Enum):
-    HELLDIVERS = "https://api.live.prod.thehelldiversgame.com/api/"
+    HELLDIVERS = Config.API_BASE
     STEAM_PLAYER_COUNT = (
         "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/"
     )
-    STEAM_NEWS = "https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=553850&count=20&maxlength=0&format=json"
+    STEAM_NEWS = "https://api.steampowered.com/ISteamNews/GetNewsForApp/v0002/?appid=553850&count=20&maxlength=0&format=json"
 
 
 DEFENCE_LEVEL_EXCLAMATION_DICT = {

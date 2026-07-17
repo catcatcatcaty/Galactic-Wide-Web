@@ -5,6 +5,7 @@ from main import GalacticWideWebBot
 from utils.checks import wait_for_startup
 from utils.containers import GlobalEventCommandContainer, GlobalEventsContainer
 from utils.dbv2 import GWWGuild, GWWGuilds
+from utils.embeds.global_events_embed import global_events_embed, global_events_command_embed
 
 
 class GlobalEventsCog(commands.Cog):
@@ -54,7 +55,7 @@ class GlobalEventsCog(commands.Cog):
                 unique_langs = GWWGuilds.unique_languages()
                 containers = {
                     lang: [
-                        GlobalEventsContainer(
+                        global_events_embed(
                             container_json=self.bot.json_dict["languages"][lang][
                                 "containers"
                             ]["GlobalEventsContainer"],
@@ -133,6 +134,42 @@ class GlobalEventsCog(commands.Cog):
         await inter.send(
             components=containers,
             ephemeral=public != "Yes",
+        )
+
+###FLUXER
+
+
+    @wait_for_startup()
+    @commands.command("global_events")
+    async def global_events(
+            self,
+            ctx: commands.Context,
+    ) -> None:
+        if ctx.guild:
+            guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
+            if not guild:
+                self.bot.logger.error(
+                    f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
+                )
+                guild = GWWGuilds.add(ctx.guild.id, "en", [])
+        else:
+            guild = GWWGuild.default()
+        containers = []
+        for global_event in sorted(
+                self.bot.data.formatted_data.global_events[guild.language],
+                key=lambda x: x.expire_time,
+        ):
+            if global_event.assignment_id:
+                continue
+            container = global_events_command_embed(
+                global_event=global_event, planets=self.bot.data.formatted_data.planets
+            )
+            containers.append(container)
+        if not containers:
+            await ctx.send("No global events active")
+            return
+        await ctx.send(
+            components=containers
         )
 
 

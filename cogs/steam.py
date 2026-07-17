@@ -137,6 +137,29 @@ class SteamCog(commands.Cog):
         )
         await inter.response.edit_message(embed=embed)
 
+###FLUXER
+
+
+    @wait_for_startup()
+    @commands.command("steam")
+    async def steam(
+            self,
+            ctx: commands.Context,
+    ) -> None:
+        if ctx.guild:
+            guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
+            if not guild:
+                self.bot.logger.error(
+                    f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
+                )
+            guild = GWWGuilds.add(ctx.guild.id, "en", [])
+        else:
+            guild = GWWGuild.default()
+        embed = SteamEmbed(
+            steam=self.bot.data.formatted_data.steam_news[0],
+            language_json=self.bot.json_dict["languages"][guild.language],
+        )
+        await ctx.channel.send(embed=embed)
 
 def setup(bot: GalacticWideWebBot) -> None:
     bot.add_cog(SteamCog(bot))

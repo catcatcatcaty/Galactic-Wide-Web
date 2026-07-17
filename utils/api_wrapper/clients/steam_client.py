@@ -6,6 +6,7 @@ class SteamPlayerCountClient(BaseAPIClient):
         super().__init__(
             base_url=base_url,
             logger=logger,
+            rate_limit_delay=1
         )
 
     async def get_steam_count(self) -> dict:
@@ -21,6 +22,7 @@ class SteamNewsClient(BaseAPIClient):
         super().__init__(
             base_url=base_url,
             logger=logger,
+            rate_limit_delay=1
         )
 
     async def get_steam_news(self) -> dict:

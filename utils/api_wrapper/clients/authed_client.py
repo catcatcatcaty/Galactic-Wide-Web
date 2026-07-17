@@ -8,6 +8,7 @@ class AuthedClient(BaseAPIClient):
             base_url=Config.AUTHED_API_URL,
             logger=logger,
             headers=Config.AUTHED_API_HEADERS,
+            rate_limit_delay=1
         )
 
     async def get_dss_votes(self) -> dict:

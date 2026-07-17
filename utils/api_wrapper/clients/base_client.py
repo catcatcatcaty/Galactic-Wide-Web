@@ -15,8 +15,9 @@ class BaseAPIClient(ABC):
         self,
         base_url: str,
         logger: GWWLogger,
-        timeout: int = 5,
+        timeout: int = 60,
         headers: Optional[dict] = None,
+        rate_limit_delay: int = 5,
     ):
         """
         Args:
@@ -31,6 +32,7 @@ class BaseAPIClient(ABC):
         self.timeout = ClientTimeout(total=timeout)
         self.default_headers = headers or {}
         self._session: Optional[ClientSession] = None
+        self.rate_limit_delay = rate_limit_delay
 
     async def _get_session(self) -> ClientSession:
         """Get or create an aiohttp session"""
@@ -72,6 +74,7 @@ class BaseAPIClient(ABC):
         request_headers = {**self.default_headers, **(headers or {})}
 
         for attempt in range(retries):
+            await sleep(self.rate_limit_delay)
             try:
                 async with session.get(
                     url=url, params=params, headers=request_headers

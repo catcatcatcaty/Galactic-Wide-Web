@@ -11,6 +11,7 @@ class HelldiversClient(BaseAPIClient):
                 "X-Super-Client": "Galactic Wide Web",
                 "X-Super-Contact": "Stonemercy",
             },
+            rate_limit_delay=1
         )
 
     async def get_news_feed(

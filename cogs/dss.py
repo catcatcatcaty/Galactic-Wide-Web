@@ -47,6 +47,24 @@ class DSSCog(commands.Cog):
         )
         await inter.send(embed=embed, ephemeral=public != "Yes")
 
+###FLUXER
+
+
+    @wait_for_startup()
+    @commands.command("dss")
+    async def dss(
+            self,
+            ctx: commands.Context,
+    ) -> None:
+            guild = GWWGuild.default()
+            guild_language = self.bot.json_dict["languages"][guild.language]
+            embed = DSSEmbed(
+            language_json=guild_language,
+            dss_data=self.bot.data.formatted_data.dss,
+            next_vote_campaigns=self.bot.data.formatted_data.campaigns[:8],
+            )
+            await ctx.channel.send(embed=embed)
+
 
 def setup(bot: GalacticWideWebBot) -> None:
     bot.add_cog(DSSCog(bot))

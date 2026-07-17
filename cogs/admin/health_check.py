@@ -45,7 +45,7 @@ class HealthCheckCog(commands.Cog):
                     message = await channel.fetch_message(dashboard.message_id)
                     cutoff = now - timedelta(minutes=17)
                     if (
-                        message.edited_at.replace(tzinfo=None) < cutoff
+                        message.edited_at is not None and message.edited_at.replace(tzinfo=None) < cutoff
                         and self.bot.startup_time < cutoff
                     ):
                         await self.bot.channels.moderator_channel.send(

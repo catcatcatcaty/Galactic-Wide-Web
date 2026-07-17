@@ -86,7 +86,7 @@ class MapCog(commands.Cog):
         for language_code, embed in map_embeds.items():
             latest_map = self.bot.maps.latest_maps[language_code]
             embed.set_image(url=latest_map.map_link)
-            embed.add_field("", f"-# Updated <t:{int(datetime.now().timestamp())}:R>")
+            embed.add_field("-", f"-# Updated <t:{int(datetime.now().timestamp())}:R>")
         await self.bot.interface_handler.send_feature("maps", map_embeds)
         self.bot.logger.info(
             f"Updated {len(self.bot.interface_handler.maps)} maps in {(datetime.now()-maps_start).total_seconds():.2f} seconds"
@@ -185,6 +185,78 @@ class MapCog(commands.Cog):
             )
             return
 
+###FLUXER
+
+
+    @wait_for_startup()
+    @commands.command("map")
+    async def map(
+            self,
+            ctx: commands.Context,
+    ) -> None:
+        if ctx.guild:
+            guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
+            if not guild:
+                self.bot.logger.error(
+                    f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
+                )
+                guild = GWWGuilds.add(ctx.guild.id, "en", [])
+        else:
+            guild = GWWGuild.default()
+        latest_map = self.bot.maps.latest_maps.get(guild.language, None)
+        fifteen_minutes_ago = datetime.now() - timedelta(minutes=15)
+        if not latest_map or (
+            latest_map and latest_map.updated_at < fifteen_minutes_ago
+        ):
+            self.bot.maps.update_base_map(
+                planets=self.bot.data.formatted_data.planets,
+                assignments=self.bot.data.formatted_data.assignments.get("en", []),
+            )
+            language_json = self.bot.json_dict["languages"][guild.language]
+            self.bot.maps.localize_map(
+                language_code_short=language_json["code"],
+                language_code_long=language_json["code_long"],
+                planets=self.bot.data.formatted_data.planets,
+                planet_names_json=self.bot.json_dict["planets"],
+            )
+            self.bot.maps.add_icons(
+                lang=language_json["code"],
+                long_code=language_json["code_long"],
+                planets=self.bot.data.formatted_data.planets,
+                dss=self.bot.data.formatted_data.dss,
+            )
+            try:
+                message = await self.bot.channels.waste_bin_channel.send(
+                    file=File(
+                        fp=self.bot.maps.FileLocations.localized_map_path(
+                            language_json["code"]
+                        )
+                    ),
+                )
+                self.bot.maps.latest_maps[language_json["code"]] = Maps.LatestMap(
+                    datetime.now(), message.attachments[0].url
+                )
+                latest_map = self.bot.maps.latest_maps[language_json["code"]]
+            except HTTPException as e:
+                await self.bot.channels.moderator_channel.send(
+                    (
+                        f"Error with Maps command\n"
+                        f"Language: **{language_json['code']}**\n"
+                        f"Filepath: **{self.bot.maps.FileLocations.localized_map_path(language_json['code'])}**"
+                    )
+                )
+                raise e
+        embed = Embed(colour=Colour.dark_embed())
+        embed.set_image(url=latest_map.map_link)
+        embed.add_field("-", "-")
+        try:
+            await ctx.channel.send(embed=embed)
+        except NotFound:
+            await ctx.channel.send(
+                "There was an error with that command, please try again.",
+                delete_after=5,
+            )
+            return
 
 def setup(bot: GalacticWideWebBot) -> None:
     bot.add_cog(MapCog(bot))

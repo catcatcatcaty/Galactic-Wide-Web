@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
-from disnake import HTTPException, NotFound, ui
+from disnake import HTTPException, NotFound, ui, Embed
 from disnake.ext import commands, tasks
 from utils.bot import GalacticWideWebBot
-from utils.containers import BotDashboardContainer
+from utils.embeds.bot_dashboard_embed import bot_dashboardEmbed
 from utils.dbv2 import BotDashboard
 
 
@@ -40,23 +40,19 @@ class BotDashboardCog(commands.Cog):
                     )
                 )
             except NotFound:
+                embed = Embed()
+                embed.add_field("Placeholder please ignore", "")
                 self.bot.bot_dashboard_message = (
                     await self.bot.bot_dashboard_channel.send(
-                        components=[ui.TextDisplay("Placeholder please ignore")]
+                        embed=embed
                     )
                 )
                 bot_dashboard.message_id = self.bot.bot_dashboard_message.id
                 bot_dashboard.save_changes()
             except HTTPException:
                 return
-        now = datetime.now()
-        if now.minute == 0 or now - timedelta(minutes=2) < self.bot.startup_time:
-            app_info = await self.bot.application_info()
-            self.user_installs = app_info.approximate_user_install_count
-        dashboard = BotDashboardContainer(
-            bot=self.bot, user_installs=self.user_installs
-        )
-        await self.bot.bot_dashboard_message.edit(components=dashboard)
+        dashboard = bot_dashboardEmbed(bot=self.bot)
+        await self.bot.bot_dashboard_message.edit(embed=dashboard)
 
     @bot_dashboard.before_loop
     async def before_bot_dashboard(self) -> None:
