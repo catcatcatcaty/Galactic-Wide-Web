@@ -1,3 +1,5 @@
+from datetime import timezone, timedelta, datetime
+
 from disnake import Embed, Colour
 
 from data.lists import CUSTOM_COLOURS
@@ -16,7 +18,9 @@ class dispatch_embed(Embed, EmbedReprMixin):
         title, description = dispatch.title, dispatch.description
         if description and title:
             self.add_field(f"# {title}", f"\n{description}")
-        if with_time:
+        if with_time or dispatch.published_at < datetime.now(
+            tz=timezone.utc
+        ) - timedelta(hours=1):
             self.add_field(".", dispatch_json["with_time"].format(
                 timestamp=int(dispatch.published_at.timestamp())))
         self.add_field(".", f"\n-# {dispatch_json['dispatch']} #{dispatch.id}")

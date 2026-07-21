@@ -1,35 +1,35 @@
 from disnake import AppCmdInter, ApplicationInstallTypes, Embed, InteractionContextTypes
 from disnake.ext import commands
-from disnake.ext.commands import Command
-
-from main import GalacticWideWebBot
+from disnake.ext.commands import Cog, Param, slash_command, Command
+from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
+from utils.dataclasses.enums import CampaignType, EventType
 from utils.dbv2 import GWWGuild, GWWGuilds
 from utils.embeds import WarfrontAllPlanetsEmbed, Dashboard
 
 
-class WarfrontCog(commands.Cog):
+class WarfrontCog(Cog):
     def __init__(self, bot: GalacticWideWebBot) -> None:
         self.bot = bot
 
     @wait_for_startup()
-    @commands.slash_command(
-        description="Returns information on a specific War front",
+    @slash_command(
+        description="Get an overview of all active campaigns for a specific faction",
         install_types=ApplicationInstallTypes.all(),
         contexts=InteractionContextTypes.all(),
         extras={
-            "long_description": "Returns information on each campaign for a specific faction",
-            "example_usage": "**`/warfront faction:Illuminate public:Yes`** would return information on the Illuminate warfront that other members in the server can see.",
+            "long_description": "Shows all currently active campaigns for the chosen faction (Automaton, Terminids, or Illuminate), broken into separate embeds for urgent liberations (if any), defence events, attack campaigns, and a full list of that faction's planets.",
+            "example_usage": "**`/warfront faction:Automaton public:Yes`** returns all active Automaton campaigns visible to everyone.\n- **`/warfront faction:Illuminate`** shows the Illuminate warfront just for you.",
         },
     )
     async def warfront(
         self,
         inter: AppCmdInter,
-        faction=commands.Param(
+        faction=Param(
             choices=["Automaton", "Terminids", "Illuminate"],
             description="The faction to focus on",
         ),
-        public: str = commands.Param(
+        public: str = Param(
             choices=["Yes", "No"],
             default="No",
             description="If you want the response to be seen by others in the server.",
@@ -37,12 +37,12 @@ class WarfrontCog(commands.Cog):
     ) -> None:
         await inter.response.defer(ephemeral=public != "Yes")
         if inter.guild:
-            guild = GWWGuilds.get_specific_guild(id=inter.guild_id)
+            guild = GWWGuilds.get_specific_guild(id=inter.guild.id)
             if not guild:
                 self.bot.logger.error(
-                    f"Guild {inter.guild_id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
+                    f"Guild {inter.guild.id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
                 )
-                guild = GWWGuilds.add(inter.guild_id, "en", [])
+                guild = GWWGuilds.add(inter.guild.id, "en", [])
         else:
             guild = GWWGuild.default()
         guild_language = self.bot.json_dict["languages"][guild.language]
@@ -51,11 +51,12 @@ class WarfrontCog(commands.Cog):
             if self.bot.data.formatted_data.dss
             else None
         )
-        defence_embed = Dashboard.DefenceEmbed(
-            planet_events=[
-                planet
-                for planet in self.bot.data.formatted_data.planet_events
-                if planet.event.faction.full_name == faction
+        defence_events_embed = Dashboard.DefenceEventsEmbed(
+            defence_event_campaigns=[
+                c
+                for c in self.bot.data.formatted_data.event_campaigns
+                if c.planet.event.faction.full_name == faction
+                and c.planet.event.type == EventType.Defence
             ],
             language_json=guild_language,
             total_players=self.bot.data.formatted_data.total_players,
@@ -77,7 +78,23 @@ class WarfrontCog(commands.Cog):
         all_planets_embed = WarfrontAllPlanetsEmbed(
             planets=self.bot.data.formatted_data.planets, faction=faction
         )
-        embeds: list[Embed] = [defence_embed, attack_embed, all_planets_embed]
+        embeds: list[Embed] = [defence_events_embed, attack_embed, all_planets_embed]
+        if urgent_campaigns := [
+            c
+            for c in self.bot.data.formatted_data.campaigns
+            if c.faction.full_name == faction
+            if c.type == CampaignType.Event
+            and c.planet.event
+            and c.planet.event.type == EventType.UrgentLiberation
+        ]:
+            embeds.insert(
+                0,
+                Dashboard.UrgentLiberationsEmbed(
+                    urgent_lib_campaigns=urgent_campaigns,
+                    language_json=guild_language,
+                    total_players=self.bot.data.formatted_data.total_players,
+                ),
+            )
         for embed in embeds.copy():
             if len(embed.fields) == 0:
                 embeds.remove(embed)
@@ -115,11 +132,12 @@ class WarfrontCog(commands.Cog):
             if self.bot.data.formatted_data.dss
             else None
         )
-        defence_embed = Dashboard.DefenceEmbed(
-            planet_events=[
-                planet
-                for planet in self.bot.data.formatted_data.planet_events
-                if planet.event.faction.full_name == faction
+        defence_events_embed = Dashboard.DefenceEventsEmbed(
+            defence_event_campaigns=[
+                c
+                for c in self.bot.data.formatted_data.event_campaigns
+                if c.planet.event.faction.full_name == faction
+                   and c.planet.event.type == EventType.Defence
             ],
             language_json=guild_language,
             total_players=self.bot.data.formatted_data.total_players,
@@ -141,7 +159,23 @@ class WarfrontCog(commands.Cog):
         all_planets_embed = WarfrontAllPlanetsEmbed(
             planets=self.bot.data.formatted_data.planets, faction=faction
         )
-        embeds: list[Embed] = [defence_embed, attack_embed, all_planets_embed]
+        embeds: list[Embed] = [defence_events_embed, attack_embed, all_planets_embed]
+        if urgent_campaigns := [
+            c
+            for c in self.bot.data.formatted_data.campaigns
+            if c.faction.full_name == faction
+            if c.type == CampaignType.Event
+               and c.planet.event
+               and c.planet.event.type == EventType.UrgentLiberation
+        ]:
+            embeds.insert(
+                0,
+                Dashboard.UrgentLiberationsEmbed(
+                    urgent_lib_campaigns=urgent_campaigns,
+                    language_json=guild_language,
+                    total_players=self.bot.data.formatted_data.total_players,
+                ),
+            )
         for embed in embeds.copy():
             if len(embed.fields) == 0:
                 embeds.remove(embed)

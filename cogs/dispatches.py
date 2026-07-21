@@ -1,11 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from disnake import (
     AppCmdInter,
     ApplicationInstallTypes,
     InteractionContextTypes,
     MessageInteraction,
 )
-from disnake.ext import commands, tasks
+from disnake.ext import commands
+from disnake.ext.commands import Cog, Param, slash_command
+from disnake.ext.tasks import loop
 from utils.bot import GalacticWideWebBot
 from utils.containers import DispatchContainer
 from utils.checks import wait_for_startup
@@ -14,7 +16,7 @@ from utils.embeds.dispatch_embed import dispatch_embed
 from utils.interactables import DispatchStringSelect
 
 
-class DispatchesCog(commands.Cog):
+class DispatchesCog(Cog):
     def __init__(self, bot: GalacticWideWebBot):
         self.bot = bot
 
@@ -29,33 +31,48 @@ class DispatchesCog(commands.Cog):
         if self.dispatch_check in self.bot.loops:
             self.bot.loops.remove(self.dispatch_check)
 
-    @tasks.loop(minutes=1)
+    @loop(minutes=1)
     async def dispatch_check(self) -> None:
-        dispatch_start = datetime.now()
-        if (
-            not self.bot.interface_handler.loaded
-            or dispatch_start < self.bot.ready_time
-            or not self.bot.data.loaded
-            or self.bot.interface_handler.busy
-        ):
-            return
-        if not self.bot.databases.war_info.dispatch_id:
-            await self.bot.channels.moderator_channel.send(
-                "# No dispatch ID found in the database. Please check the war info table."
+        dispatch_start = datetime.now(tz=timezone.utc)
+        if not self.bot.ready:
+            self.bot.logger.warning(
+                "dispatch_check loop returning - the bot isn't ready"
             )
             return
+        if self.bot.interface_handler.busy:
+            self.bot.logger.warning(
+                "dispatch_check loop returning - the interface_handler is busy"
+            )
+            return
+        if not self.bot.data.formatted_data:
+            self.bot.logger.error("dispatch_check loop returning - NO FORMATTED DATA")
+            return
+
         if english_dispatches := self.bot.data.formatted_data.dispatches.get("en"):
+            fifteen_minutes_ago = datetime.now(tz=timezone.utc) - timedelta(minutes=15)
             for index, dispatch in enumerate(english_dispatches):
                 if self.bot.databases.war_info.dispatch_id < dispatch.id:
-                    if (
-                        len(dispatch.full_message) < 5
-                        or "#planet" in dispatch.full_message
-                    ):
-                        self.bot.logger.warning(f"Dispatch {dispatch.id} skipped")
-                        if len(dispatch.full_message) < 5:
-                            self.bot.logger.warning("   Full message length under 5")
-                        if "#planet" in dispatch.full_message:
-                            self.bot.logger.warning("   #planet in full message")
+                    faulty_dispatch = False
+                    if len(dispatch.full_message) < 5:
+                        self.bot.logger.warning(
+                            f"dispatch_check loop - dispatch {dispatch.id} full message length is {len(dispatch.full_message)}"
+                        )
+                        if dispatch.published_at < fifteen_minutes_ago:
+                            faulty_dispatch = True
+                        else:
+                            return
+                    elif "#planet" in dispatch.full_message:
+                        self.bot.logger.warning(
+                            f"dispatch_check loop - dispatch {dispatch.id} has #planet in message"
+                        )
+                        if dispatch.published_at < fifteen_minutes_ago:
+                            faulty_dispatch = True
+                        else:
+                            return
+                    if faulty_dispatch:
+                        self.bot.logger.error(
+                            f"dispatch_check loop - dispatch {dispatch.id} has been faulty for 15 minutes, skipping"
+                        )
                         self.bot.databases.war_info.dispatch_id = dispatch.id
                         self.bot.databases.war_info.save_changes()
                         continue
@@ -94,7 +111,7 @@ class DispatchesCog(commands.Cog):
                     self.bot.databases.war_info.dispatch_id = dispatch.id
                     self.bot.databases.war_info.save_changes()
                     self.bot.logger.info(
-                        f"Sent dispatch #{dispatch.id} out to {len(self.bot.interface_handler.war_announcements)} channels in {(datetime.now() - dispatch_start).total_seconds():.2f}s"
+                        f"dispatch_check loop - sent dispatch #{dispatch.id} out to {len(self.bot.interface_handler.war_announcements)} channels in {(datetime.now(tz=timezone.utc) - dispatch_start).total_seconds():.2f} seconds"
                     )
                     return
 
@@ -109,38 +126,39 @@ class DispatchesCog(commands.Cog):
             await error_handler.log_error(None, error, "dispatch_check loop")
 
     async def dispatch_autocomp(inter: AppCmdInter, user_input: str) -> list[str]:
-        if not inter.bot.data.loaded:
+        if not inter.bot.ready:
             return []
-        dispatch_list = sorted(
-            [
-                f"{i.id}-{i.title}"[:90]
-                for i in inter.bot.data.formatted_data.dispatches["en"]
-            ],
-            reverse=True,
-        )
-        return [d for d in dispatch_list if str(user_input).lower() in str(d).lower()][
-            :25
-        ]
+        return [
+            d
+            for d in sorted(
+                [
+                    f"{i.id}-{i.title}"[:90]
+                    for i in inter.bot.data.formatted_data.dispatches["en"]
+                ],
+                reverse=True,
+            )
+            if str(user_input).lower() in str(d).lower()
+        ][:25]
 
     @wait_for_startup()
-    @commands.slash_command(
-        description="Get the 25 most recent dispatches or a specific dispatch",
+    @slash_command(
+        description="Get the most recent dispatch, or search for a specific one",
         install_types=ApplicationInstallTypes.all(),
         contexts=InteractionContextTypes.all(),
         extras={
-            "long_description": "Returns the 25 latest dispatches with a dropdown to select other ones via id-title.",
-            "example_usage": "**`/dispatches public:Yes`** returns an embed with the most recent patch notes, it also has a dropdown for the most recent 10 patch notes you can choose from. Other people can see this too.",
+            "long_description": "Shows the most recent in-game dispatch by default. Use the `specific` option with autocomplete to look up a particular dispatch by ID and title. Includes a dropdown to switch between the 25 most recent dispatches.",
+            "example_usage": "**`/dispatches public:Yes`** returns the latest dispatch visible to everyone.\n- **`/dispatches specific:1234-Title public:No`** returns that specific dispatch just for you.",
         },
     )
     async def dispatches(
         self,
         inter: AppCmdInter,
-        specific: str = commands.Param(
+        specific: str = Param(
             autocomplete=dispatch_autocomp,
             default=None,
             description="Get a specific dispatch by ID",
         ),
-        public: str = commands.Param(
+        public: str = Param(
             choices=["Yes", "No"],
             default="No",
             description="Do you want other people to see the response to this command?",
@@ -148,12 +166,12 @@ class DispatchesCog(commands.Cog):
     ) -> None:
         await inter.response.defer(ephemeral=public != "Yes")
         if inter.guild:
-            guild = GWWGuilds.get_specific_guild(id=inter.guild_id)
+            guild = GWWGuilds.get_specific_guild(id=inter.guild.id)
             if not guild:
                 self.bot.logger.error(
-                    f"Guild {inter.guild_id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
+                    f"Guild {inter.guild.id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
                 )
-                guild = GWWGuilds.add(inter.guild_id, "en", [])
+                guild = GWWGuilds.add(inter.guild.id, "en", [])
         else:
             guild = GWWGuild.default()
         dispatch = None
@@ -193,20 +211,21 @@ class DispatchesCog(commands.Cog):
             ephemeral=public != "Yes",
         )
 
-    @commands.Cog.listener("on_dropdown")
+    @Cog.listener("on_dropdown")
     async def dispatches_listener(self, inter: MessageInteraction) -> None:
         if (
-            inter.component.custom_id != "dispatch"
+            not self.bot.ready
+            or inter.component.custom_id != "dispatch"
             or inter.author != inter.message.interaction_metadata.user
         ):
             return
         if inter.guild:
-            guild = GWWGuilds.get_specific_guild(id=inter.guild_id)
+            guild = GWWGuilds.get_specific_guild(id=inter.guild.id)
             if not guild:
                 self.bot.logger.error(
-                    f"Guild {inter.guild_id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
+                    f"Guild {inter.guild.id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
                 )
-                guild = GWWGuilds.add(inter.guild_id, "en", [])
+                guild = GWWGuilds.add(inter.guild.id, "en", [])
         else:
             guild = GWWGuild.default()
         dispatch = [

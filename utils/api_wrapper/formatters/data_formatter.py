@@ -1,9 +1,10 @@
 from copy import deepcopy
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from ..models import (
+from datetime import datetime, timedelta, timezone
+from utils.api_wrapper.models import (
     Assignment,
     Campaign,
+    ControlCentre,
     Dispatch,
     DSS,
     GalacticWarEffect,
@@ -11,9 +12,12 @@ from ..models import (
     GlobalResource,
     PersonalOrder,
     Planet,
+    SpaceStation,
     SteamNews,
 )
-from ...dataclasses import Factions
+from utils.dataclasses import Factions
+from utils.dataclasses.communities import arsenal
+from utils.dataclasses.enums import AssignmentTaskType, EventType, SpaceStationType
 
 CORRECT_SECTORS = {
     "SOL": ["SUPER EARTH"],
@@ -22,7 +26,7 @@ CORRECT_SECTORS = {
         "NEW HAVEN",
         "PATHFINDER V",
         "PILEN V",
-        "WIDOW'S HARBOR",
+        "WIDOW'S HARBOUR",
     ],
     "KELVIN": ["EMERIA", "FORT JUSTICE", "IGLA", "NEW KIRUNA", "ZEGEMA PARADISE"],
     "BARNARD": [
@@ -35,7 +39,7 @@ CORRECT_SECTORS = {
     ],
     "CANTOLUS": ["FREEDOM PEAK", "KELVINOR", "MARTYR'S BAY", "OBARI", "VIRIDIA PRIME"],
     "CANCRI": [
-        "CERBERUS IIIC",
+        "CERBERUS IIIc",
         "EFFLUVIA",
         "FORT SANCTUARY",
         "PROSPERITY FALLS",
@@ -77,6 +81,8 @@ CORRECT_SECTORS = {
         "HEETH",
         "TERREK",
         "VELD",
+        "BRILLIANCE",
+        "ZYGOS",
     ],
     "GALLUX": ["ACUBENS PRIME", "ADHARA", "AFOYAY BAY", "BASHYR", "KHARST", "RASP"],
     "HYDRA": ["AESIR PASS", "MENKENT", "VERNEN WELLS"],
@@ -88,7 +94,7 @@ CORRECT_SECTORS = {
         "EAST IRIDIUM TRADING BAY",
         "OSUPSAM",
     ],
-    "UMLAUT": ["ERATA PRIME", "FENRIR III", "TURING"],
+    "UMLAUT": ["ERATA PRIME", "FENRIR III", "TURING", "FRONTERIA"],
     "THESEUS": ["CAPH", "CASTOR", "KUPER", "LASTOFE", "THE WEIR", "TIEN KWAN"],
     "GUANG": ["ALDERIDGE COVE", "BELLATRIX", "BOTEIN", "ELYSIAN MEADOWS", "KHANDARK"],
     "URSA": ["ACRAB XI", "ACRUX IX", "GEMMA", "SKAASH"],
@@ -120,8 +126,9 @@ CORRECT_SECTORS = {
         "GATRIA",
         "PANDION-XXIV",
         "PHACT BAY",
+        "LUXURIANT",
     ],
-    "OMEGA": ["HYDROBIUS", "KARLIA", "SEASSE", "SENGE 23", "SETIA"],
+    "OMEGA": ["HYDROBIUS", "KARLIA", "SEASSE", "SENGE 23", "SETIA", "SANGIS"],
     "LEO": ["HAKA", "HALIES PORT", "PROPUS", "RAS ALGETHI"],
     "VALDIS": [
         "AURORA BAY",
@@ -131,7 +138,7 @@ CORRECT_SECTORS = {
         "MERGA IV",
         "VINDEMITARIX PRIME",
     ],
-    "RIGEL": ["HESOE PRIME", "HORT", "RD-4", "RIRGA BAY", "ROGUE 5"],
+    "RIGEL": ["HESOE PRIME", "HORT", "RD-4", "RIRGA BAY", "ROGUE 5", "BASQUINE VIII"],
     "QUINTUS": ["LENG SECUNDUS", "SPHERION", "STOR THA PRIME", "STOUT", "TERMADON"],
     "TRIGON": [
         "CHOEPESSA IV",
@@ -163,7 +170,14 @@ CORRECT_SECTORS = {
     "GELLERT": ["BLISTICA", "MINCHIR", "MINTORIA", "ZOSMA", "ZZANIAH PRIME"],
     "SEVERIN": ["DURGEN", "MAIA", "MALEVELON CREEK", "TIBIT", "UBANEA"],
     "HAWKING": ["EUPHORIA III", "KUMA", "MORDIA 9", "SKITTER"],
-    "STEN": ["AZUR SECUNDUS", "OVERGOE PRIME", "PARTION", "PEACOCK", "TRANDOR"],
+    "STEN": [
+        "AZUR SECUNDUS",
+        "OVERGOE PRIME",
+        "PARTION",
+        "PEACOCK",
+        "TRANDOR",
+        "BIG ROCK",
+    ],
 }
 
 
@@ -174,13 +188,17 @@ class FormattedDataContext:
     war_status: dict[str, dict]
     news_feed: dict[str, list[dict]]
     assignments: dict[str, list[dict]]
-    dss: dict
     dss_votes: dict
     war_stats: dict
     war_info: dict
     war_effects: list
     personal_order: dict
+    space_stations: list[dict]
     steam_news: list
+    control_centre: dict[str, list[dict]]
+
+    # community targets
+    arsenal_targets: list[int]
 
     json_dict: dict
 
@@ -198,10 +216,11 @@ class FormattedData:
         "global_resources",
         "dispatches",
         "assignments",
-        "dss",
-        "planet_events",
+        "space_stations",
+        "event_campaigns",
         "campaigns",
         "steam_news",
+        "control_centre",
         "personal_order",
         "formatted_at",
     )
@@ -222,10 +241,11 @@ class FormattedData:
         self.global_resources: list[GlobalResource] = []
         self.dispatches: dict[str, list[Dispatch]] = {}
         self.assignments: dict[str, list[Assignment]] = {}
-        self.dss: DSS = None
-        self.planet_events: list[Planet] = []
+        self.space_stations: list[SpaceStation] = []
+        self.event_campaigns: list[Campaign] = []
         self.campaigns: list[Campaign] = []
         self.steam_news: list[SteamNews] = []
+        self.control_centre: dict[str, ControlCentre] = {}
         self.personal_order: PersonalOrder = None
 
         if context.steam_player_count:
@@ -233,22 +253,41 @@ class FormattedData:
 
         if context.war_status.get("en"):
             self.war_start_timestamp: int = (
-                int(datetime.now().timestamp()) - context.war_status["en"]["time"]
+                int(datetime.now(tz=timezone.utc).timestamp())
+                - context.war_status["en"]["time"]
             )
 
         if context.war_info:
             for raw_planet in context.war_info["planetInfos"]:
                 planet = Planet(
                     raw_planet_info=raw_planet,
-                    planets_json=context.json_dict["planets"][str(raw_planet["index"])],
+                    planets_json=context.json_dict["planets"].get(
+                        str(raw_planet["index"]),
+                        {
+                            "names": {
+                                "en-GB": f"UNKNOWN PLANET {raw_planet['index']}",
+                                "de-DE": f"UNKNOWN PLANET {raw_planet['index']}",
+                                "es-ES": f"UNKNOWN PLANET {raw_planet['index']}",
+                                "fr-FR": f"UNKNOWN PLANET {raw_planet['index']}",
+                                "it-IT": f"UNKNOWN PLANET {raw_planet['index']}",
+                                "pt-BR": f"UNKNOWN PLANET {raw_planet['index']}",
+                                "ru-RU": f"UNKNOWN PLANET {raw_planet['index']}",
+                                "zh-Hans": f"UNKNOWN PLANET {raw_planet['index']}",
+                                "zh-Hant": f"UNKNOWN PLANET {raw_planet['index']}",
+                            },
+                            "description": "",
+                        },
+                    ),
                     sectors_json=context.json_dict["sectors"],
                 )
                 self.planets[planet.index] = planet
-                if planet.names["en-GB"] not in CORRECT_SECTORS.get(planet.sector, []):
+                if planet.names.get("en-GB", planet.name) not in CORRECT_SECTORS.get(
+                    planet.sector, []
+                ):
                     sector_list = [
                         s
                         for s, pl in CORRECT_SECTORS.items()
-                        if planet.names["en-GB"] in pl
+                        if planet.names.get("en-GB", planet.name) in pl
                     ]
                     if sector_list:
                         planet.sector = sector_list[0]
@@ -266,13 +305,22 @@ class FormattedData:
                 self.war_effects[war_effect["id"]] = GalacticWarEffect(
                     gwa=war_effect, json_dict=context.json_dict
                 )
+            self.war_effects = dict(
+                sorted(self.war_effects.items(), key=lambda x: x[0])
+            )
 
         if context.war_status.get("en"):
-            self.galactic_impact_mod = context.war_status["en"]["impactMultiplier"]
+            self.galactic_impact_mod: float = context.war_status["en"][
+                "impactMultiplier"
+            ]
             for planet_status in context.war_status["en"]["planetStatus"]:
                 planet = self.planets.get(planet_status["index"])
                 if planet:
                     planet.add_data_from_status(raw_planet_status=planet_status)
+                else:
+                    print(
+                        f"data_formatter - Planet not found for status {planet_status['index']}"
+                    )
 
             self.total_players: int = sum(
                 [planet.stats.player_count for planet in self.planets.values()]
@@ -292,6 +340,8 @@ class FormattedData:
                     raw_event_data=planet_event,
                     war_start_timestamp=self.war_start_timestamp,
                 )
+                if planet.event.type == EventType.UrgentLiberation:
+                    planet.event.faction = planet.faction
 
             for campaign in context.war_status["en"]["campaigns"]:
                 c_planet = self.planets.get(campaign["planetIndex"])
@@ -341,7 +391,9 @@ class FormattedData:
                         )
                         planet.regions[region["regionIndex"]].planet = planet
 
-            for region_status in context.war_status["en"]["planetRegions"]:
+            for region_status in context.war_status.get("en", {"planetRegions": []})[
+                "planetRegions"
+            ]:
                 planet = self.planets.get(region_status["planetIndex"])
                 if planet:
                     region = planet.regions.get(region_status["regionIndex"])
@@ -349,6 +401,12 @@ class FormattedData:
                         region.update_from_status_data(
                             raw_region_status_data=region_status
                         )
+
+            self.event_campaigns: list[Campaign] = sorted(
+                [c for c in self.campaigns if c.planet.event],
+                key=lambda c: c.planet.stats.player_count,
+                reverse=True,
+            )
 
             for lang, status in context.war_status.items():
                 self.global_events[lang] = [
@@ -381,7 +439,7 @@ class FormattedData:
                 for steam_news in context.steam_news
             ]
 
-        if context.assignments.get("en"):
+        if context.assignments.get("en") != None:
             for lang, assignments in context.assignments.items():
                 self.assignments[lang] = sorted(
                     [
@@ -394,13 +452,17 @@ class FormattedData:
                     key=lambda x: x.ends_at_datetime,
                     reverse=True,
                 )
-                for assignment in self.assignments[lang]:
+                for assignment in self.assignments.get(lang, []):
                     if assignment.briefing and assignment.briefing.count("_") > 5:
-                        english_assignment_list = [
-                            a for a in self.assignments["en"] if a.id == assignment.id
-                        ]
-                        if english_assignment_list:
-                            english_assignment = english_assignment_list[0]
+                        english_assignment = next(
+                            (
+                                a
+                                for a in self.assignments.get("en", [])
+                                if a.id == assignment.id
+                            ),
+                            None,
+                        )
+                        if english_assignment:
                             if (
                                 english_assignment.briefing
                                 and english_assignment.briefing.count("_") < 5
@@ -408,13 +470,23 @@ class FormattedData:
                                 assignment.briefing = english_assignment.briefing
 
             # in_assignment
-            for assignment in self.assignments["en"]:
+            for assignment in self.assignments.get("en", []):
                 for task in assignment.tasks:
-                    if task.progress_perc >= 1:
-                        continue
                     match task.type:
-                        case 1 | 2 | 3 | 4 | 5 | 6 | 7 | 9 | 11:
-                            if task.planet_index:
+                        case (
+                            AssignmentTaskType.ExtractFromLocations
+                            | AssignmentTaskType.ExtractWithItem
+                            | AssignmentTaskType.KillEnemies
+                            | AssignmentTaskType.CompleteObjectives
+                            | AssignmentTaskType.PlayObjectives
+                            | AssignmentTaskType.UseItems
+                            | AssignmentTaskType.ExtractFromMission
+                            | AssignmentTaskType.CompleteOperations
+                            | AssignmentTaskType.LiberateLocationsSpecific
+                        ):
+                            if task.progress_perc >= 1:
+                                continue
+                            if task.planet_index != None:
                                 planet = self.planets.get(task.planet_index)
                                 if planet:
                                     planet.in_assignment = True
@@ -429,29 +501,36 @@ class FormattedData:
                                 for planet in (
                                     p
                                     for p in self.planets.values()
-                                    if p.faction == task.faction and p.active_campaign
+                                    if p.faction == task.faction
+                                    and p.active_campaign
+                                    or p.event
+                                    and p.event.faction == task.faction
                                 ):
                                     planet.in_assignment = True
-                        case 10:
+                        case AssignmentTaskType.DonateItems:
+                            if task.progress_perc >= 1:
+                                continue
                             pass
-                        case 12:
+                        case AssignmentTaskType.DefendFromAttacks:
+                            if task.progress_perc >= 1:
+                                continue
                             if task.sector_index:
                                 if task.faction:
-                                    for planet_event in (
-                                        pe
-                                        for pe in self.planet_events
-                                        if pe.sector == task.sector_index
-                                        and pe.event.faction == task.faction
+                                    for event_campaign in (
+                                        c
+                                        for c in self.event_campaigns
+                                        if c.planet.sector == task.sector_index
+                                        and c.planet.event.faction == task.faction
                                     ):
-                                        planet_event.in_assignment = True
+                                        event_campaign.planet.in_assignment = True
                                 else:
-                                    for planet_event in (
-                                        pe
-                                        for pe in self.planet_events
-                                        if pe.sector == task.sector_index
+                                    for event_campaign in (
+                                        c
+                                        for c in self.event_campaigns
+                                        if c.planet.sector == task.sector_index
                                     ):
-                                        planet_event.in_assignment = True
-                            elif task.planet_index:
+                                        event_campaign.planet.in_assignment = True
+                            elif task.planet_index != None:
                                 planet = self.planets.get(task.planet_index)
                                 if planet:
                                     if planet.event:
@@ -462,28 +541,44 @@ class FormattedData:
                                             if planet.event:
                                                 planet.in_assignment = True
                             elif task.faction:
-                                for planet_event in (
-                                    pe
-                                    for pe in self.planet_events
-                                    if pe.event.faction == task.faction
+                                for event_campaign in (
+                                    c
+                                    for c in self.event_campaigns
+                                    if c.planet.event.faction == task.faction
                                 ):
-                                    planet_event.in_assignment = True
+                                    event_campaign.planet.in_assignment = True
                             else:
-                                for planet_event in self.planet_events:
-                                    planet_event.in_assignment = True
-                        case 13:
+                                for event_campaign in self.event_campaigns:
+                                    event_campaign.planet.in_assignment = True
+                        case AssignmentTaskType.HoldLocationsUntilEnd:
                             if task.sector_index:
                                 for planet in (
                                     p
                                     for p in self.planets.values()
                                     if p.sector == task.sector_index
+                                    and (
+                                        planet.faction != Factions.humans
+                                        or (
+                                            planet.event
+                                            and planet.event.type == EventType.Defence
+                                        )
+                                    )
                                 ):
                                     planet.in_assignment = True
-                            elif task.planet_index:
+                            elif task.planet_index != None:
                                 planet = self.planets.get(task.planet_index)
-                                if planet:
+                                if planet and (
+                                    planet.faction != Factions.humans
+                                    or (
+                                        planet.event
+                                        and planet.event.type == EventType.Defence
+                                    )
+                                ):
                                     planet.in_assignment = True
-                        case 14 | 15:
+                        case (
+                            AssignmentTaskType.LiberateLocationsCount
+                            | AssignmentTaskType.NetLiberation
+                        ):
                             if task.faction:
                                 for campaign in (
                                     c
@@ -494,49 +589,91 @@ class FormattedData:
                         case _:
                             pass
 
-        if context.dss:
-            dss_planet = None
-            if context.dss["flags"] == 0:
-                planet_with_1217 = next(
-                    (
-                        p
-                        for p in self.planets.values()
-                        if 1217 in (ae.id for ae in p.active_effects)
-                    ),
-                    None,
-                )
-                if planet_with_1217:
-                    dss_planet = planet_with_1217
-            else:
-                dss_planet = self.planets.get(context.dss["planetIndex"])
-            if dss_planet:
-                dss_planet.dss_in_orbit = True
-                self.dss: DSS = DSS(
-                    raw_dss_data=context.dss,
-                    planet=dss_planet,
-                    war_start_timestamp=self.war_start_timestamp,
-                )
-                if eagle_storm := self.dss.get_ta_by_name("EAGLE STORM"):
-                    if eagle_storm.status == 2:
-                        if dss_planet.event:
-                            dss_planet.eagle_storm_active = True
-                            dss_planet.event.end_time_datetime += timedelta(
-                                seconds=(
-                                    eagle_storm.status_end_datetime - datetime.now()
-                                ).total_seconds()
+        for space_station_json in context.space_stations:
+            ss_planet = self.planets.get(space_station_json.get("planetIndex", 0))
+            if space_station_json.get("id32") in [
+                sst.value for sst in SpaceStationType
+            ]:
+                match SpaceStationType(space_station_json["id32"]):
+                    case SpaceStationType.DSS:
+                        if space_station_json.get("flags") == 0:
+                            planet_with_1217 = next(
+                                (
+                                    p
+                                    for p in self.planets.values()
+                                    if 1217 in (ae.id for ae in p.active_effects)
+                                ),
+                                None,
                             )
-                if context.dss_votes:
-                    self.dss.votes = DSS.Votes(
-                        planets=self.planets,
-                        raw_votes_data=context.dss_votes,
-                    )
+                            if planet_with_1217:
+                                ss_planet = planet_with_1217
+
+                        space_station = DSS(
+                            space_station_json,
+                            ss_planet,
+                            self.war_start_timestamp,
+                        )
+
+                        if context.dss_votes:
+                            space_station.votes = DSS.Votes(
+                                planets=self.planets,
+                                raw_votes_data=context.dss_votes,
+                            )
+
+                        space_station.planet.dss_in_orbit = True
+
+                        if eagle_storm := space_station.get_ta_by_name("EAGLE STORM"):
+                            if (
+                                eagle_storm.status == 2
+                                and space_station.planet.event
+                                and not space_station.planet.event.type
+                                == EventType.UrgentLiberation
+                            ):
+                                space_station.planet.eagle_storm_active = True
+                                dss_moving = False
+                                if space_station.votes:
+                                    next_planet = space_station.votes.available_planets[
+                                        0
+                                    ][0]
+                                    if space_station.planet != next_planet:
+                                        time_until_move = (
+                                            space_station.move_timer_datetime
+                                            - datetime.now(tz=timezone.utc)
+                                        ).total_seconds()
+                                        space_station.planet.event.end_time_datetime += timedelta(
+                                            seconds=time_until_move
+                                        )
+                                        dss_moving = True
+
+                                if not dss_moving:
+                                    space_station.planet.event.end_time_datetime += (
+                                        timedelta(
+                                            seconds=(
+                                                eagle_storm.status_end_datetime
+                                                - datetime.now(tz=timezone.utc)
+                                            ).total_seconds()
+                                        )
+                                    )
+            else:
+                space_station = SpaceStation(
+                    space_station_json, ss_planet, self.war_start_timestamp
+                )
+            if ss_effects := next(
+                (
+                    ss
+                    for ss in context.war_status.get("en", {}).get("spaceStations", [])
+                    if ss["id32"] == space_station.id
+                ),
+                {},
+            ).get("activeEffectIds", []):
+                for effect in ss_effects:
+                    space_station.active_effects.append(self.war_effects.get(effect))
+                    for effect in space_station.active_effects:
+                        space_station.planet.active_effects.add(effect)
+
+            self.space_stations.append(space_station)
 
         if self.planets:
-            self.planet_events: list[Planet] = sorted(
-                [planet for planet in self.planets.values() if planet.event],
-                key=lambda planet: planet.stats.player_count,
-                reverse=True,
-            )
             if context.war_stats:
                 for pstat in context.war_stats["planets_stats"]:
                     planet = self.planets.get(pstat["planetIndex"])
@@ -544,29 +681,69 @@ class FormattedData:
                         planet.stats.update(raw_stats_info=pstat)
 
         if context.personal_order:
-            correct_po = [
-                po
-                for po in context.personal_order
-                if po["setting"]["rewards"] != []
-                and 8 not in (task["type"] for task in po["setting"]["tasks"])
-            ][0]
-            self.personal_order: PersonalOrder = PersonalOrder(
-                personal_order=correct_po, json_dict=context.json_dict
+            correct_po = next(
+                (
+                    po
+                    for po in context.personal_order
+                    if po["setting"]["rewards"] != []
+                    and 8 not in (task["type"] for task in po["setting"]["tasks"])
+                ),
+                None,
             )
+            if correct_po:
+                self.personal_order: PersonalOrder = PersonalOrder(
+                    personal_order=correct_po, json_dict=context.json_dict
+                )
 
-        for region in (r for p in self.planets.values() for r in p.regions.values()):
-            for index in region._connection_indices:
-                if connected_region_list := [
-                    r
-                    for p in self.planets.values()
-                    for r in p.regions.values()
-                    if r.settings_hash == index
-                ]:
-                    connected_region = connected_region_list[0]
-                    region.connections.append(connected_region)
+        if self.planets:
+            for region in (
+                r for p in self.planets.values() for r in p.regions.values()
+            ):
+                for index in region._connection_indices:
+                    if connected_region_list := [
+                        r
+                        for p in self.planets.values()
+                        for r in p.regions.values()
+                        if r.settings_hash == index
+                    ]:
+                        connected_region = connected_region_list[0]
+                        region.connections.append(connected_region)
 
-        self.formatted_at = datetime.now()
+            for p in self.planets.values():
+                for wplanet in (self.planets.get(wp) for wp in p.waypoints):
+                    wplanet.nearby.append(p.index)
+
+            for ge in self.global_events.get("en", []):
+                if ge.effects and ge.planet_indices:
+                    for planet in (self.planets.get(i) for i in ge.planet_indices):
+                        planet.active_effects.update(set(ge.effects))
+
+            # community targets
+            if context.arsenal_targets:
+                for i in context.arsenal_targets:
+                    planet = self.planets.get(i)
+                    if planet:
+                        planet.community_targets.append(arsenal)
+
+        if context.control_centre.get("en"):
+            self.control_centre = {
+                lang: ControlCentre(
+                    context.control_centre.get(lang),
+                    context.json_dict,
+                    self.war_start_timestamp,
+                )
+                for lang in context.control_centre
+            }
+
+        self.formatted_at = datetime.now(tz=timezone.utc)
 
     def copy(self):
         """Returns a deep copy of the data"""
         return deepcopy(self)
+
+    @property
+    def dss(self) -> DSS | None:
+        """Returns the DSS data"""
+        return next(
+            (ss for ss in self.space_stations if ss.type == SpaceStationType.DSS), None
+        )

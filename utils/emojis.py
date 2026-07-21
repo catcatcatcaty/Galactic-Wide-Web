@@ -5,11 +5,34 @@ from dataclasses import dataclass
 class Emojis:
 
     @dataclass
+    class ControlCentre:
+        overview = "<:s:1517986931944980652>"
+        active_campaigns = "<:s:1517986930367795260>"
+        past_campaigns = "<:s:1517986933228437614>"
+
+    @dataclass
+    class CommunityIcons:
+        arsenal = "<:s:1507750876607942806>"
+
+    @dataclass
     class Items:
-        medal = "<:s:1226254158278037504>"
+        medal = "<:s:1507479373094195400>"
         common_sample = "<:s:1306611420510687334>"
         rare_sample = "<:s:1306611408406052874>"
         requisition_slip = "<:s:1306611395986587689>"
+        super_credit = "<:s:1492853000291614750>"
+        cape = "<:s:1506751771765248030>"
+        armor = "<:s:1507054836053573702>"
+        helmet = "<:s:1507054837391556763>"
+        primary_weapon = "<:s:1507054839052374229>"
+        sidearm_weapon = "<:s:1507054840235294943>"
+        throwable_weapon = "<:s:1507054841179013212>"
+
+    @dataclass
+    class DefenceIcons:
+        automaton = "<:s:1524785202457612328>"
+        terminids = "<:s:1524785204999491725>"
+        illuminate = "<:s:1524785203707642101>"
 
     @dataclass
     class RegionIcons:
@@ -54,7 +77,7 @@ class Emojis:
         hdc = "<:s:1336735906350104586>"
         victory = "<:s:1238069280508215337>"
         high_prio_campaign = "<:s:1467088190048305279>"
-        mo = "<:s:1240706769043456031>"
+        mo = "<:s:1507764218672185424>"
         mo_task_complete = "<:s:1325865957037445192>"
         mo_task_incomplete = "<:s:1325865167359316042>"
         steam = "<:s:1373613637012426772>"
@@ -102,19 +125,20 @@ class Emojis:
 
     @dataclass
     class Stratagems:
-        up = "<:s:1277557874041557002>"
-        down = "<:s:1277557875849302107>"
-        left = "<:s:1277557877787066389>"
-        right = "<:s:1277557872246652928>"
+        up = "<:s:1508013715751178342>"
+        down = "<:s:1508013712085221476>"
+        left = "<:s:1508013713377067070>"
+        right = "<:s:1508013714568122478>"
 
-    @dataclass
-    class DSS:
-        icon = "<:s:1417971465311223808>"
-        orbital_blockade = "<:s:1318875016909029388>"
-        heavy_ordnance_distribution = "<:s:1318874283350687816>"
-        eagle_storm = "<:s:1318874257773690881>"
-        operational_support = "<:s:1340990960120631376>"
-        eagle_blockade = "<:s:1377971389570744361>"
+    class SpaceStations:
+        @dataclass
+        class DSS:
+            icon = "<:s:1417971465311223808>"
+            orbital_blockade = "<:s:1318875016909029388>"
+            planetary_bombardment = "<:s:1318874283350687816>"
+            eagle_storm = "<:s:1318874257773690881>"
+            operational_support = "<:s:1340990960120631376>"
+            eagle_blockade = "<:s:1377971389570744361>"
 
     @dataclass
     class Weather:
@@ -132,16 +156,18 @@ class Emojis:
         volcanic_activity = "<:s:1368174822722633738>"
 
     @dataclass
-    class SpecialUnits:
+    class Subfactions:
         predator_strain = "<:s:1355905145992646877>"
         jet_brigade = "<:s:1355912552143393039>"
         incineration_corps = "<:s:1355913678704349336>"
         the_great_host = "<:s:1372871467255070751>"
-        gloom_burster_strain = "<:s:1404621462278504529>"
+        spore_burst_strain = "<:s:1500875470088966195>"
         rupture_strain = "<:s:1412402213938270258>"
         dragonroaches = "<:s:1412402344502759425>"
         hive_lords = "<:s:1412402306334457916>"
         cyborgs = "<:s:1467949410573877545>"
+        mindless_masses = "<:s:1483440352701452379>"
+        appropriators = "<:s:1483440351380504586>"
 
     @dataclass
     class PlanetFeatures:
@@ -154,6 +180,7 @@ class Emojis:
         fractured_planet = "<:s:1422646803681247333>"
         deep_mantle_forge_complex = "<:s:1422648073133359195>"
         helldiver_training_facilities = "<:s:1422657339902656542>"
+        max_sec_city_construction_site = "<:s:1522271221620936897>"
         new_hope_city = "<:s:1422657922642743486>"
         new_aspiration_city = "<:s:1422657920771817613>"
         new_yearning_city = "<:s:1422657931186540545>"
@@ -161,6 +188,12 @@ class Emojis:
         e711_extraction_facility = "<:s:1435280504978018335>"
         cecod = "<:s:1446068780429082744>"
         pandora_base = "<:s:1478444563034013876>"
+        exostorm = "<:s:1484326498151432355>"
+        void = "<:s:1486057474220884179>"
+        terminid_research_preserve = "<:s:1522266050752806923>"
+        negative_energy_labratory = "<:s:1522269875135971509>"
+        tyranny_park_2 = "<:s:1522272390128599160>"
+        tcs_plus = "<:s:1525091788988350465>"
 
     @dataclass
     class Flags:
@@ -173,3 +206,4 @@ class Emojis:
         es = "🇪🇸"
         zh_hans = "🇨🇳"
         zh_hant = "🇨🇳"
+        tr = "🇹🇷"

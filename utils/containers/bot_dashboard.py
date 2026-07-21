@@ -1,32 +1,44 @@
-from datetime import datetime
-from disnake import Colour, OptionType, ui
+from datetime import datetime, timezone
+from disnake import Colour, OptionType
+from disnake.ui import Container, Section, Separator, TextDisplay
 from math import inf
 from os import getpid
-from psutil import Process, cpu_percent, net_io_counters
+from psutil import Process, cpu_percent, net_io_counters, virtual_memory
 from utils.bot import GalacticWideWebBot
-from utils.interactables.HDC_button import HDCButton
-from utils.interactables.github_button import GitHubButton
-from utils.interactables.ko_fi_button import KoFiButton
-from utils.mixins import ReprMixin
+from utils.functions import short_format
+from utils.interactables import GitHubButton, HDCButton, KoFiButton
 
 
 # DOESNT NEED LOCALIZATION
-class BotDashboardContainer(ui.Container, ReprMixin):
+class BotDashboardContainer(Container):
     def __init__(self, bot: GalacticWideWebBot, user_installs: int):
-        now = datetime.now()
         self.components = []
-        commands_text = f"## The GWW has {len([c for c in bot.global_slash_commands if c.name not in ['gwe', 'global_event']])} commands available\n"
-        for global_command in sorted(bot.global_slash_commands, key=lambda sc: sc.name):
-            if global_command.name not in ["gwe", "global_event"]:
-                for option in global_command.options:
-                    if option.type == OptionType.sub_command:
-                        commands_text += f"</{global_command.name} {option.name}:{global_command.id}> "
-                commands_text += f"</{global_command.name}:{global_command.id}> "
-        self.components.append(ui.TextDisplay(commands_text))
 
-        self.components.append(ui.Separator())
+        public_commands = [
+            c
+            for c in bot.global_slash_commands
+            if c.name not in ["gwe", "global_event", "pmajor_order"]
+        ]
+        commands_text = f"## The GWW has {len(public_commands)} commands available\n"
+        for global_command in sorted(public_commands, key=lambda sc: sc.name):
+            for option in global_command.options:
+                if option.type == OptionType.sub_command:
+                    commands_text += (
+                        f"</{global_command.name} {option.name}:{global_command.id}> "
+                    )
+            commands_text += f"</{global_command.name}:{global_command.id}> "
+        self.components.extend([TextDisplay(commands_text), Separator()])
 
-        servers_by_age = sorted([g for g in bot.guilds], key=lambda x: x.created_at)
+        quickest_server = sorted(
+            bot.guilds, key=lambda x: (x.me.joined_at - x.created_at)
+        )[0]
+        self.components.append(
+            TextDisplay(
+                f"**Fastest server to add the bot after creation**\n-# **{(quickest_server.me.joined_at - quickest_server.created_at).total_seconds():.0f} seconds**"
+            )
+        )
+
+        servers_by_age = sorted(bot.guilds, key=lambda x: x.created_at)
         oldest_server = servers_by_age[0]
         newest_server = servers_by_age[-1]
         community_servers = len([g for g in bot.guilds if "COMMUNITY" in g.features])
@@ -35,8 +47,8 @@ class BotDashboardContainer(ui.Container, ReprMixin):
         voice_channels = sum(len(g.voice_channels) for g in bot.guilds)
         total_emojis = sum(len(g.emojis) for g in bot.guilds)
         self.components.append(
-            ui.Section(
-                ui.TextDisplay(
+            Section(
+                TextDisplay(
                     (
                         f"Servers: **{len(bot.guilds):,}**"
                         f"\n-# ├ Newest Server: Created **<t:{int(newest_server.created_at.timestamp())}:R>**"
@@ -47,21 +59,47 @@ class BotDashboardContainer(ui.Container, ReprMixin):
                         f"\n-# ├ Text: **{text_channels:,}**"
                         f"\n-# └ Voice: **{voice_channels:,}**"
                         f"\nEmojis: **{total_emojis:,}**"
-                        f"\nUser installs: **{user_installs:,}**"
+                        f"\nUser installs: **{short_format(user_installs)}**"
                     )
                 ),
                 accessory=HDCButton(),
             )
         )
 
-        self.components.append(ui.Separator())
+        self.components.append(Separator())
 
-        memory_used = Process(getpid()).memory_info().rss / 1024**2
+        memory_used = Process(getpid()).memory_info().rss / 1024**3
+        total_system_memory = virtual_memory().total / 1024**3
+        memory_percentage = memory_used / total_system_memory
+        memory_bar = "█" * round(memory_percentage / 100 * 30) + "░" * (
+            30 - round(memory_percentage / 100 * 30)
+        )
         latency = 9999.999 if bot.latency == float(inf) else bot.latency
+        core_percents = cpu_percent(percpu=True)
+        overall_cpu = cpu_percent()
+        overall_bar = "█" * round(overall_cpu / 100 * 35) + "░" * (
+            35 - round(overall_cpu / 100 * 35)
+        )
+        cpu_text = ""
+        for i, percent in enumerate(core_percents, start=1):
+            filled = round(percent / 100 * 5)
+            bar = "█" * filled + "░" * (5 - filled)
+            if i % 2:
+                cpu_text += "\n"
+            else:
+                cpu_text += f"          "
+            cpu_text += f"Core {i:2}: {bar} {percent:4.1f}%"
+
         self.components.append(
-            ui.Section(
-                ui.TextDisplay(
-                    f"### :desktop: Hardware Info\n-# **CPU**: {cpu_percent()}%\n-# **RAM**: {memory_used:.2f}MB\n-# **Last restart**: <t:{int(bot.startup_time.timestamp())}:R>\n-# **Latency**: {int(latency * 1000)}ms"
+            Section(
+                TextDisplay(
+                    f"### :desktop: Hardware Info"
+                    f"\n```CPU:"
+                    f"\nOverall: {overall_bar} {overall_cpu:4.1f}%"
+                    f"\n{cpu_text}"
+                    f"\n\nRAM: {memory_bar} {memory_used:.2f}GB/{total_system_memory:.2f}GB```"
+                    f"\n-# **Last restart**: <t:{int(bot.startup_time.timestamp())}:R>"
+                    f"\n-# **Latency**: {int(latency * 1000)}ms"
                 ),
                 accessory=KoFiButton(),
             )
@@ -72,12 +110,12 @@ class BotDashboardContainer(ui.Container, ReprMixin):
         bytes_recv_gb = net_io.bytes_recv / (1024**3)
 
         self.components.append(
-            ui.TextDisplay(
+            TextDisplay(
                 f"### :satellite: Network Info\n-# **Sent**: {bytes_sent_gb:.2f}GB\n-# **Received:** {bytes_recv_gb:.2f}GB"
             )
         )
 
-        self.components.append(ui.Separator())
+        self.components.append(Separator())
 
         shardinfo = "\n".join(
             [
@@ -86,8 +124,8 @@ class BotDashboardContainer(ui.Container, ReprMixin):
             ]
         )
         self.components.append(
-            ui.Section(
-                ui.TextDisplay(f"### :jigsaw: Shards\n{shardinfo}"),
+            Section(
+                TextDisplay(f"### :jigsaw: Shards\n{shardinfo}"),
                 accessory=GitHubButton(),
             )
         )
@@ -103,11 +141,13 @@ class BotDashboardContainer(ui.Container, ReprMixin):
                 loop_errors += f"{loop.coro.__name__} - **__ERROR__**:warning:\n"
                 errors += 1
         if loop_errors:
-            self.components.append(ui.Separator())
-            self.components.append(ui.TextDisplay(f"# LOOP ERRORS\n{loop_errors}"))
+            self.components.append(Separator())
+            self.components.append(TextDisplay(f"# LOOP ERRORS\n{loop_errors}"))
         accent_colour = embed_colours.get(errors, Colour.from_rgb(0, 0, 0))
         self.components.append(
-            ui.TextDisplay(f"-# Updated <t:{int(now.timestamp())}:R>")
+            TextDisplay(
+                f"-# Updated <t:{int(datetime.now(tz=timezone.utc).timestamp())}:R>"
+            )
         )
 
         super().__init__(*self.components, accent_colour=accent_colour)

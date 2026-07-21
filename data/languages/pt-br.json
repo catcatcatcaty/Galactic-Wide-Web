@@ -16,7 +16,9 @@
             "ends": "\n-# Acaba em <t:{timestamp}:R>",
             "liberate": "### LIBERAR **{planet_name}** {emojis}",
             "resistance": "\n-# Resistência: **{regen}/hr**",
-            "planet_lost": "**{planet_name}** foi perdido para os **{faction_name}** {emojis}"
+            "planet_lost": "**{planet_name}** foi perdido para os **{faction_name}** {emojis}",
+            "urgently_liberate": "### URGENTLY LIBERATE **{planet_name}** {emojis}",
+            "urgency_level": "\n-# Urgency Level **{level}{emoji}**"
         },
         "DispatchContainer": {
             "dispatch": "Despacho",
@@ -32,6 +34,7 @@
             "inactive": "desativado(a)",
             "on_cooldown": "recarregando",
             "prep_starts": "Preparação começa",
+            "required_cost": "\n-# Requer **{amount}** {item_name} para ativar",
             "expires": "Expira",
             "tactical_actions": {
                 "EAGLE STORM": {
@@ -53,13 +56,14 @@
             }
         },
         "GlobalEventsContainer": {
+            "effect": "Effect",
             "new_event": "Novo Evento Global",
             "all_planets": "todos os planetas",
             "unknown_effect": "EFEITO DESCONHECIDO",
-            "active_on_planets": "\n-# Ativo nos seguintes planetas:\n- {planets}",
-            "enemy_identified": "Inimigo identificado",
-            "strat_identified": "Estratégia identificada",
-            "booster_identified": "Reforçador identificado",
+            "active_on_planets": "Ativo nos seguintes planetas",
+            "enemy": "Inimigo identificado",
+            "stratagem": "Estratégia identificada",
+            "booster": "Reforçador identificado",
             "expires": "Expira em:",
             "global_event": "Evento Global"
         },
@@ -133,7 +137,7 @@
             "major_order_updates_title": "Atualizações da Ordem Imperativa",
             "major_order_updates_desc": "-# Providencia atualizações para as Ordens Imperativas ativas as <t:1737786000:t> e as <t:1737829200:t>\n",
             "personal_order_updates_title": "Atualizações da Ordem Pessoal",
-            "personal_order_updates_desc": "-# Forneçe atualizações para Ordens Pessoais ativas em <t:1762594200:t>\n",
+            "personal_order_updates_desc": "-# Forneçe atualizações para Ordens Pessoais ativas em <t:1783244100:t>\n",
             "detailed_dispatches_title": "Despachos Detalhados",
             "detailed_dispatches_desc": "-# Providencia os despachos maiores do Alto Comando da Super Terra\n",
             "feature_channel_select": "Selecione o canal para esse recurso",
@@ -163,6 +167,8 @@
                 "progress": "Progresso",
                 "complete": "Completo(a)",
                 "tasks": {
+                    "-1_from_loss": "\n-# **-1** da perda de **{planet}** {timestamp}",
+                    "+1_from_lib": "\n-# **+1** da liberação de **{planet}** {timestamp}",
                     "option": "Opcão",
                     "times": "vezes",
                     "against": "contra",
@@ -191,7 +197,7 @@
                     "type5": "{emoji} Jogue **{count} {obj}**{race_pre}{race}{race_post}{diff_pre}{diff}{diff_post}{multi}.",
                     "type6": "{emoji} Use o/a **{item}**{count_pre}{count}{count_post}{race_pre}{race}{race_post}{diff_pre}{diff}{diff_post}{multi}.",
                     "type7_f_p": "{emoji} Extraia com sucesso de {mtype}{race_pre}{race}{race_post}{diff_pre}{diff}{diff_post}{count_pre}{count}{count_post}{multi}{ext_pre}{ext}{ext_post}",
-                    "type7_r": "{emoji} Extract com sucesso de {mtype}{diff_pre}{diff}{diff_post}{count_pre}{count}{count_post}{multi}{ext_pre}{ext}{ext_post}",
+                    "type7_r": "{emoji} Extraia com sucesso de {mtype}{diff_pre}{diff}{diff_post}{count_pre}{count}{count_post}{multi}{ext_pre}{ext}{ext_post}",
                     "type9_f_p": "{emoji} Complete uma **Operação**{race_pre}{race}{race_post}{diff_pre}{diff}{diff_post}{count_pre}{count}{count_post}{multi}{ext_pre}{ext}{ext_post}",
                     "type9_r": "{emoji} Complete uma **Operação**{diff_pre}{diff}{diff_post}{count_pre}{count}{count_post}{multi}{ext_pre}{ext}{ext_post}",
                     "type10": "{emoji} Doe **{count} {item}** {item_type}",
@@ -207,9 +213,7 @@
                     "type14_f": "{emoji} Libere **{count}** planetas dos**{race}**",
                     "type14_r": "{emoji} Libere **{count}** planetas",
                     "type15_f": "{emoji} Libere mais planetas do que são perdidos dos **{race}** durante a vigência da ordem",
-                    "type15_r": "{emoji} Libere mais planetas do que são perdidos durante a vigência da ordem",
-                    "type15_from_loss": "\n-# **-1** da perda de **{planet}** {timestamp}",
-                    "type15_from_lib": "\n-# **+1** da liberação de **{planet}** {timestamp}"
+                    "type15_r": "{emoji} Libere mais planetas do que são perdidos durante a vigência da ordem"
                 }
             },
             "DSSEmbed": {
@@ -246,15 +250,18 @@
                     }
                 }
             },
+            "UrgentLiberationsEmbed": {
+                "title": "Urgent Liberations",
+                "urgency_level": "Urgency Level"
+            },
             "DefenceEmbed": {
                 "title": "Defendendo",
-                "defence_held_by_dss": "\n-# DEFESA MANTIDA PELA EED",
                 "invasion_level": "Invasão de Nível",
                 "victory": "Vitória",
                 "loss": "Perdendo",
                 "thanks_to_gambit": "graças à liberação de **{planet}**",
                 "if_region_lib": "\n-# Se as seguintes regiões forem liberadas:\n-# {regions_list}",
-                "gambit": "GAMBITO",
+                "gambit": "GAMBITO EM",
                 "heroes": "Heróis",
                 "available": "disponível"
             },
@@ -312,6 +319,7 @@
     "complete": "Completo",
     "failure": "Falha",
     "regions": {
+        "megafactory": "Class {number} Megafábrica",
         "4": "Megalópole",
         "3": "Cidade",
         "2": "Povoado",
@@ -330,9 +338,12 @@
         "Terminids": "Terminídios",
         "Automaton": "Autômatos",
         "Illuminate": "Iluminados",
-        "Terminids_plural": "Terminids",
-        "Automaton_plural": "Automaton",
-        "Illuminate_plural": "Illuminate"
+        "Terminids_plural": "Terminidíos",
+        "Automaton_plural": "Autômatos",
+        "Illuminate_plural": "Iluminados",
+        "the_Terminids_plural": "OS TERMINIDÍOS",
+        "the_Automaton_plural": "OS AUTÔMATOS",
+        "the_Illuminate_plural": "OS ILUMINADOS"
     },
     "difficulty": {
         "1": "Trivial.",
@@ -350,19 +361,21 @@
         "Unknown Item": "Item desconhecido",
         "Medal": "Medalha",
         "Requisition Slip": "Fichas de Requisição",
-        "Common Sample": "Amostras Comun",
-        "Rare Sample": "Amostras Rara",
+        "Common Sample": "Amostra Comum",
+        "Rare Sample": "Amostra Rara",
         "Super Sample": "Super Amostra"
     },
-    "special_units": {
-        "THE JET BRIGADE": "BRIGADA A JATO",
+    "subfactions": {
+        "JET BRIGADE": "BRIGADA A JATO",
         "PREDATOR STRAIN": "CEPA PREDADORA",
-        "GLOOM BURSTER STRAIN": "CEPA ESPORÍFERA",
+        "SPORE BURST STRAIN": "CEPA ESPORÍFERA",
         "INCINERATION CORPS": "UNIDADES DE INCINERAÇÃO",
         "THE GREAT HOST": "A GRÃ-FROTA",
         "RUPTURE STRAIN": "CEPA ROMPEDORA",
         "DRAGONROACHES": "DRACOBARATAS",
         "HIVE LORDS": "SENHORES DOS NINHOS",
-        "CYBORGS": "CYBORGS"
+        "CYBORGS": "CIBORGUES",
+        "MINDLESS MASSES": "MASSAS IRRACIONAIS",
+        "APPROPRIATORS": "APROPRIADORES"
     }
 }

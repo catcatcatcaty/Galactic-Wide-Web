@@ -1,13 +1,11 @@
-from datetime import datetime, time
+from datetime import datetime, time, timezone
 from disnake import Activity, ActivityType, Status
-from disnake.ext import commands, tasks
-from main import GalacticWideWebBot
+from disnake.ext.commands import Cog
+from disnake.ext.tasks import loop
+from utils.bot import GalacticWideWebBot
 
 
-FETCH_SKIP_LIMIT = 5
-
-
-class DataManagementCog(commands.Cog):
+class DataManagementCog(Cog):
     def __init__(self, bot: GalacticWideWebBot) -> None:
         self.bot = bot
         self.loops = (self.startup, self.pull_from_api)
@@ -26,13 +24,26 @@ class DataManagementCog(commands.Cog):
             if loop in self.bot.loops:
                 self.bot.loops.remove(loop)
 
-    @tasks.loop(count=1)
+    @loop(count=1)
     async def startup(self) -> None:
+        self.bot.logger.info("startup loop started")
         await self.bot.interface_handler.populate_lists()
-        await self.pull_from_api()
         await self.bot.change_presence(
             activity=Activity(name="/setup - /help", type=ActivityType.listening),
             status=Status.online,
+        )
+        self.bot.logger.info("startup loop completed")
+        now = datetime.now()
+        secs_until_pull_from_api = (
+            (
+                now.replace(second=45)
+                if now.second < 45
+                else now.replace(minute=now.minute + 1, second=45)
+            )
+            - now
+        ).total_seconds()
+        self.bot.logger.info(
+            f"pull_from_api should begin in {secs_until_pull_from_api:.1f} seconds"
         )
 
     @startup.before_loop
@@ -45,32 +56,31 @@ class DataManagementCog(commands.Cog):
         if error_handler:
             await error_handler.log_error(None, error, "startup loop")
 
-    @tasks.loop(
+    @loop(
         time=[time(hour=j, minute=i, second=45) for j in range(24) for i in range(60)]
     )
     async def pull_from_api(self) -> None:
-        if self.bot.data.fetching and self.fetch_skips < FETCH_SKIP_LIMIT:
+        if self.bot.data.fetching and self.fetch_skips < 5:
             self.fetch_skips += 1
             self.bot.logger.warning(
                 f"Bot is already fetching. Skipped {self.fetch_skips} times so far"
             )
             return
-        if self.fetch_skips > 0:
-            self.fetch_skips = 0
-        if self.bot.data.loaded:
-            first_load = False
-        else:
-            first_load = True
+        first_load = not self.bot.data.loaded
         await self.bot.data.pull_from_api()
         self.bot.data.format_data()
+        if self.fetch_skips != 0:
+            self.fetch_skips = 0
         if first_load:
-            now = datetime.now()
-            if now < self.bot.ready_time:
-                change = f"{(self.bot.ready_time - now).total_seconds():.2f} seconds faster than the given 45"
-            else:
-                change = f"Took {(now - self.bot.ready_time).total_seconds():.2f} seconds longer than the given 45"
+            now = datetime.now(tz=timezone.utc)
             self.bot.logger.info(
-                f"Startup complete in {(now - self.bot.startup_time).total_seconds():.2f} seconds - {change}"
+                "======================================================================="
+            )
+            self.bot.logger.info(
+                f"=== Galactic Wide Web booted in {(now - self.bot.startup_time).total_seconds():.2f} seconds with {len(self.bot.guilds):,} Discord guilds ==="
+            )
+            self.bot.logger.info(
+                "======================================================================="
             )
             self.bot.ready_time = now
 

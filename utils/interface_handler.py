@@ -1,12 +1,20 @@
 from asyncio import sleep
-from disnake import Embed, Forbidden, NotFound, PartialMessage, TextChannel, ui
-from disnake.ext.commands import AutoShardedBot
-from utils.dbv2 import Feature, GWWGuilds, GWWGuild as GWWGuild
+from disnake import (
+    Embed,
+    Forbidden,
+    HTTPException,
+    NotFound,
+    PartialMessage,
+    TextChannel,
+)
+from disnake.ext.commands import AutoShardedInteractionBot, AutoShardedBot
+from disnake.ui import Container
+from utils.dbv2 import Feature, GWWGuilds, GWWGuild
 from utils.interactables import WikiButton
 from utils.mixins import ReprMixin
 
 # Time to wait between feature updates to avoid rate limits (in seconds)
-WAIT_TIME = 0.001
+WAIT_TIME = 0.035
 
 
 class InterfaceHandler:
@@ -15,17 +23,17 @@ class InterfaceHandler:
         self.bot = bot
         self.busy = False
         self.loaded = False
-        self.all_guilds = GWWGuilds(fetch_all=True)
+        all_guilds = GWWGuilds(fetch_all=True)
         self.dashboards = BaseFeatureInteractionHandler(
             features=[
-                f for g in self.all_guilds for f in g.features if f.name == "dashboards"
+                f for g in all_guilds for f in g.features if f.name == "dashboards"
             ],
             bot=self.bot,
         )
         self.war_announcements = BaseFeatureInteractionHandler(
             features=[
                 f
-                for g in self.all_guilds
+                for g in all_guilds
                 for f in g.features
                 if f.name == "war_announcements"
             ],
@@ -34,7 +42,7 @@ class InterfaceHandler:
         self.dss_announcements = BaseFeatureInteractionHandler(
             features=[
                 f
-                for g in self.all_guilds
+                for g in all_guilds
                 for f in g.features
                 if f.name == "dss_announcements"
             ],
@@ -43,7 +51,7 @@ class InterfaceHandler:
         self.region_announcements = BaseFeatureInteractionHandler(
             features=[
                 f
-                for g in self.all_guilds
+                for g in all_guilds
                 for f in g.features
                 if f.name == "region_announcements"
             ],
@@ -51,17 +59,14 @@ class InterfaceHandler:
         )
         self.patch_notes = BaseFeatureInteractionHandler(
             features=[
-                f
-                for g in self.all_guilds
-                for f in g.features
-                if f.name == "patch_notes"
+                f for g in all_guilds for f in g.features if f.name == "patch_notes"
             ],
             bot=self.bot,
         )
         self.major_order_updates = BaseFeatureInteractionHandler(
             features=[
                 f
-                for g in self.all_guilds
+                for g in all_guilds
                 for f in g.features
                 if f.name == "major_order_updates"
             ],
@@ -70,7 +75,7 @@ class InterfaceHandler:
         self.personal_order_updates = BaseFeatureInteractionHandler(
             features=[
                 f
-                for g in self.all_guilds
+                for g in all_guilds
                 for f in g.features
                 if f.name == "personal_order_updates"
             ],
@@ -79,16 +84,14 @@ class InterfaceHandler:
         self.detailed_dispatches = BaseFeatureInteractionHandler(
             features=[
                 f
-                for g in self.all_guilds
+                for g in all_guilds
                 for f in g.features
                 if f.name == "detailed_dispatches"
             ],
             bot=self.bot,
         )
         self.maps = BaseFeatureInteractionHandler(
-            features=[
-                f for g in self.all_guilds for f in g.features if f.name == "maps"
-            ],
+            features=[f for g in all_guilds for f in g.features if f.name == "maps"],
             bot=self.bot,
         )
         self.lists = {
@@ -104,9 +107,12 @@ class InterfaceHandler:
         }
 
     async def populate_lists(self):
-        for feature_list in self.lists.values():
+        for list_name, feature_list in self.lists.items():
             feature_list.clear()
             await feature_list.populate()
+            self.bot.logger.info(
+                f"{list_name} populated with {len(feature_list)} items"
+            )
         self.loaded = True
         self.bot.logger.info("InterfaceHandler has been populated")
 
@@ -118,10 +124,22 @@ class InterfaceHandler:
             guild: GWWGuild = GWWGuilds.get_specific_guild(message.guild.id)
             guild.features = [f for f in guild.features if f.name != "dashboards"]
             guild.update_features()
-            guild.save_changes()
             return self.bot.logger.error(
                 f"edit_dashboard | {guild.language} | {e} | reset in DB | {guild.guild_id = }"
             )
+        except HTTPException as e:
+            if "Thread is archived" in e.text:
+                self.dashboards.remove_entry(message.guild.id)
+                guild: GWWGuild = GWWGuilds.get_specific_guild(message.guild.id)
+                guild.features = [f for f in guild.features if f.name != "dashboards"]
+                guild.update_features()
+                return self.bot.logger.error(
+                    f"edit_dashboard | {guild.language} | {e} | reset in DB | {guild.guild_id = }"
+                )
+            else:
+                return self.bot.logger.warning(
+                    f"edit_dashboard | HTTPException | {e} | {message.guild.id = }"
+                )
         except Exception as e:
             return self.bot.logger.error(
                 f"edit_dashboard | {e} | {message.guild.id = }"
@@ -135,7 +153,6 @@ class InterfaceHandler:
             guild: GWWGuild = GWWGuilds.get_specific_guild(message.guild.id)
             guild.features = [f for f in guild.features if f.name != "maps"]
             guild.update_features()
-            guild.save_changes()
             return self.bot.logger.error(
                 f"edit_map | {e} | reset in DB | {guild.guild_id = }"
             )
@@ -158,7 +175,6 @@ class InterfaceHandler:
             guild: GWWGuild = GWWGuilds.get_specific_guild(channel.guild.id)
             guild.features = [f for f in guild.features if f.name != feature_type]
             guild.update_features()
-            guild.save_changes()
             return self.bot.logger.error(
                 f"send_embed {feature_type} | {e} | reset in DB | {channel.guild.id = }"
             )
@@ -171,7 +187,7 @@ class InterfaceHandler:
         self,
         feature_type: str,
         channel: TextChannel,
-        container: ui.Container,
+        container: Container,
     ):
         try:
             await channel.send(components=container)
@@ -182,7 +198,6 @@ class InterfaceHandler:
             guild: GWWGuild = GWWGuilds.get_specific_guild(channel.guild.id)
             guild.features = [f for f in guild.features if f.name != feature_type]
             guild.update_features()
-            guild.save_changes()
             return self.bot.logger.error(
                 f"send_component {feature_type} | {e} | reset in DB | {channel.guild.id = }"
             )
@@ -194,19 +209,21 @@ class InterfaceHandler:
     async def send_feature(
         self,
         feature_type: str,
-        content: dict[str, Embed | ui.Container],
+        content: dict[str, Embed | Container],
         announcement_type: str = None,
     ):
         self.busy = True
         list_to_use: BaseFeatureInteractionHandler = getattr(self, feature_type)
         components = None
+        guild_map = {g.guild_id: g for g in GWWGuilds(fetch_all=True)}
         match feature_type:
             case "dashboards":
                 for message in list_to_use.copy():
                     message: PartialMessage
-                    guild: GWWGuild = GWWGuilds.get_specific_guild(message.guild.id)
+                    guild: GWWGuild = guild_map.get(message.guild.id)
                     if not guild:
-                        list_to_use.remove(message)
+                        if message in list_to_use:
+                            list_to_use.remove(message)
                         self.bot.logger.error(
                             f"send_feature {feature_type} | guild not found in DB | {message.guild.id = }"
                         )
@@ -220,9 +237,10 @@ class InterfaceHandler:
             case "maps":
                 for message in list_to_use.copy():
                     message: PartialMessage
-                    guild: GWWGuild = GWWGuilds.get_specific_guild(message.guild.id)
+                    guild: GWWGuild = guild_map.get(message.guild.id)
                     if not guild:
-                        list_to_use.remove(message)
+                        if message in list_to_use:
+                            list_to_use.remove(message)
                         self.bot.logger.error(
                             f"send_feature {feature_type} | guild not found in DB | {message.guild.id = }"
                         )
@@ -239,7 +257,7 @@ class InterfaceHandler:
                 | "region_announcements"
             ):
                 for channel in list_to_use.copy():
-                    guild = GWWGuilds.get_specific_guild(channel.guild.id)
+                    guild = guild_map.get(channel.guild.id)
                     if not guild:
                         list_to_use.remove(channel)
                         self.bot.logger.error(
@@ -273,7 +291,7 @@ class InterfaceHandler:
             case _:
                 for channel in list_to_use.copy():
                     channel: TextChannel
-                    guild = GWWGuilds.get_specific_guild(channel.guild.id)
+                    guild = guild_map.get(channel.guild.id)
                     if not guild:
                         list_to_use.remove(channel)
                         self.bot.logger.error(
@@ -310,7 +328,7 @@ class BaseFeatureInteractionHandler(list, ReprMixin):
                     self.append(message)
                 else:
                     self.append(channel)
-            except NotFound as e:
+            except (NotFound, Forbidden) as e:
                 guild: GWWGuild = GWWGuilds.get_specific_guild(id=feature.guild_id)
                 if not guild:
                     self.bot.logger.error(
@@ -322,7 +340,6 @@ class BaseFeatureInteractionHandler(list, ReprMixin):
                         f for f in guild.features if f.name != feature.name
                     ]
                     guild.update_features()
-                    guild.save_changes()
                     self.bot.logger.error(
                         f"{feature.name}.populate() ERROR | {e} | reset in DB | {guild.guild_id = }"
                     )

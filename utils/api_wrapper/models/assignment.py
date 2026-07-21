@@ -1,28 +1,25 @@
-from datetime import datetime, timedelta
-from ...mixins import ReprMixin
-from ...trackers import BaseTrackerEntry
-from ...dataclasses import Faction, Factions
-from ...functions import health_bar
+from datetime import datetime, timedelta, timezone
+from utils.dataclasses import Faction, Factions
+from utils.dataclasses.enums import AssignmentTaskType
+from utils.functions import arrowhead_format, health_bar
+from utils.trackers import BaseTrackerEntry
 
 
-class Assignment(ReprMixin):
+class Assignment:
     def __init__(self, raw_assignment_data: dict, war_start_timestamp: int) -> None:
         """Organised data of an Assignment or Major Order"""
         self.id: int = raw_assignment_data["id32"]
-        self.title: str = raw_assignment_data["setting"]["overrideTitle"]
-        self.briefing: str = (
-            (
-                raw_assignment_data["setting"]["overrideBrief"]
-                if raw_assignment_data["setting"]["overrideBrief"] not in ([], None)
-                else ""
-            )
-            .strip("\n")
-            .replace("\n", "\n-# ")
+        self.title: str = raw_assignment_data["setting"].get("overrideTitle", None)
+        self.briefing: str = arrowhead_format(
+            raw_assignment_data["setting"].get("overrideBrief", None)
+            if raw_assignment_data["setting"].get("overrideBrief", None)
+            not in ([], None)
+            else ""
         )
         self.description: str = (
-            raw_assignment_data["setting"]["taskDescription"]
-            if raw_assignment_data["setting"]["taskDescription"]
-            not in ([], None, raw_assignment_data["setting"]["overrideBrief"])
+            raw_assignment_data["setting"].get("taskDescription", None)
+            if raw_assignment_data["setting"].get("taskDescription", None)
+            not in ([], None, raw_assignment_data["setting"].get("overrideBrief", None))
             else ""
         )
         self.tasks: list[Assignment.Task] = []
@@ -34,39 +31,22 @@ class Assignment(ReprMixin):
             )
         self.rewards: list[dict] = raw_assignment_data["setting"]["rewards"]
         self.starts_at_datetime: datetime = datetime.fromtimestamp(
-            raw_assignment_data["startTime"] + war_start_timestamp
+            raw_assignment_data.get("startTime", 0) + war_start_timestamp,
+            tz=timezone.utc,
         )
-        self.ends_at_datetime: datetime = datetime.now() + timedelta(
+        self.ends_at_datetime: datetime = datetime.now(tz=timezone.utc) + timedelta(
             seconds=raw_assignment_data["expiresIn"]
         )
         self.flags: int = raw_assignment_data["setting"]["flags"]
 
     @property
-    def unique_task_types(self) -> set[int]:
+    def unique_task_types(self) -> set[AssignmentTaskType]:
         return {t.type for t in self.tasks}
 
-    class Task(ReprMixin):
-        """Organised data of an Assignment Task"""
-
-        __slots__ = (
-            "faction",
-            "target",
-            "enemy_id",
-            "item_id",
-            "item_type",
-            "objective",
-            "min_players",
-            "mission_type",
-            "difficulty",
-            "planet_index",
-            "sector_index",
-            "type",
-            "progress",
-            "tracker",
-        )
-
+    class Task:
         def __init__(self, task: dict, current_progress: int | float) -> None:
-            self.type: int = task["type"]
+            self._type: int = task["type"]
+            self.type: AssignmentTaskType = AssignmentTaskType(self._type)
             self.progress: int | float = current_progress
             self.values_dict = dict(zip(task["valueTypes"], task["values"]))
             self.faction = self.target = self.enemy_id = self.item_id = (
@@ -119,25 +99,39 @@ class Assignment(ReprMixin):
                 increasing = self.tracker.change_rate_per_hour > 0
 
             match self.type:
-                case 1 | 2 | 4 | 5 | 10 | 13 | 14:
+                case (
+                    AssignmentTaskType.ExtractFromLocations
+                    | AssignmentTaskType.ExtractWithItem
+                    | AssignmentTaskType.CompleteObjectives
+                    | AssignmentTaskType.PlayObjectives
+                    | AssignmentTaskType.DonateItems
+                    | AssignmentTaskType.HoldLocationsUntilEnd
+                    | AssignmentTaskType.LiberateLocationsCount
+                ):
                     return health_bar(
                         perc=self.progress_perc,
                         faction=Factions.humans,
                         anim=anim,
                         increasing=increasing,
                     )
-                case 3 | 6 | 7 | 9 | 12:
+                case (
+                    AssignmentTaskType.KillEnemies
+                    | AssignmentTaskType.UseItems
+                    | AssignmentTaskType.ExtractFromMission
+                    | AssignmentTaskType.CompleteOperations
+                    | AssignmentTaskType.DefendFromAttacks
+                ):
                     return health_bar(
                         perc=self.progress_perc,
                         faction=self.faction or "MO",
                         anim=anim,
                         increasing=increasing,
                     )
-                case 15:
+                case AssignmentTaskType.NetLiberation:
                     return health_bar(
                         perc=0.5,
-                        faction=(Factions.automaton),
+                        faction=Factions.automaton,
                         empty_colour="green",
                     )
                 case _:
-                    return
+                    return ""

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Self
 from psycopg2 import connect
 from psycopg2.extras import Json, DictCursor
+from typing import Self
 from utils.mixins import ReprMixin
 from utils.dataclasses import Languages, Config
 
@@ -81,6 +81,14 @@ class WarCampaign(ReprMixin):
             with conn.cursor() as curs:
                 curs.execute(
                     query=f"DELETE FROM war.campaigns WHERE campaign_id = {self.campaign_id}"
+                )
+                conn.commit()
+
+    def save_event_changes(self) -> None:
+        with connection() as conn:
+            with conn.cursor() as curs:
+                curs.execute(
+                    f"UPDATE war.campaigns SET event = {self.event}, event_type = {self.event_type}, event_faction = '{self.event_faction}' WHERE campaign_id = {self.campaign_id}"
                 )
                 conn.commit()
 
@@ -171,11 +179,11 @@ class Feature(ReprMixin):
     message_id: int | None = None
 
 
-class GWWGuild(ReprMixin):
+class GWWGuild:
     def __init__(self, row: dict):
         self.guild_id = row.get("guild_id")
         self.language: str = row.get("language", "en")
-        self.feature_keys = row.get("feature_keys", [])
+        self.feature_keys: list[str] = row.get("feature_keys", [])
         self.features: list[Feature] = []
         if len(row) > 3:
             features_dict: dict[str, dict[str, int]] = {}
@@ -215,7 +223,8 @@ class GWWGuild(ReprMixin):
                         match feature.name:
                             case "dashboards" | "maps":
                                 curs.execute(
-                                    f"INSERT INTO feature.{feature.name} (guild_id, channel_id, message_id) VALUES (%s, %s, %s)",
+                                    f"INSERT INTO feature.{feature.name} (guild_id, channel_id, message_id) VALUES (%s, %s, %s)"
+                                    " ON CONFLICT (guild_id) DO UPDATE SET channel_id = EXCLUDED.channel_id, message_id = EXCLUDED.message_id",
                                     (
                                         self.guild_id,
                                         feature.channel_id,
@@ -224,7 +233,8 @@ class GWWGuild(ReprMixin):
                                 )
                             case _:
                                 curs.execute(
-                                    f"INSERT INTO feature.{feature.name} (guild_id, channel_id) VALUES (%s, %s)",
+                                    f"INSERT INTO feature.{feature.name} (guild_id, channel_id) VALUES (%s, %s)"
+                                    " ON CONFLICT (guild_id) DO UPDATE SET channel_id = EXCLUDED.channel_id",
                                     (self.guild_id, feature.channel_id),
                                 )
                 for feature_key in self.feature_keys.copy():
@@ -241,6 +251,7 @@ class GWWGuild(ReprMixin):
                         (self.feature_keys, self.guild_id),
                     )
                 conn.commit()
+        self.save_changes()
 
     def save_changes(self) -> None:
         """Save changes to the database"""
@@ -265,9 +276,9 @@ class GWWGuild(ReprMixin):
     def reset(self) -> None:
         """Reset this entry to default"""
         self.language = "en"
-        for feature_key in self.feature_keys:
-            with connection() as conn:
-                with conn.cursor() as curs:
+        with connection() as conn:
+            with conn.cursor() as curs:
+                for feature_key in self.feature_keys:
                     curs.execute(
                         query=f"DELETE FROM feature.{feature_key} WHERE guild_id = {self.guild_id}"
                     )
@@ -393,7 +404,7 @@ class PlanetRegion(ReprMixin):
     planet_index: int
 
 
-class PlanetRegions(list[PlanetRegion], ReprMixin):
+class PlanetRegions(list[PlanetRegion]):
     def __init__(self):
         with connection() as conn:
             with conn.cursor() as curs:
@@ -415,7 +426,11 @@ class PlanetRegions(list[PlanetRegion], ReprMixin):
                     ),
                 )
                 conn.commit()
-        self.append(region)
+        self.append(
+            PlanetRegion(
+                region.settings_hash, region.owner.full_name, region.planet_index
+            )
+        )
 
     def delete(self, region):
         with connection() as conn:

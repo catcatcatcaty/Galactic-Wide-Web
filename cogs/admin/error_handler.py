@@ -1,43 +1,66 @@
+from aiohttp import ServerDisconnectedError
+from disnake import AppCmdInter, ChannelType, Color, Embed, MessageInteraction, NotFound
+from disnake.ext.commands import (
+    BadArgument,
+    BotMissingPermissions,
+    CheckFailure,
+    Cog,
+    MissingPermissions,
+    MissingRequiredArgument,
+    NoPrivateMessage,
+    PrivateMessageOnly,
+)
 from traceback import format_exception
-from disnake import AppCmdInter, Color, Embed, MessageInteraction
-from disnake.ext import commands
 from utils.bot import GalacticWideWebBot
 from utils.errors import NotReadyYet, NotWhitelisted
 
 
-class ErrorHandlerCog(commands.Cog):
+class ErrorHandlerCog(Cog):
     def __init__(self, bot: GalacticWideWebBot) -> None:
         self.bot = bot
 
-    @commands.Cog.listener()
+    @Cog.listener()
     async def on_slash_command_error(self, inter: AppCmdInter, error):
         error = getattr(error, "original", error)
         embed = Embed(title="Error", color=Color.red())
+        log_error = True
 
         if isinstance(error, NotReadyYet):
             embed.description = f"The bot isn't ready yet, try again <t:{int(self.bot.ready_time.timestamp())}:R>"
+            log_error = False
         elif isinstance(error, NotWhitelisted):
             embed.description = (
                 f"This command isn't for public use. Apologies for the inconvenience."
             )
-        elif isinstance(error, commands.MissingPermissions):
+            log_error = False
+        elif isinstance(error, MissingPermissions):
             embed.description = f"You don't have permission to use this command.\nRequired: {', '.join(error.missing_permissions)}"
-        elif isinstance(error, commands.BotMissingPermissions):
+        elif isinstance(error, BotMissingPermissions):
             embed.description = f"I don't have the required permissions.\nMissing: {', '.join(error.missing_permissions)}"
-        elif isinstance(error, commands.MissingRequiredArgument):
+        elif isinstance(error, MissingRequiredArgument):
             embed.description = f"Missing required argument: `{error.param.name}`"
-        elif isinstance(error, commands.BadArgument):
+        elif isinstance(error, BadArgument):
             embed.description = f"Invalid argument provided: {str(error)}"
-        elif isinstance(error, commands.CheckFailure):
+        elif isinstance(error, CheckFailure):
             embed.description = "You don't have permission to use this command."
-        elif isinstance(error, commands.NoPrivateMessage):
+        elif isinstance(error, NoPrivateMessage):
             embed.description = "This command cannot be used in DMs."
-        elif isinstance(error, commands.PrivateMessageOnly):
+            log_error = False
+        elif isinstance(error, PrivateMessageOnly):
             embed.description = "This command can only be used in DMs."
+            log_error = False
+        elif isinstance(error, NotFound):
+            embed.description = "There was an error with Discord for this interaction. Please try again."
+            log_error = False
+        elif isinstance(error, ServerDisconnectedError):
+            embed.description = "There was an error with Discord's server for this interaction. Please try again."
+            log_error = False
         else:
             embed.description = (
                 "An unexpected error occurred. The developers have been notified."
             )
+
+        if log_error:
             await self.log_error(inter, error, "Slash Command")
 
         try:
@@ -48,59 +71,9 @@ class ErrorHandlerCog(commands.Cog):
         except:
             pass
 
-    @commands.Cog.listener()
-    async def on_button_click_error(self, inter: MessageInteraction, error):
-        error = getattr(error, "original", error)
-        embed = Embed(title="Button Error", color=Color.red())
-
-        if isinstance(error, NotReadyYet):
-            embed.description = f"The bot isn't ready yet, try again <t:{int(self.bot.ready_time.timestamp())}:R>"
-        elif isinstance(error, NotWhitelisted):
-            embed.description = (
-                f"This command isn't for public use. Apologies for the inconvenience."
-            )
-        elif isinstance(error, commands.CheckFailure):
-            embed.description = "You don't have permission to use this button."
-        elif isinstance(error, commands.CommandOnCooldown):
-            embed.description = f"This button is on cooldown. Try again in {error.retry_after:.2f} seconds."
-        else:
-            embed.description = "An error occurred while processing your button click."
-            await self.log_error(inter, error, "Button Click")
-
-        try:
-            if inter.response.is_done():
-                await inter.followup.send(embed=embed, ephemeral=True)
-            else:
-                await inter.response.send_message(embed=embed, ephemeral=True)
-        except:
-            pass
-
-    @commands.Cog.listener()
-    async def on_dropdown_error(self, inter: MessageInteraction, error):
-        error = getattr(error, "original", error)
-        embed = Embed(title="Dropdown Error", color=Color.red())
-
-        if isinstance(error, NotReadyYet):
-            embed.description = f"The bot isn't ready yet, try again <t:{int(self.bot.ready_time.timestamp())}:R>"
-        elif isinstance(error, NotWhitelisted):
-            embed.description = (
-                f"This command isn't for public use. Apologies for the inconvenience."
-            )
-        elif isinstance(error, commands.CheckFailure):
-            embed.description = "You don't have permission to use this dropdown."
-        elif isinstance(error, commands.CommandOnCooldown):
-            embed.description = f"This dropdown is on cooldown. Try again in {error.retry_after:.2f} seconds."
-        else:
-            embed.description = "An error occurred while processing your selection."
-            await self.log_error(inter, error, "Dropdown")
-
-        try:
-            if inter.response.is_done():
-                await inter.followup.send(embed=embed, ephemeral=True)
-            else:
-                await inter.response.send_message(embed=embed, ephemeral=True)
-        except:
-            pass
+        self.bot.logger.error(
+            f"{inter.author.name} | /{inter.application_command.qualified_name} | {error}"
+        )
 
     async def log_error(
         self,
@@ -127,9 +100,14 @@ class ErrorHandlerCog(commands.Cog):
                 value=f"-# {inter.user}\n-# {inter.user.id}\n-# {inter.user.mention}",
             )
         if hasattr(inter, "channel"):
+            channel_name = (
+                "DMs"
+                if inter.channel.type == ChannelType.private
+                else inter.channel.name
+            )
             embed.add_field(
                 name="Channel",
-                value=f"-# {inter.channel.name}\n-# {inter.channel.mention}",
+                value=f"-# {channel_name}\n-# {inter.channel.mention if hasattr(inter.channel, 'mention') else 'DM'}",
                 inline=False,
             )
 

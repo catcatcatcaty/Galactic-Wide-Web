@@ -1,6 +1,7 @@
-from ...functions import dispatch_format
-from ...mixins import ReprMixin
-from datetime import datetime
+from datetime import datetime, timezone
+from re import DOTALL, match
+from utils.functions import arrowhead_format
+from utils.mixins import ReprMixin
 
 
 class Dispatch(ReprMixin):
@@ -10,20 +11,15 @@ class Dispatch(ReprMixin):
         """Organised data of a dispatch"""
         self.id: int = raw_dispatch_data["id"]
         self.published_at: datetime = datetime.fromtimestamp(
-            war_start_timestamp + raw_dispatch_data.get("published", 0)
+            war_start_timestamp + raw_dispatch_data.get("published", 0), tz=timezone.utc
         )
-        self.full_message: str = dispatch_format(
-            text=raw_dispatch_data.get("message", "")
-        )
-        self.title: str = ""
-        self.description: str = ""
+        self.raw_message = raw_dispatch_data.get("message", "")
+        self.full_message: str = arrowhead_format(text=self.raw_message)
 
-        split_lines = self.full_message.splitlines(True)
-        if len(split_lines) == 1:
-            self.description = split_lines[0]
-        elif split_lines != []:
-            self.title = split_lines[0].replace("*", "")
-            self.description = "".join(split_lines[1:]).strip()
-        else:
-            self.title = "New Dispatch"
-            self.description = self.full_message
+        self.title: str = ""
+        title_match = match(r"^<i=3>(.*?)</i>\s*", self.raw_message, DOTALL)
+        if title_match:
+            self.title = arrowhead_format(title_match.group(1).strip()).lstrip("\n")
+            self.raw_message = self.raw_message[title_match.end() :].lstrip("\n")
+
+        self.description: str = arrowhead_format(self.raw_message)

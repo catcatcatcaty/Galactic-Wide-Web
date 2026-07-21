@@ -1,8 +1,11 @@
-from datetime import datetime, time
+from disnake.ext import commands
+
+from utils.api_wrapper.models import GlobalEvent
+from datetime import datetime, time, timezone
 from disnake import AppCmdInter, ApplicationInstallTypes, InteractionContextTypes, Embed
-from disnake.ext import commands, tasks
-from main import GalacticWideWebBot
-from typing import TYPE_CHECKING
+from disnake.ext.commands import Cog, Param, slash_command
+from disnake.ext.tasks import loop
+from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
 from utils.containers import MOUnavailableContainer
 from utils.dataclasses import Languages
@@ -10,11 +13,8 @@ from utils.dbv2 import GWWGuild, GWWGuilds
 from utils.embeds import Dashboard
 from utils.interactables import WikiButton
 
-if TYPE_CHECKING:
-    from utils.api_wrapper.models import GlobalEvent
 
-
-class MajorOrderCog(commands.Cog):
+class MajorOrderCog(Cog):
     def __init__(self, bot: GalacticWideWebBot) -> None:
         self.bot = bot
         self.last_mo_update: None | datetime = None
@@ -34,25 +34,32 @@ class MajorOrderCog(commands.Cog):
             if loop in self.bot.loops:
                 self.bot.loops.remove(loop)
 
-    @tasks.loop(minutes=1)
+    @loop(minutes=1)
     async def major_order_check(self) -> None:
-        mo_check_start = datetime.now()
-        if (
-            not self.bot.interface_handler.loaded
-            or mo_check_start < self.bot.ready_time
-            or not self.bot.data.loaded
-            or self.bot.interface_handler.busy
-            or not self.bot.data.formatted_data.assignments.get("en")
-        ):
+        mo_check_start = datetime.now(tz=timezone.utc)
+        if not self.bot.ready:
+            self.bot.logger.warning(
+                "major_order_check loop returning - the bot isn't ready"
+            )
             return
-        if self.bot.databases.war_info.major_order_ids == None:
-            await self.bot.channels.moderator_channel.send(
-                "# Major Order entry has not been initialized with an empty array. Please check the war info table."
+        if self.bot.interface_handler.busy:
+            self.bot.logger.warning(
+                "major_order_check loop returning - the interface_handler is busy"
+            )
+            return
+        if not self.bot.data.formatted_data:
+            self.bot.logger.error(
+                "major_order_check loop returning - NO FORMATTED DATA"
+            )
+            return
+        if self.bot.data.formatted_data.assignments.get("en") is None:
+            self.bot.logger.warning(
+                "major_order_check loop returning - english assignments are missing"
             )
             return
         unique_langs = GWWGuilds.unique_languages()
         for index, major_order in enumerate(
-            self.bot.data.formatted_data.assignments["en"]
+            self.bot.data.formatted_data.assignments.get("en")
         ):
             if major_order.id not in self.bot.databases.war_info.major_order_ids:
                 mo_briefing_dict = {
@@ -72,8 +79,8 @@ class MajorOrderCog(commands.Cog):
                     else:
                         self.mo_briefing_check_dict[major_order.id] = 1
                     if self.mo_briefing_check_dict[major_order.id] < 5:
-                        self.bot.logger.info(
-                            f"MO briefing not available for assignment #{major_order.id} - Check #{self.mo_briefing_check_dict[major_order.id]}"
+                        self.bot.logger.warning(
+                            f"major_order_check loop - briefing not available for assignment {major_order.id} - Check #{self.mo_briefing_check_dict[major_order.id]}"
                         )
                         return
                 self.mo_briefing_check_dict.pop(major_order.id, None)
@@ -82,7 +89,8 @@ class MajorOrderCog(commands.Cog):
                     lang: [
                         Dashboard.MajorOrderEmbed(
                             assignment=self.bot.data.formatted_data.assignments.get(
-                                lang, self.bot.data.formatted_data.assignments["en"]
+                                lang,
+                                self.bot.data.formatted_data.assignments.get("en"),
                             )[index],
                             planets=self.bot.data.formatted_data.planets,
                             gambit_planets=self.bot.data.formatted_data.gambit_planets,
@@ -93,7 +101,7 @@ class MajorOrderCog(commands.Cog):
                     for lang in unique_langs
                 }
                 for lang, embed_list in embeds.items():
-                    briefing: GlobalEvent = mo_briefing_dict.get(lang, None)
+                    briefing = mo_briefing_dict.get(lang, None)
                     if briefing:
                         for embed in embed_list:
                             embed._add_briefing(briefing=briefing)
@@ -105,17 +113,20 @@ class MajorOrderCog(commands.Cog):
                     announcement_type="MO",
                 )
                 self.bot.logger.info(
-                    f"Sent MO announcements out to {len(self.bot.interface_handler.major_order_updates)} channels in {(datetime.now() - mo_check_start).total_seconds():.2f}s"
+                    f"major_order_check loop - sent MO {major_order.id} initial announcement out to {len(self.bot.interface_handler.major_order_updates)} channels in {(datetime.now(tz=timezone.utc) - mo_check_start).total_seconds():.2f} seconds"
                 )
 
         # check for old MO IDs that are no longer active
         current_mo_ids = [
-            mo.id for mo in self.bot.data.formatted_data.assignments["en"]
+            mo.id for mo in self.bot.data.formatted_data.assignments.get("en", [])
         ]
         for active_id in self.bot.databases.war_info.major_order_ids.copy():
             if active_id not in current_mo_ids:
                 self.bot.databases.war_info.major_order_ids.remove(active_id)
                 self.bot.databases.war_info.save_changes()
+                self.bot.logger.info(
+                    f"major_order_check - MO {active_id} no longer active, removed from DB"
+                )
 
     @major_order_check.before_loop
     async def before_mo_check(self) -> None:
@@ -127,25 +138,31 @@ class MajorOrderCog(commands.Cog):
         if error_handler:
             await error_handler.log_error(None, error, "major_order_check loop")
 
-    @tasks.loop(
+    @loop(
         time=[time(hour=6, minute=20, second=30), time(hour=18, minute=20, second=30)]
     )
     async def major_order_updates(self):
-        mo_updates_start = datetime.now()
-        self.bot.logger.info(f"MO loop starting at {mo_updates_start}")
+        mo_updates_start = datetime.now(tz=timezone.utc)
         if (
             self.last_mo_update
             and (mo_updates_start - self.last_mo_update).total_seconds() < 600
         ):
-            self.bot.logger.info(f"Skipping duplicate MO loop execution")
+            self.bot.logger.warning(
+                f"major_order_updates loop - skipping duplicate loop execution"
+            )
             return
         self.last_mo_update = mo_updates_start
-        if (
-            not self.bot.interface_handler.loaded
-            or mo_updates_start < self.bot.ready_time
-            or not self.bot.data.loaded
-            or not self.bot.data.formatted_data.assignments.get("en")
-        ):
+        if not self.bot.ready:
+            self.bot.logger.warning(
+                "major_order_updates returning - the bot isn't ready"
+            )
+            return
+        if self.bot.data.formatted_data.assignments.get("en") is None:
+            self.bot.logger.warning(
+                "major_order_updates returning - english assignments are missing"
+            )
+            return
+        if self.bot.data.formatted_data.assignments.get("en") == []:
             return
         unique_langs = GWWGuilds.unique_languages()
         embeds = {
@@ -157,7 +174,9 @@ class MajorOrderCog(commands.Cog):
                     language_json=self.bot.json_dict["languages"][lang],
                     json_dict=self.bot.json_dict,
                 )
-                for major_order in self.bot.data.formatted_data.assignments[lang]
+                for major_order in self.bot.data.formatted_data.assignments.get(
+                    lang, self.bot.data.formatted_data.assignments.get("en", [])
+                )
             ]
             for lang in unique_langs
         }
@@ -167,7 +186,7 @@ class MajorOrderCog(commands.Cog):
             announcement_type="MO",
         )
         self.bot.logger.info(
-            f"Sent MO announcements out to {len(self.bot.interface_handler.major_order_updates)} channels in {(datetime.now() - mo_updates_start).total_seconds():.2f}s"
+            f"major_order_updates loop - sent MO update announcement out to {len(self.bot.interface_handler.major_order_updates)} channels in {(datetime.now(tz=timezone.utc) - mo_updates_start).total_seconds():.2f} seconds"
         )
 
     @major_order_updates.before_loop
@@ -181,24 +200,24 @@ class MajorOrderCog(commands.Cog):
             await error_handler.log_error(None, error, "major_order_updates loop")
 
     @wait_for_startup()
-    @commands.slash_command(
-        description="Returns information on the current major order(s) - if available.",
+    @slash_command(
+        description="Show the current Major Order(s), if any are active",
         install_types=ApplicationInstallTypes.all(),
         contexts=InteractionContextTypes.all(),
         extras={
-            "long_description": "Returns information on the current Major Order(s) and other assignments from High Command",
-            "example_usage": "**`/major_order public:Yes`** would return information on the current Major Order that other members in the server can see.",
+            "long_description": "Shows all currently active Major Orders from High Command. Use `with_announcement:Yes` to also attach the MO's briefing text. Includes a link to the wiki.",
+            "example_usage": "**`/major_order public:Yes`** returns the current Major Order visible to everyone.\n- **`/major_order with_announcement:Yes`** includes the High Command briefing text alongside the order.",
         },
     )
     async def major_order(
         self,
         inter: AppCmdInter,
-        with_announcement: str = commands.Param(
+        with_announcement: str = Param(
             choices=["Yes", "No"],
             default="No",
             description="If you want the large briefing to be attached.",
         ),
-        public: str = commands.Param(
+        public: str = Param(
             choices=["Yes", "No"],
             default="No",
             description="If you want the response to be seen by others in the server.",
@@ -206,18 +225,22 @@ class MajorOrderCog(commands.Cog):
     ) -> None:
         await inter.response.defer(ephemeral=public != "Yes")
         if inter.guild:
-            guild = GWWGuilds.get_specific_guild(id=inter.guild_id)
+            guild = GWWGuilds.get_specific_guild(id=inter.guild.id)
             if not guild:
                 self.bot.logger.error(
-                    f"Guild {inter.guild_id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
+                    f"Guild {inter.guild.id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
                 )
-                guild = GWWGuilds.add(inter.guild_id, "en", [])
+                guild = GWWGuilds.add(inter.guild.id, "en", [])
         else:
             guild = GWWGuild.default()
         guild_language = self.bot.json_dict["languages"][guild.language]
-        if self.bot.data.formatted_data.assignments.get("en"):
+        if (
+            assignments := self.bot.data.formatted_data.assignments.get(
+                guild.language, self.bot.data.formatted_data.assignments.get("en", [])
+            )
+        ) != []:
             embeds = []
-            for assignment in self.bot.data.formatted_data.assignments[guild.language]:
+            for assignment in assignments:
                 embed = Dashboard.MajorOrderEmbed(
                     assignment=assignment,
                     planets=self.bot.data.formatted_data.planets,
@@ -226,7 +249,7 @@ class MajorOrderCog(commands.Cog):
                     json_dict=self.bot.json_dict,
                 )
                 if with_announcement == "Yes":
-                    briefings_list: list[GlobalEvent] = [
+                    briefings_list = [
                         ge
                         for ge in self.bot.data.formatted_data.global_events[
                             guild.language
@@ -274,9 +297,13 @@ class MajorOrderCog(commands.Cog):
         else:
             guild = GWWGuild.default()
         guild_language = self.bot.json_dict["languages"][guild.language]
-        if self.bot.data.formatted_data.assignments.get("en"):
+        if (
+                assignments := self.bot.data.formatted_data.assignments.get(
+                    guild.language, self.bot.data.formatted_data.assignments.get("en", [])
+                )
+        ) != []:
             embeds = []
-            for assignment in self.bot.data.formatted_data.assignments[guild.language]:
+            for assignment in assignments:
                 embed = Dashboard.MajorOrderEmbed(
                     assignment=assignment,
                     planets=self.bot.data.formatted_data.planets,
@@ -284,7 +311,7 @@ class MajorOrderCog(commands.Cog):
                     language_json=guild_language,
                     json_dict=self.bot.json_dict,
                 )
-                briefings_list: list[GlobalEvent] = [
+                briefings_list = [
                         ge
                         for ge in self.bot.data.formatted_data.global_events[
                             guild.language

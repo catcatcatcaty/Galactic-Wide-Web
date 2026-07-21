@@ -1,15 +1,20 @@
+from disnake.ext import commands
+
 from data.lists import json_dict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from disnake import Intents, Message, Status, TextChannel
-from disnake.ext import commands, tasks
+from disnake.ext.commands import AutoShardedInteractionBot
+from disnake.ext.tasks import Loop
 from json import load
 from os import listdir
+from utils.api_wrapper.services import DataService
 from utils.dataclasses import BotChannels, Config, GWWBotModes
 from utils.dbv2 import Databases
 from utils.interface_handler import InterfaceHandler
 from utils.logger import GWWLogger
 from utils.maps import Maps
-from utils.api_wrapper.services.data_service import DataService
+
+STARTUP_SECONDS = 90
 
 
 class GalacticWideWebBot(commands.AutoShardedBot):
@@ -18,8 +23,8 @@ class GalacticWideWebBot(commands.AutoShardedBot):
         super().__init__(intents=Intents.all(), status=Status.idle, command_prefix="!")
         self.MODE = GWWBotModes.LIVE
         self.logger: GWWLogger = GWWLogger()
-        self.startup_time = datetime.now()
-        self.ready_time = self.startup_time + timedelta(seconds=45)
+        self.startup_time = datetime.now(tz=timezone.utc)
+        self.ready_time = self.startup_time + timedelta(seconds=STARTUP_SECONDS)
         self.interface_handler = InterfaceHandler(bot=self)
         self.channels = BotChannels()
         self.json_dict = json_dict.copy()
@@ -31,13 +36,17 @@ class GalacticWideWebBot(commands.AutoShardedBot):
         self.bot_dashboard_channel: TextChannel | None = None
         self.bot_dashboard_message: Message | None = None
         self.maps = Maps()
-        self.loops: list[tasks.Loop] = []
+        self.loops: list[Loop] = []
         self.load_extensions("cogs/admin")
         self.load_extensions("cogs")
 
     @property
     def time_until_ready(self) -> int:
-        return int((self.ready_time - datetime.now()).total_seconds())
+        return int((self.ready_time - datetime.now(tz=timezone.utc)).total_seconds())
+
+    @property
+    def ready(self) -> bool:
+        return self.ready_time < datetime.now(tz=timezone.utc)
 
     async def on_ready(self) -> None:
         await self.channels.get_channels(self)

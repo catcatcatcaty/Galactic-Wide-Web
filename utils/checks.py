@@ -1,6 +1,5 @@
-from datetime import datetime
 from disnake import AppCmdInter
-from disnake.ext import commands
+from disnake.ext.commands import check
 from utils.errors import NotReadyYet, NotWhitelisted
 
 
@@ -8,12 +7,12 @@ def wait_for_startup():
     """Waits for the bot to be ready before allowing the interaction"""
 
     def predicate(inter: AppCmdInter):
-        if datetime.now() > inter.bot.ready_time:
+        if inter.bot.ready:
             return True
 
         raise NotReadyYet()
 
-    return commands.check(predicate)
+    return check(predicate)
 
 
 WHITELIST_SERVERS = [1368301807872512171]
@@ -32,4 +31,4 @@ def is_whitelisted():
 
         raise NotWhitelisted()
 
-    return commands.check(predicate)
+    return check(predicate)

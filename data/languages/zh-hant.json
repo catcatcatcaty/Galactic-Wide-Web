@@ -16,7 +16,9 @@
             "ends": "\n-# 將結束於 <t:{timestamp}:R>",
             "liberate": "### 解放 **{planet_name}** {emojis}",
             "resistance": "\n-# 抵抗力: **{regen}/hr**",
-            "planet_lost": "**{planet_name}** 已被 **{faction_name}** 佔領 {emojis}"
+            "planet_lost": "**{planet_name}** 已被 **{faction_name}** 佔領 {emojis}",
+            "urgently_liberate": "### URGENTLY LIBERATE **{planet_name}** {emojis}",
+            "urgency_level": "\n-# Urgency Level **{level}{emoji}**"
         },
         "DispatchContainer": {
             "dispatch": "報告",
@@ -32,6 +34,7 @@
             "inactive": "未啟動",
             "on_cooldown": "冷卻中",
             "prep_starts": "準備開始",
+            "required_cost": "\n-# 需要 **{amount}** {item_name} 以啟用",
             "expires": "已過期",
             "tactical_actions": {
                 "EAGLE STORM": {
@@ -53,13 +56,14 @@
             }
         },
         "GlobalEventsContainer": {
+            "effect": "Effect",
             "new_event": "新事件",
             "all_planets": "所有星球",
             "unknown_effect": "未知效果",
-            "active_on_planets": "\n-# 現在在以下星球啟用:\n- {planets}",
-            "enemy_identified": "已辨識敵人",
-            "strat_identified": "已辨識戰略配備",
-            "booster_identified": "已辨識強化套件",
+            "active_on_planets": "現在在以下星球啟用",
+            "enemy": "已辨識敵人",
+            "stratagem": "已辨識戰略配備",
+            "booster": "已辨識強化套件",
             "expires": "已過期",
             "global_event": "全球事件"
         },
@@ -133,7 +137,7 @@
             "major_order_updates_title": "主要指令更新",
             "major_order_updates_desc": "-# 在 <t:1737786000:t> 與 <t:1737829200:t> 提供最新的主要指令更新\n",
             "personal_order_updates_title": "個人指令更新",
-            "personal_order_updates_desc": "-# 在 <t:1762594200:t> 提供最新的個人指令更新\n",
+            "personal_order_updates_desc": "-# 在 <t:1783244100:t> 提供最新的個人指令更新\n",
             "detailed_dispatches_title": "詳細報告",
             "detailed_dispatches_desc": "-# 提供來自超級地球更詳細的報告\n",
             "feature_channel_select": "為此功能選擇頻道",
@@ -163,6 +167,8 @@
                 "progress": "進度",
                 "complete": "完成",
                 "tasks": {
+                    "-1_from_loss": "\n-# **-1** 來自 **{planet}** 的失去 {timestamp}",
+                    "+1_from_lib": "\n-# **+1** 來自 **{planet}** 的解放 {timestamp}",
                     "option": "選項",
                     "times": "次",
                     "against": "對抗",
@@ -207,9 +213,7 @@
                     "type14_f": "{emoji} 自 **{race}** 手中解放 **{count}** 顆星球",
                     "type14_r": "{emoji} 解放 **{count}** 顆星球",
                     "type15_f": "{emoji} 在指令期間解放的星球數量多於輸給 **{race}** 的星球數量",
-                    "type15_r": "{emoji} 在指令期间解放的星球數量多於失去的星球數量",
-                    "type15_from_loss": "\n-# **-1** 來自 **{planet}** 的失去 {timestamp}",
-                    "type15_from_lib": "\n-# **+1** 來自 **{planet}** 的解放 {timestamp}"
+                    "type15_r": "{emoji} 在指令期间解放的星球數量多於失去的星球數量"
                 }
             },
             "DSSEmbed": {
@@ -246,9 +250,12 @@
                     }
                 }
             },
+            "UrgentLiberationsEmbed": {
+                "title": "Urgent Liberations",
+                "urgency_level": "Urgency Level"
+            },
             "DefenceEmbed": {
                 "title": "防禦中",
-                "defence_held_by_dss": "\n-# 進攻由 DSS 擋下",
                 "invasion_level": "入侵等級",
                 "victory": "勝利",
                 "loss": "失敗",
@@ -312,6 +319,7 @@
     "complete": "完成",
     "failure": "失敗",
     "regions": {
+        "megafactory": "Class {number} 巨型工廠",
         "4": "大都會",
         "3": "城市",
         "2": "鎮",
@@ -332,7 +340,10 @@
         "Illuminate": "光能者",
         "Terminids_plural": "蟲族們",
         "Automaton_plural": "機器人們",
-        "Illuminate_plural": "光能者們"
+        "Illuminate_plural": "光能者們",
+        "the_Terminids_plural": "終結者",
+        "the_Automaton_plural": "自動人偶",
+        "the_Illuminate_plural": "啟蒙者"
     },
     "difficulty": {
         "1": "入門",
@@ -354,15 +365,17 @@
         "Rare Sample": "稀有樣本",
         "Super Sample": "超級樣本"
     },
-    "special_units": {
-        "THE JET BRIGADE": "噴射隊",
+    "subfactions": {
+        "JET BRIGADE": "噴射隊",
         "PREDATOR STRAIN": "掠食者品種",
-        "GLOOM BURSTER STRAIN": "幽霾變種",
+        "SPORE BURST STRAIN": "幽霾變種",
         "INCINERATION CORPS": "焚燒軍團",
         "THE GREAT HOST": "大遠征隊",
         "RUPTURE STRAIN": "裂破變種",
         "DRAGONROACHES": "龍蟑",
         "HIVE LORDS": "霸王蟲",
-        "CYBORGS": "生化人"
+        "CYBORGS": "生化人",
+        "MINDLESS MASSES": "MINDLESS MASSES",
+        "APPROPRIATORS": "APPROPRIATORS"
     }
 }

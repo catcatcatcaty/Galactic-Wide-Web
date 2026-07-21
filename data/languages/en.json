@@ -16,7 +16,9 @@
             "ends": "\n-# Ends <t:{timestamp}:R>",
             "liberate": "### LIBERATE **{planet_name}** {emojis}",
             "resistance": "\n-# Resistance: **{regen}/hr**",
-            "planet_lost": "**{planet_name}** has been lost to the **{faction_name}** {emojis}"
+            "planet_lost": "**{planet_name}** has been lost to the **{faction_name}** {emojis}",
+            "urgently_liberate": "### URGENTLY LIBERATE **{planet_name}** {emojis}",
+            "urgency_level": "\n-# Urgency Level **{level}{emoji}**"
         },
         "DispatchContainer": {
             "dispatch": "Dispatch",
@@ -32,6 +34,7 @@
             "inactive": "inactive",
             "on_cooldown": "on cooldown",
             "prep_starts": "Preparing starts",
+            "required_cost": "\n-# Requires **{amount}** {item_name} to activate",
             "expires": "Expires",
             "tactical_actions": {
                 "EAGLE STORM": {
@@ -53,13 +56,14 @@
             }
         },
         "GlobalEventsContainer": {
+            "effect": "Effect",
             "new_event": "New Global Event",
             "all_planets": "all planets",
             "unknown_effect": "UNKNOWN EFFECT",
-            "active_on_planets": "\n-# Now active on the following planet(s):\n- {planets}",
-            "enemy_identified": "Enemy identified",
-            "strat_identified": "Stratagem identified",
-            "booster_identified": "Booster identified",
+            "active_on_planets": "Now active on the following planet(s)",
+            "enemy": "Enemy",
+            "stratagem": "Stratagem",
+            "booster": "Booster",
             "expires": "Expires",
             "global_event": "Global Event"
         },
@@ -133,7 +137,7 @@
             "major_order_updates_title": "Major Order updates",
             "major_order_updates_desc": "-# Provides updates for active major orders at <t:1737786000:t> and <t:1737829200:t>\n",
             "personal_order_updates_title": "Personal Order updates",
-            "personal_order_updates_desc": "-# Provides updates for active personal orders at <t:1762594200:t>\n",
+            "personal_order_updates_desc": "-# Provides updates for active personal orders at <t:1783244100:t>\n",
             "detailed_dispatches_title": "Detailed Dispatches",
             "detailed_dispatches_desc": "-# Provides the larger dispatches from Super Earth High Command\n",
             "feature_channel_select": "Select the channel for this feature",
@@ -163,6 +167,8 @@
                 "progress": "Progress",
                 "complete": "Complete",
                 "tasks": {
+                    "-1_from_loss": "\n-# **-1** from **{planet}** loss {timestamp}",
+                    "+1_from_lib": "\n-# **+1** from **{planet}** liberation {timestamp}",
                     "option": "Option",
                     "times": "times",
                     "against": "against",
@@ -207,9 +213,7 @@
                     "type14_f": "{emoji} Liberate **{count}** planets from **{race}**",
                     "type14_r": "{emoji} Liberate **{count}** planets",
                     "type15_f": "{emoji} Liberate more planets than are lost to **{race}** during the order duration",
-                    "type15_r": "{emoji} Liberate more planets than are lost during the order duration",
-                    "type15_from_loss": "\n-# **-1** from **{planet}** loss {timestamp}",
-                    "type15_from_lib": "\n-# **+1** from **{planet}** liberation {timestamp}"
+                    "type15_r": "{emoji} Liberate more planets than are lost during the order duration"
                 }
             },
             "DSSEmbed": {
@@ -246,9 +250,12 @@
                     }
                 }
             },
+            "UrgentLiberationsEmbed": {
+                "title": "Urgent Liberations",
+                "urgency_level": "Urgency Level"
+            },
             "DefenceEmbed": {
                 "title": "Defending",
-                "defence_held_by_dss": "\n-# DEFENCE HELD BY DSS",
                 "invasion_level": "Invasion Level",
                 "victory": "Victory",
                 "loss": "Losing",
@@ -312,6 +319,7 @@
     "complete": "Complete",
     "failure": "Failure",
     "regions": {
+        "megafactory": "Class {number} Megafactory",
         "4": "Mega City",
         "3": "City",
         "2": "Town",
@@ -332,7 +340,10 @@
         "Illuminate": "Illuminate",
         "Terminids_plural": "Terminids",
         "Automaton_plural": "Automaton",
-        "Illuminate_plural": "Illuminate"
+        "Illuminate_plural": "Illuminate",
+        "the_Terminids_plural": "THE TERMINIDS",
+        "the_Automaton_plural": "THE AUTOMATON",
+        "the_Illuminate_plural": "THE ILLUMINATE"
     },
     "difficulty": {
         "1": "Trivial",
@@ -354,15 +365,17 @@
         "Rare Sample": "Rare Sample",
         "Super Sample": "Super Sample"
     },
-    "special_units": {
-        "THE JET BRIGADE": "THE JET BRIGADE",
+    "subfactions": {
+        "JET BRIGADE": "JET BRIGADE",
         "PREDATOR STRAIN": "PREDATOR STRAIN",
-        "GLOOM BURSTER STRAIN": "GLOOM BURSTER STRAIN",
+        "SPORE BURST STRAIN": "SPORE BURST STRAIN",
         "INCINERATION CORPS": "INCINERATION CORPS",
         "THE GREAT HOST": "THE GREAT HOST",
         "RUPTURE STRAIN": "RUPTURE STRAIN",
         "DRAGONROACHES": "DRAGONROACHES",
         "HIVE LORDS": "HIVE LORDS",
-        "CYBORGS": "CYBORGS"
+        "CYBORGS": "CYBORGS",
+        "MINDLESS MASSES": "MINDLESS MASSES",
+        "APPROPRIATORS": "APPROPRIATORS"
     }
 }

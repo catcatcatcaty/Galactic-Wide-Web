@@ -1,5 +1,5 @@
-from datetime import datetime
-from ...mixins import ReprMixin
+from datetime import datetime, timezone
+from utils.mixins import ReprMixin
 
 
 class SteamNews(ReprMixin):
@@ -9,4 +9,6 @@ class SteamNews(ReprMixin):
         self.title: str = raw_steam_data["title"]
         self.author: str = raw_steam_data["author"]
         self.url: str = raw_steam_data["url"]
-        self.published_at: datetime = datetime.fromtimestamp(raw_steam_data["date"])
+        self.published_at: datetime = datetime.fromtimestamp(
+            raw_steam_data["date"], tz=timezone.utc
+        )

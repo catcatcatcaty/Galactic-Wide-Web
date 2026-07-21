@@ -1,13 +1,14 @@
-from datetime import datetime
-from disnake import Colour, ui
+from datetime import datetime, timezone
+from disnake import Colour
+from disnake.ui import Container, Section, Separator, TextDisplay
 from utils.api_wrapper.models import Planet
-from utils.dataclasses import Factions, PlanetFeatures, SpecialUnits
+from utils.dataclasses import Factions
+from utils.emojis import Emojis
 from utils.functions import get_end_time, short_format
 from utils.interactables import HDCButton, WikiButton
-from utils.mixins import ReprMixin
 
 
-class PlanetContainers(list[ui.Container]):
+class PlanetContainers(list[Container]):
     def __init__(
         self,
         planet: Planet,
@@ -34,7 +35,7 @@ class PlanetContainers(list[ui.Container]):
                 )
             )
 
-    class PlanetContainer(ui.Container, ReprMixin):
+    class PlanetContainer(Container):
         def __init__(
             self,
             planet: Planet,
@@ -63,8 +64,8 @@ class PlanetContainers(list[ui.Container]):
                 faction_json=faction_json,
             )
             self.components.append(
-                ui.Section(
-                    ui.TextDisplay(f"\n\n-# {planet.index}"),
+                Section(
+                    TextDisplay(f"\n\n-# {planet.index}"),
                     accessory=HDCButton(
                         link=f"https://helldiverscompanion.com/#hellpad/planets/{planet.index}"
                     ),
@@ -89,15 +90,16 @@ class PlanetContainers(list[ui.Container]):
             gambit_planets,
         ):
             if planet.faction:
+                description = "\n-# " + planet.description if planet.description else ""
                 self.components.extend(
                     [
-                        ui.Section(
-                            ui.TextDisplay(
+                        Section(
+                            TextDisplay(
                                 (
-                                    f"# {planet.faction.emoji} {planet.names.get(self.lang_code, planet.index)} {planet.exclamations}"
+                                    f"# {planet.faction.emoji} {planet.names.get(self.lang_code, planet.name)} {planet.exclamations}"
                                     f"\n{component_json['sector']}: **{planet.sector}**"
                                     f"\n{component_json['owner']}: **{factions_json[planet.faction.full_name]}**{planet.faction.emoji}"
-                                    f"\n{planet.description}"
+                                    f"{description}"
                                 )
                             ),
                             accessory=WikiButton(
@@ -105,21 +107,29 @@ class PlanetContainers(list[ui.Container]):
                                 link=f"https://helldivers.wiki.gg/wiki/",  # {planet.sector.replace(' ', '_')}_Sector",
                             ),
                         ),
-                        ui.Separator(),
+                        Separator(),
                     ]
                 )
 
             effects_text = f"### Features:"
-            for pf in PlanetFeatures.get_from_effects_list(planet.active_effects):
-                effects_text += f"\n-# {pf[1]} {pf[0]}"
+            for pf in planet.planet_features:
+                effects_text += f"\n-# {pf.emoji} {pf.name}"
             if effects_text != "### Features:":
-                self.components.append(ui.TextDisplay(effects_text))
+                self.components.append(TextDisplay(effects_text))
 
-            su_text = f"### Special Units:"
-            for su in SpecialUnits.get_from_effects_list(planet.active_effects):
-                su_text += f"\n-# {su[1]} {su[0]}"
-            if su_text != "### Special Units:":
-                self.components.append(ui.TextDisplay(su_text))
+            sf_text = f"### Subfactions:"
+            for sf in planet.subfactions:
+                sf_text += f"\n-# {sf.emoji} {sf.eng_name}"
+            if sf_text != "### Subfactions:":
+                self.components.append(TextDisplay(sf_text))
+
+            comm_target_text = f"### Communities targeting this planet:"
+            if len(planet.community_targets) > 0:
+                for comm in planet.community_targets:
+                    comm_target_text += (
+                        f"\n-# {comm.full_name} [{comm.emoji}](<{comm.discord_link}>)"
+                    )
+                self.components.append(TextDisplay(comm_target_text))
 
             liberation_text = (
                 f"### {component_json['heroes']}: **{planet.stats.player_count:,}**"
@@ -135,23 +145,21 @@ class PlanetContainers(list[ui.Container]):
                 if end_time_info.source_planet:
                     liberation_text += f"\n-# {component_json['liberated']} **<t:{int(planet.tracker.complete_time.timestamp())}:R>**"
                 elif end_time_info.gambit_planet:
-                    liberation_text += f"\n-# {component_json['liberated']} **<t:{int(end_time_info.gambit_planet.tracker.complete_time.timestamp())}:R>** thanks to {end_time_info.gambit_planet.names.get(self.lang_code, end_time_info.gambit_planet.index)} liberation"
+                    liberation_text += f"\n-# {component_json['liberated']} **<t:{int(end_time_info.gambit_planet.tracker.complete_time.timestamp())}:R>** thanks to {end_time_info.gambit_planet.names.get(self.lang_code, end_time_info.gambit_planet.name)} liberation"
                 elif end_time_info.regions:
                     regions_list = f"\n-# ".join(
-                        [f" {r.emoji} {r.name}" for r in end_time_info.regions]
+                        [
+                            f" {r.emoji} {r.names.get(self.lang_code, r.name)}"
+                            for r in end_time_info.regions
+                        ]
                     )
                     liberation_text += f"\n**{component_json['liberated']}** <t:{int(end_time_info.end_time.timestamp())}:R>\nIf the following regions are liberated:\n-# {regions_list}"
 
-            self.components.extend(
-                [
-                    ui.TextDisplay(liberation_text),
-                    ui.Separator(),
-                ]
-            )
+            self.components.extend([TextDisplay(liberation_text), Separator()])
 
         def add_mission_stats(self, planet: Planet, component_json: dict):
             self.components.append(
-                ui.TextDisplay(
+                TextDisplay(
                     (
                         f"## {component_json['title']}"
                         f"\n{component_json['missions_won']}: **{short_format(planet.stats.missions_won)}**"
@@ -164,7 +172,7 @@ class PlanetContainers(list[ui.Container]):
 
         def add_hero_stats(self, planet: Planet, component_json: dict):
             self.components.append(
-                ui.TextDisplay(
+                TextDisplay(
                     (
                         f"## {component_json['title']}"
                         f"\n{component_json['active_heroes']}: **{planet.stats.player_count:,}**"
@@ -183,7 +191,7 @@ class PlanetContainers(list[ui.Container]):
             faction = planet.faction if not planet.event else planet.event.faction
             if faction != Factions.humans:
                 self.components.append(
-                    ui.TextDisplay(
+                    TextDisplay(
                         (
                             f"💀 {faction_json[faction.full_name]} {component_json['killed']}: "
                             f"**{short_format(getattr(planet.stats, f'{faction.singular}_kills'))}**"
@@ -191,12 +199,12 @@ class PlanetContainers(list[ui.Container]):
                     )
                 )
 
-    class RegionContainer(ui.Container, ReprMixin):
+    class RegionContainer(Container):
         def __init__(self, planet: Planet, lang_code: str, container_json: dict):
             self.components = []
-            now_seconds = int(datetime.now().timestamp())
+            now_seconds = int(datetime.now(tz=timezone.utc).timestamp())
             for region in sorted(planet.regions.values(), key=lambda x: x.size):
-                text_display = ui.TextDisplay(
+                text_display = TextDisplay(
                     f"{region.owner.emoji} **{region.names.get(lang_code, region.name)}**"
                 )
                 if (
@@ -207,7 +215,7 @@ class PlanetContainers(list[ui.Container]):
                     )
                 ):
                     text_display.content = f"~~{text_display.content}~~"
-                if region.flags == 1 and planet.faction == Factions.automaton:
+                if region.is_factory:
                     text_display.content += (
                         f"\n-# {region.emoji} Class {region.size} Megafactory"
                     )

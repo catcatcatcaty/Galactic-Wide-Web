@@ -1,8 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from disnake import (
     AppCmdInter,
     ChannelType,
     Colour,
+    DiscordServerError,
     Embed,
     File,
     Forbidden,
@@ -10,12 +11,12 @@ from disnake import (
     MessageInteraction,
     NotFound,
     Permissions,
-    ui,
 )
-from disnake.ext import commands
-from main import GalacticWideWebBot
-from utils.containers import SetupContainer
+from disnake.ext.commands import Cog, slash_command
+from disnake.ui import ActionRow, Container, TextDisplay
+from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
+from utils.containers import SetupContainer
 from utils.dbv2 import Feature, GWWGuild, GWWGuilds
 from utils.embeds import Dashboard
 from utils.maps import Maps
@@ -38,6 +39,7 @@ ALLOWED_BUTTONS = {
     "clear_map_button",
     "features_button",
     "language_button",
+    "welcome_setup_button",
 }
 ALLOWED_DROPDOWNS = {
     "dashboard_channel_select",
@@ -46,7 +48,7 @@ ALLOWED_DROPDOWNS = {
 }
 
 
-class SetupCog(commands.Cog):
+class SetupCog(Cog):
     def __init__(self, bot: GalacticWideWebBot) -> None:
         self.bot = bot
         self.dashboard_perms_needed = Permissions(
@@ -69,23 +71,23 @@ class SetupCog(commands.Cog):
         )
 
     @wait_for_startup()
-    @commands.slash_command(
-        description="Change GWW settings.",
+    @slash_command(
+        description="Configure GWW settings for this server",
         default_member_permissions=Permissions(manage_guild=True),
         contexts=InteractionContextTypes(guild=True),
         extras={
-            "long_description": "Change the GWW settings for your server.",
-            "example_usage": "**`/setup`** brings up a message with buttons you can use to change the bot's settings.",
+            "long_description": "Opens the server configuration panel. Requires Manage Server permission. Lets admins set channels for the auto-updating dashboard and map, toggle notification features (Major Orders, Personal Orders, dispatches, patch notes, DSS announcements, region changes, and detailed dispatches), and change the bot's language.",
+            "example_usage": "**`/setup`** opens the settings panel with buttons to configure dashboards, maps, notification features, and language.",
         },
     )
     async def setup(self, inter: AppCmdInter) -> None:
         await inter.response.defer(ephemeral=True)
-        guild = GWWGuilds.get_specific_guild(id=inter.guild_id)
+        guild = GWWGuilds.get_specific_guild(id=inter.guild.id)
         if not guild:
             self.bot.logger.error(
-                f"Guild {inter.guild_id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
+                f"Guild {inter.guild.id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
             )
-            guild: GWWGuild = GWWGuilds.add(inter.guild_id, "en", [])
+            guild: GWWGuild = GWWGuilds.add(inter.guild.id, "en", [])
         await inter.send(
             components=SetupContainer(
                 guild=guild,
@@ -97,18 +99,19 @@ class SetupCog(commands.Cog):
             )
         )
 
-    @commands.Cog.listener("on_button_click")
+    @Cog.listener("on_button_click")
     async def on_button_clicks(self, inter: MessageInteraction) -> None:
         if (
-            inter.component.custom_id not in ALLOWED_BUTTONS
+            not self.bot.ready
+            or inter.component.custom_id not in ALLOWED_BUTTONS
             and "set_features_button-" not in inter.component.custom_id
             and "clear_features_button-" not in inter.component.custom_id
         ):
             return
         await inter.response.defer()
-        guild: GWWGuild = GWWGuilds.get_specific_guild(inter.guild_id)
+        guild: GWWGuild = GWWGuilds.get_specific_guild(inter.guild.id)
         guild_language = self.bot.json_dict["languages"][guild.language]
-        container = ui.Container.from_component(inter.message.components[0])
+        container = Container.from_component(inter.message.components[0])
         if inter.component.custom_id == "setup_home_button":
             container = SetupContainer(
                 guild=guild,
@@ -117,8 +120,50 @@ class SetupCog(commands.Cog):
                 shard_info=self.bot.shards[inter.guild.shard_id],
             )
             await inter.edit_original_response(components=container)
+        elif inter.component.custom_id == "welcome_setup_button":
+            container = [
+                SetupContainer(
+                    guild=guild,
+                    container_json=guild_language["containers"]["SetupContainer"],
+                    language_code=guild.language,
+                    shard_info=self.bot.shards[inter.guild.shard_id],
+                    active_category="dashboards",
+                )
+            ]
+            await inter.send(components=container, ephemeral=True)
         elif "dashboard" in inter.component.custom_id:
             if inter.component.custom_id == "dashboards_button":
+                if "dashboards" not in guild.feature_keys:
+                    for channel in inter.guild.text_channels:
+                        if channel.permissions_for(inter.me).send_messages:
+                            async for message in channel.history(limit=10):
+                                if (
+                                    message.author == inter.guild.me
+                                    and message.embeds != []
+                                    and message.attachments != []
+                                ):
+                                    guild.features = [
+                                        f
+                                        for f in guild.features
+                                        if f.name != "dashboards"
+                                    ]
+                                    guild.features.append(
+                                        Feature(
+                                            name="dashboards",
+                                            guild_id=guild.guild_id,
+                                            channel_id=channel.id,
+                                            message_id=message.id,
+                                        )
+                                    )
+                                    guild.update_features()
+                                    self.bot.interface_handler.dashboards.append(
+                                        message
+                                    )
+                                    await inter.send(
+                                        f"Dashboard located and reconnected: {message.jump_url}",
+                                        ephemeral=True,
+                                    )
+                                    break
                 container = SetupContainer(
                     guild=guild,
                     container_json=guild_language["containers"]["SetupContainer"],
@@ -139,7 +184,6 @@ class SetupCog(commands.Cog):
                     pass
                 guild.features = [f for f in guild.features if f.name != "dashboards"]
                 guild.update_features()
-                guild.save_changes()
                 self.bot.interface_handler.dashboards.remove_entry(guild.guild_id)
                 await inter.edit_original_response(
                     components=SetupContainer(
@@ -165,7 +209,6 @@ class SetupCog(commands.Cog):
                     pass
                 guild.features = [f for f in guild.features if f.name != "maps"]
                 guild.update_features()
-                guild.save_changes()
                 self.bot.interface_handler.maps.remove_entry(guild.guild_id)
                 await inter.edit_original_response(
                     components=SetupContainer(
@@ -202,7 +245,7 @@ class SetupCog(commands.Cog):
                 )
                 container.children.insert(
                     FEATURE_INDEXES[feature_type],
-                    ui.ActionRow(
+                    ActionRow(
                         Setup.Features.FeatureChannelSelect(
                             feature_type=feature_type,
                             container_json=guild_language["containers"][
@@ -216,7 +259,6 @@ class SetupCog(commands.Cog):
                 feature_type = inter.component.custom_id.split("-")[1]
                 guild.features = [f for f in guild.features if f.name != feature_type]
                 guild.update_features()
-                guild.save_changes()
                 getattr(self.bot.interface_handler, feature_type).remove_entry(
                     guild.guild_id
                 )
@@ -241,7 +283,7 @@ class SetupCog(commands.Cog):
                 )
                 container.children.insert(
                     len(container.children),
-                    ui.ActionRow(
+                    ActionRow(
                         Setup.Language.LanguageSelect(
                             container_json=guild_language["containers"][
                                 "SetupContainer"
@@ -253,15 +295,16 @@ class SetupCog(commands.Cog):
                     components=container,
                 )
 
-    @commands.Cog.listener("on_dropdown")
+    @Cog.listener("on_dropdown")
     async def on_dropdowns(self, inter: MessageInteraction) -> None:
         if (
-            inter.component.custom_id not in ALLOWED_DROPDOWNS
+            not self.bot.ready
+            or inter.component.custom_id not in ALLOWED_DROPDOWNS
             and "feature_channel_select-" not in inter.component.custom_id
         ):
             return
         await inter.response.defer()
-        guild: GWWGuild = GWWGuilds.get_specific_guild(inter.guild_id)
+        guild: GWWGuild = GWWGuilds.get_specific_guild(inter.guild.id)
         guild_language = self.bot.json_dict["languages"][guild.language]
         if inter.component.custom_id == "dashboard_channel_select":
             try:
@@ -301,7 +344,9 @@ class SetupCog(commands.Cog):
                     json_dict=self.bot.json_dict,
                 )
                 compact_level = 0
-                while dashboard.character_count() > 6000 and compact_level < 2:
+                while (
+                    dashboard.character_count() > 6000 or len(dashboard.embeds) >= 9
+                ) and compact_level < 2:
                     compact_level += 1
                     dashboard = Dashboard(
                         data=self.bot.data.formatted_data,
@@ -309,10 +354,19 @@ class SetupCog(commands.Cog):
                         json_dict=self.bot.json_dict,
                         compact_level=compact_level,
                     )
-                message = await dashboard_channel.send(
-                    embeds=dashboard.embeds,
-                    file=File("resources/dashboard/banner.png"),
-                )
+                try:
+                    message = await dashboard_channel.send(
+                        embeds=dashboard.embeds,
+                        file=File("resources/dashboard/banner.png"),
+                    )
+                except DiscordServerError:
+                    await inter.send(
+                        "There was an Discord Server error when setting up the dashboard, please try again."
+                        "\nIf this persists, there is nothing I can do, sorry. :pensive:",
+                        ephemeral=True,
+                    )
+                    return
+                guild.features = [f for f in guild.features if f.name != "dashboards"]
                 guild.features.append(
                     Feature(
                         name="dashboards",
@@ -322,7 +376,6 @@ class SetupCog(commands.Cog):
                     )
                 )
                 guild.update_features()
-                guild.save_changes()
                 self.bot.interface_handler.dashboards.append(message)
                 await inter.edit_original_response(
                     components=SetupContainer(
@@ -369,18 +422,21 @@ class SetupCog(commands.Cog):
                 return
             else:
                 latest_map = self.bot.maps.latest_maps.get(guild.language, None)
-                fifteen_minutes_ago = datetime.now() - timedelta(minutes=15)
+                fifteen_minutes_ago = datetime.now(tz=timezone.utc) - timedelta(
+                    minutes=15
+                )
                 if latest_map and latest_map.updated_at > fifteen_minutes_ago:
                     message = await map_channel.send(
                         embed=Embed(colour=Colour.dark_embed())
                         .set_image(url=latest_map.map_link)
                         .add_field(
-                            "", f"-# Updated <t:{int(datetime.now().timestamp())}:R>"
+                            "",
+                            f"-# Updated <t:{int(datetime.now(tz=timezone.utc).timestamp())}:R>",
                         ),
                     )
                 else:
                     await inter.edit_original_response(
-                        components=[ui.TextDisplay("Generating map, please wait...")]
+                        components=[TextDisplay("Generating map, please wait...")]
                     )
                     self.bot.maps.update_base_map(
                         planets=self.bot.data.formatted_data.planets,
@@ -402,7 +458,7 @@ class SetupCog(commands.Cog):
                         )
                     )
                     self.bot.maps.latest_maps[guild_language["code"]] = Maps.LatestMap(
-                        datetime.now(), message.attachments[0].url
+                        datetime.now(tz=timezone.utc), message.attachments[0].url
                     )
                     self.bot.maps.add_icons(
                         lang=guild_language["code"],
@@ -415,9 +471,11 @@ class SetupCog(commands.Cog):
                         embed=Embed(colour=Colour.dark_embed())
                         .set_image(url=latest_map.map_link)
                         .add_field(
-                            "", f"-# Updated <t:{int(datetime.now().timestamp())}:R>"
+                            "",
+                            f"-# Updated <t:{int(datetime.now(tz=timezone.utc).timestamp())}:R>",
                         ),
                     )
+                guild.features = [f for f in guild.features if f.name != "maps"]
                 guild.features.append(
                     Feature(
                         name="maps",
@@ -427,7 +485,6 @@ class SetupCog(commands.Cog):
                     )
                 )
                 guild.update_features()
-                guild.save_changes()
                 self.bot.interface_handler.maps.append(message)
                 await inter.edit_original_response(
                     components=SetupContainer(
@@ -469,6 +526,7 @@ class SetupCog(commands.Cog):
                 )
                 return
             else:
+                guild.features = [f for f in guild.features if f.name != feature_type]
                 guild.features.append(
                     Feature(
                         name=feature_type,
@@ -477,7 +535,6 @@ class SetupCog(commands.Cog):
                     )
                 )
                 guild.update_features()
-                guild.save_changes()
                 list_to_update: list = getattr(self.bot.interface_handler, feature_type)
                 list_to_update.append(channel)
                 await inter.edit_original_response(

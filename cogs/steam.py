@@ -1,19 +1,21 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from disnake import (
     AppCmdInter,
     ApplicationInstallTypes,
     InteractionContextTypes,
     MessageInteraction,
 )
-from disnake.ext import commands, tasks
-from main import GalacticWideWebBot
+from disnake.ext import commands
+from disnake.ext.commands import Cog, Param, slash_command
+from disnake.ext.tasks import loop
+from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
 from utils.dbv2 import GWWGuild, GWWGuilds
 from utils.embeds import SteamEmbed
 from utils.interactables import SteamStringSelect
 
 
-class SteamCog(commands.Cog):
+class SteamCog(Cog):
     def __init__(self, bot: GalacticWideWebBot) -> None:
         self.bot = bot
 
@@ -28,39 +30,42 @@ class SteamCog(commands.Cog):
         if self.steam_check in self.bot.loops:
             self.bot.loops.remove(self.steam_check)
 
-    @tasks.loop(minutes=1)
+    @loop(minutes=1)
     async def steam_check(self) -> None:
-        patch_notes_start = datetime.now()
-        if (
-            not self.bot.interface_handler.loaded
-            or patch_notes_start < self.bot.ready_time
-            or not self.bot.data.loaded
-            or self.bot.interface_handler.busy
-            or not self.bot.data.formatted_data.steam_news
-        ):
+        patch_notes_start = datetime.now(tz=timezone.utc)
+        if not self.bot.ready:
+            self.bot.logger.warning("steam_check loop returning - the bot isn't ready")
             return
-        if (
-            self.bot.databases.war_info.patch_notes_id
-            < self.bot.data.formatted_data.steam_news[0].id
-        ):
-            unique_langs = GWWGuilds.unique_languages()
-            embeds = {
-                lang: [
-                    SteamEmbed(
-                        self.bot.data.formatted_data.steam_news[0],
-                        self.bot.json_dict["languages"][lang],
-                    )
-                ]
-                for lang in unique_langs
-            }
-            await self.bot.interface_handler.send_feature("patch_notes", embeds)
-            self.bot.databases.war_info.patch_notes_id = (
-                self.bot.data.formatted_data.steam_news[0].id
+        if self.bot.interface_handler.busy:
+            self.bot.logger.warning(
+                "steam_check loop returning - the interface_handler is busy"
             )
-            self.bot.databases.war_info.save_changes()
-            self.bot.logger.info(
-                f"Sent patch announcements out to {len(self.bot.interface_handler.patch_notes)} channels in {(datetime.now() - patch_notes_start).total_seconds():.2f}s"
+            return
+        if not self.bot.data.formatted_data.steam_news:
+            self.bot.logger.warning(
+                "steam_check loop returning - steam posts are missing"
             )
+            return
+        if not self.bot.data.formatted_data:
+            self.bot.logger.error("steam_check loop returning - NO FORMATTED DATA")
+            return
+
+        for steam_news in self.bot.data.formatted_data.steam_news[::-1]:
+            if steam_news.id > self.bot.databases.war_info.patch_notes_id:
+                unique_langs = GWWGuilds.unique_languages()
+                embeds = {
+                    lang: [
+                        SteamEmbed(steam_news, self.bot.json_dict["languages"][lang])
+                    ]
+                    for lang in unique_langs
+                }
+                await self.bot.interface_handler.send_feature("patch_notes", embeds)
+                self.bot.databases.war_info.patch_notes_id = steam_news.id
+                self.bot.databases.war_info.save_changes()
+                self.bot.logger.info(
+                    f"steam_check loop - sent steam announcement {steam_news.id} out to {len(self.bot.interface_handler.patch_notes)} channels in {(datetime.now(tz=timezone.utc) - patch_notes_start).total_seconds():.2f} seconds"
+                )
+                return
 
     @steam_check.before_loop
     async def before_steam_check(self) -> None:
@@ -73,19 +78,19 @@ class SteamCog(commands.Cog):
             await error_handler.log_error(None, error, "steam_check loop")
 
     @wait_for_startup()
-    @commands.slash_command(
-        description="Get the 25 most recent Steam posts",
+    @slash_command(
+        description="Get the most recent Helldivers 2 Steam posts",
         install_types=ApplicationInstallTypes.all(),
         contexts=InteractionContextTypes.all(),
         extras={
-            "long_description": "Returns the 25 latest patch notes with a dropdown to select other ones via title.",
-            "example_usage": "**`/steam public:Yes`** returns an embed with the most recent patch notes, it also has a dropdown for the most recent 10 patch notes you can choose from. Other people can see this too.",
+            "long_description": "Shows the most recent Helldivers 2 Steam post. Includes a dropdown to browse and switch between the 25 most recent posts by title.",
+            "example_usage": "**`/steam public:Yes`** returns the latest Steam post visible to everyone, with a dropdown to browse recent posts.",
         },
     )
     async def steam(
         self,
         inter: AppCmdInter,
-        public: str = commands.Param(
+        public: str = Param(
             choices=["Yes", "No"],
             default="No",
             description="Do you want other people to see the response to this command?",
@@ -93,12 +98,12 @@ class SteamCog(commands.Cog):
     ) -> None:
         await inter.response.defer(ephemeral=public != "Yes")
         if inter.guild:
-            guild = GWWGuilds.get_specific_guild(id=inter.guild_id)
+            guild = GWWGuilds.get_specific_guild(id=inter.guild.id)
             if not guild:
                 self.bot.logger.error(
-                    f"Guild {inter.guild_id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
+                    f"Guild {inter.guild.id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
                 )
-                guild = GWWGuilds.add(inter.guild_id, "en", [])
+                guild = GWWGuilds.add(inter.guild.id, "en", [])
         else:
             guild = GWWGuild.default()
         await inter.send(
@@ -110,10 +115,11 @@ class SteamCog(commands.Cog):
             ephemeral=public != "Yes",
         )
 
-    @commands.Cog.listener("on_dropdown")
+    @Cog.listener("on_dropdown")
     async def steam_notes_listener(self, inter: MessageInteraction):
         if (
-            inter.component.custom_id != "steam"
+            not self.bot.ready
+            or inter.component.custom_id != "steam"
             or inter.author != inter.message.interaction_metadata.user
         ):
             return
@@ -123,12 +129,12 @@ class SteamCog(commands.Cog):
             if steam.title == inter.values[0]
         ][0]
         if inter.guild:
-            guild = GWWGuilds.get_specific_guild(id=inter.guild_id)
+            guild = GWWGuilds.get_specific_guild(id=inter.guild.id)
             if not guild:
                 self.bot.logger.error(
-                    f"Guild {inter.guild_id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
+                    f"Guild {inter.guild.id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
                 )
-                guild = GWWGuilds.add(inter.guild_id, "en", [])
+                guild = GWWGuilds.add(inter.guild.id, "en", [])
         else:
             guild = GWWGuild.default()
         embed = SteamEmbed(

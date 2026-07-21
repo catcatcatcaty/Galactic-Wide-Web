@@ -1,4 +1,4 @@
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, timezone
 from disnake import (
     AppCmdInter,
     ApplicationInstallTypes,
@@ -9,14 +9,16 @@ from disnake import (
     InteractionContextTypes,
     NotFound,
 )
-from disnake.ext import commands, tasks
-from main import GalacticWideWebBot
+from disnake.ext import commands
+from disnake.ext.commands import Cog, Param, slash_command
+from disnake.ext.tasks import loop
+from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
 from utils.dbv2 import GWWGuild, GWWGuilds
 from utils.maps import Maps
 
 
-class MapCog(commands.Cog):
+class MapCog(Cog):
     def __init__(self, bot: GalacticWideWebBot):
         self.bot = bot
 
@@ -31,24 +33,15 @@ class MapCog(commands.Cog):
         if self.map_poster in self.bot.loops:
             self.bot.loops.remove(self.map_poster)
 
-    @tasks.loop(time=[time(hour=hour, minute=5, second=0) for hour in range(24)])
+    @loop(time=[time(hour=hour, minute=5, second=0) for hour in range(24)])
     async def map_poster(self) -> None:
-        maps_start = datetime.now()
-        if (
-            not self.bot.interface_handler.loaded
-            or maps_start < self.bot.ready_time
-            or not self.bot.data.loaded
-        ):
+        maps_start = datetime.now(tz=timezone.utc)
+        if not self.bot.ready:
+            self.bot.logger.warning("map_poster returning - the bot isn't ready")
             return
-        try:
-            await self.bot.channels.waste_bin_channel.purge(
-                before=maps_start - timedelta(hours=2)
-            )
-        except:
-            pass
         unique_langs = GWWGuilds.unique_languages()
         map_embeds = {lang: Embed(colour=Colour.dark_embed()) for lang in unique_langs}
-        fifteen_minutes_ago = datetime.now() - timedelta(minutes=15)
+        fifteen_minutes_ago = datetime.now(tz=timezone.utc) - timedelta(minutes=15)
         need_to_update_maps = not all(
             [
                 lang in self.bot.maps.latest_maps
@@ -81,15 +74,17 @@ class MapCog(commands.Cog):
                     )
                 )
                 self.bot.maps.latest_maps[language_code] = Maps.LatestMap(
-                    datetime.now(), message.attachments[0].url
+                    datetime.now(tz=timezone.utc), message.attachments[0].url
                 )
         for language_code, embed in map_embeds.items():
             latest_map = self.bot.maps.latest_maps[language_code]
             embed.set_image(url=latest_map.map_link)
-            embed.add_field("-", f"-# Updated <t:{int(datetime.now().timestamp())}:R>")
+            embed.add_field(
+                "", f"-# Updated <t:{int(datetime.now(tz=timezone.utc).timestamp())}:R>"
+            )
         await self.bot.interface_handler.send_feature("maps", map_embeds)
         self.bot.logger.info(
-            f"Updated {len(self.bot.interface_handler.maps)} maps in {(datetime.now()-maps_start).total_seconds():.2f} seconds"
+            f"map_poster loop - updated {len(self.bot.interface_handler.maps)} maps in {(datetime.now(tz=timezone.utc)-maps_start).total_seconds():.2f} seconds"
         )
 
     @map_poster.before_loop
@@ -103,19 +98,19 @@ class MapCog(commands.Cog):
             await error_handler.log_error(None, error, "map_poster loop")
 
     @wait_for_startup()
-    @commands.slash_command(
-        description="Get an up-to-date map of the galaxy",
+    @slash_command(
+        description="Get the current galactic map",
         install_types=ApplicationInstallTypes.all(),
         contexts=InteractionContextTypes.all(),
         extras={
-            "long_description": "Get an up-to-date map of the galaxy. This is generated upon use of the command so it may take a couple of seconds.",
-            "example_usage": "**`/map faction:Automaton public:Yes`** would return a map of the galaxy zoomed in on Automaton planets with names over active planets. It can also be seen by others in discord.",
+            "long_description": "Shows the current galactic map. Serves a cached version if one was generated in the last 15 minutes, otherwise generates a fresh one on the spot. The map respects your server's language setting.",
+            "example_usage": "**`/map public:Yes`** returns the current galactic map, visible to everyone in the channel.",
         },
     )
     async def map(
         self,
         inter: AppCmdInter,
-        public: str = commands.Param(
+        public: str = Param(
             choices=["Yes", "No"],
             default="No",
             description="Do you want other people to see the response to this command?",
@@ -123,16 +118,16 @@ class MapCog(commands.Cog):
     ) -> None:
         await inter.response.defer(ephemeral=public != "Yes")
         if inter.guild:
-            guild = GWWGuilds.get_specific_guild(id=inter.guild_id)
+            guild = GWWGuilds.get_specific_guild(id=inter.guild.id)
             if not guild:
                 self.bot.logger.error(
-                    f"Guild {inter.guild_id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
+                    f"Guild {inter.guild.id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
                 )
-                guild = GWWGuilds.add(inter.guild_id, "en", [])
+                guild = GWWGuilds.add(inter.guild.id, "en", [])
         else:
             guild = GWWGuild.default()
         latest_map = self.bot.maps.latest_maps.get(guild.language, None)
-        fifteen_minutes_ago = datetime.now() - timedelta(minutes=15)
+        fifteen_minutes_ago = datetime.now(tz=timezone.utc) - timedelta(minutes=15)
         if not latest_map or (
             latest_map and latest_map.updated_at < fifteen_minutes_ago
         ):
@@ -162,7 +157,7 @@ class MapCog(commands.Cog):
                     ),
                 )
                 self.bot.maps.latest_maps[language_json["code"]] = Maps.LatestMap(
-                    datetime.now(), message.attachments[0].url
+                    datetime.now(tz=timezone.utc), message.attachments[0].url
                 )
                 latest_map = self.bot.maps.latest_maps[language_json["code"]]
             except HTTPException as e:
@@ -204,7 +199,7 @@ class MapCog(commands.Cog):
         else:
             guild = GWWGuild.default()
         latest_map = self.bot.maps.latest_maps.get(guild.language, None)
-        fifteen_minutes_ago = datetime.now() - timedelta(minutes=15)
+        fifteen_minutes_ago = datetime.now(tz=timezone.utc) - timedelta(minutes=15)
         if not latest_map or (
             latest_map and latest_map.updated_at < fifteen_minutes_ago
         ):
@@ -234,7 +229,7 @@ class MapCog(commands.Cog):
                     ),
                 )
                 self.bot.maps.latest_maps[language_json["code"]] = Maps.LatestMap(
-                    datetime.now(), message.attachments[0].url
+                    datetime.now(tz=timezone.utc), message.attachments[0].url
                 )
                 latest_map = self.bot.maps.latest_maps[language_json["code"]]
             except HTTPException as e:

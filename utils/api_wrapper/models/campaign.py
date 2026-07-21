@@ -1,6 +1,7 @@
-from ...mixins import ReprMixin
-from ...dataclasses import Faction
-from .planet import Planet
+from utils.dataclasses import Faction
+from utils.dataclasses.enums import CampaignType
+from utils.mixins import ReprMixin
+from utils.api_wrapper.models.planet import Planet
 
 
 class Campaign(ReprMixin):
@@ -10,7 +11,8 @@ class Campaign(ReprMixin):
         """Organised data for a campaign"""
         self.id: int = raw_campaign_data["id"]
         self.planet: Planet = campaign_planet
-        self.type: int = raw_campaign_data["type"]
+        self._type: int = raw_campaign_data["type"]
+        self.type: CampaignType = CampaignType(self._type)
         self.count: int = raw_campaign_data["count"]
         self.progress: float = (
             (1 - (self.planet.health / self.planet.max_health))
@@ -18,7 +20,11 @@ class Campaign(ReprMixin):
             else self.planet.event.progress
         )
         self.faction: Faction = (
-            self.planet.event.faction
-            if self.planet.event != None
-            else self.planet.faction
+            self.planet.event.faction if self.planet.event else self.planet.faction
         )
+
+    def __eq__(self, value):
+        return self.id == value.id
+
+    def __hash__(self):
+        return hash(self.id)

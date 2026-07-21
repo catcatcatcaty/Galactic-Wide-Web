@@ -1,7 +1,7 @@
 from disnake import Embed, Colour, Color
 
 from utils.api_wrapper.models import Planet
-from utils.dataclasses import PlanetFeatures, SpecialUnits, Factions
+from utils.dataclasses import PlanetFeatures, Factions
 from utils.functions import get_end_time, short_format
 from utils.mixins import EmbedReprMixin
 
@@ -50,25 +50,35 @@ class PlanetEmbed(Embed, EmbedReprMixin):
         lang_code: str,
     ):
         if planet.faction:
-            self.add_field(f"{planet.faction.emoji} {planet.names.get(lang_code, planet.index)}, {planet.exclamations}",
+            description = "\n-# " + planet.description if planet.description else ""
+            self.add_field(f"{planet.faction.emoji} {planet.names.get(lang_code, planet.name)}, {planet.exclamations}",
               f"\n{component_json['sector']}: **{planet.sector}**"
             + f"\n{component_json['owner']}: **{factions_json[planet.faction.full_name]}**{planet.faction.emoji}"
-            + f"\n{planet.description}"
+            + f"\n{description}"
             + f"\n")
 
             #EFFECTS
             effects_text = f""
-            for pf in PlanetFeatures.get_from_effects_list(planet.active_effects):
-                effects_text += f"\n-# {pf[1]} {pf[0]}"
+            for pf in planet.planet_features:
+                effects_text += f"\n-# {pf.emoji} {pf.name}"
             if effects_text != "":
                 self.add_field(f"Features:", effects_text + f"\n")
 
-            #SPECIAL UNITS
-            su_text = f""
-            for su in SpecialUnits.get_from_effects_list(planet.active_effects):
-                su_text += f"\n-# {su[1]} {su[0]}"
-            if su_text != "":
-                self.add_field(f"Special Units:", effects_text + f"\n")
+            #SUBFACTIONS
+            sf_text = f""
+            for sf in planet.subfactions:
+                sf_text += f"\n-# {sf.emoji} {sf.eng_name}"
+            if sf_text != "":
+                self.add_field(f"Subfactions:", effects_text + f"\n")
+
+            #COMMUNITY TARGETS
+            comm_target_text = f"### Communities targeting this planet:"
+            if len(planet.community_targets) > 0:
+                for comm in planet.community_targets:
+                    comm_target_text += (
+                        f"\n-# {comm.full_name} [{comm.emoji}](<{comm.discord_link}>)"
+                    )
+                self.add_field(f"Communities targeting this planet:", comm_target_text)
 
             #LIBERATION
             liberation_text = (
@@ -84,10 +94,13 @@ class PlanetEmbed(Embed, EmbedReprMixin):
                 if end_time_info.source_planet:
                     liberation_text += f"\n-# {component_json['liberated']} **<t:{int(planet.tracker.complete_time.timestamp())}:R>**"
                 elif end_time_info.gambit_planet:
-                    liberation_text += f"\n-# {component_json['liberated']} **<t:{int(end_time_info.gambit_planet.tracker.complete_time.timestamp())}:R>** thanks to {end_time_info.gambit_planet.names.get(lang_code, end_time_info.gambit_planet.index)} liberation"
+                    liberation_text += f"\n-# {component_json['liberated']} **<t:{int(end_time_info.gambit_planet.tracker.complete_time.timestamp())}:R>** thanks to {end_time_info.gambit_planet.names.get(lang_code, end_time_info.gambit_planet.name)} liberation"
                 elif end_time_info.regions:
                     regions_list = f"\n-# ".join(
-                        [f" {r.emoji} {r.name}" for r in end_time_info.regions]
+                        [
+                            f" {r.emoji} {r.names.get(lang_code, r.name)}"
+                            for r in end_time_info.regions
+                        ]
                     )
                     liberation_text += f"\n**{component_json['liberated']}** <t:{int(end_time_info.end_time.timestamp())}:R>\nIf the following regions are liberated:\n-# {regions_list}"
             self.add_field(f"{component_json['heroes']}: **{planet.stats.player_count:,}**", liberation_text + f"\n")

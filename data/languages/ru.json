@@ -16,7 +16,9 @@
             "ends": "\n-# Заканчивается <t:{timestamp}:R>",
             "liberate": "### ОСВОБОДИТЕ ПЛАНЕТУ **{planet_name}** {emojis}",
             "resistance": "\n-# Сопротивление: **{regen}/ч**",
-            "planet_lost": "Планета **{planet_name}** перешла под контроль **{faction_name}** {emojis}"
+            "planet_lost": "Планета **{planet_name}** перешла под контроль **{faction_name}** {emojis}",
+            "urgently_liberate": "### СРОЧНО ОСВОБОДИТЕ **{planet_name}** {emojis}",
+            "urgency_level": "\n-# Уровень опасности **{level}{emoji}**"
         },
         "DispatchContainer": {
             "dispatch": "Рапорт",
@@ -32,6 +34,7 @@
             "inactive": "неактивно",
             "on_cooldown": "на перезарядке",
             "prep_starts": "Сбор средств начнется",
+            "required_cost": "\n-# Требуется **{amount}** {item_name} для активации",
             "expires": "Истекает",
             "tactical_actions": {
                 "EAGLE STORM": {
@@ -53,13 +56,14 @@
             }
         },
         "GlobalEventsContainer": {
+            "effect": "Эффект",
             "new_event": "Новое глобальное событие",
             "all_planets": "все планеты",
             "unknown_effect": "НЕИЗВЕСТНЫЙ ЭФФЕКТ",
-            "active_on_planets": "\n-# Теперь активно на следующей(их) планете(ах):\n- {planets}",
-            "enemy_identified": "Обнаружен враг",
-            "strat_identified": "Обнаружена стратагема",
-            "booster_identified": "Обнаружено усиление",
+            "active_on_planets": "Теперь активно на следующей(их) планете(ах)",
+            "enemy": "Обнаружен враг",
+            "stratagem": "Обнаружена стратагема",
+            "booster": "Обнаружено усиление",
             "expires": "Истекает",
             "global_event": "Глобальное событие"
         },
@@ -131,7 +135,7 @@
             "patch_notes_title": "Патчноуты",
             "patch_notes_desc": "-# Публикует ссылки на новости игры в Steam\n",
             "personal_order_updates_title": "Обновления личного приказа",
-            "personal_order_updates_desc": "-# Публикует обновления активных личных приказов в <t:1762594200:t>\n",
+            "personal_order_updates_desc": "-# Публикует обновления активных личных приказов в <t:1783244100:t>\n",
             "major_order_updates_title": "Обновления главного приказа",
             "major_order_updates_desc": "-# Публикует обновления главных приказов в <t:1737786000:t> и <t:1737829200:t>\n",
             "detailed_dispatches_title": "Подробные рапорты",
@@ -163,10 +167,12 @@
                 "progress": "Прогресс",
                 "complete": "Готово",
                 "tasks": {
+                    "-1_from_loss": "\n-# **-1** из-за потери планеты **{planet}** {timestamp}",
+                    "+1_from_lib": "\n-# **+1** из-за освобождения планеты **{planet}** {timestamp}",
                     "option": "Опция",
                     "times": "раз(а)",
                     "against": "против",
-                    "mission": "миссия",
+                    "mission": "миссию",
                     "missions": "миссий",
                     "loc_from_planet": "с планеты",
                     "loc_on_planet": "на",
@@ -190,8 +196,8 @@
                     "type4": "{emoji} Выполните **{obj} Задание**{count_pre}{count}{count_post}{race_pre}{race}{race_post}{diff_pre}{diff}{diff_post}{multi}.",
                     "type5": "{emoji} Сыграйте **{count} {obj}**{race_pre}{race}{race_post}{diff_pre}{diff}{diff_post}{multi}.",
                     "type6": "{emoji} Используйте **{item}**{count_pre}{count}{count_post}{race_pre}{race}{race_post}{diff_pre}{diff}{diff_post}{multi}.",
-                    "type7_f_p": "{emoji} Эвакуируйтесь, успешно выполнив задание {mtype}{race_pre}{race}{race_post}{diff_pre}{diff}{diff_post}{count_pre}{count}{count_post}{multi}{ext_pre}{ext}{ext_post}",
-                    "type7_r": "{emoji} Эвакуируйтесь, успешно выполнив задание {mtype}{diff_pre}{diff}{diff_post}{count_pre}{count}{count_post}{multi}{ext_pre}{ext}{ext_post}",
+                    "type7_f_p": "{emoji} Эвакуируйтесь, успешно выполнив {mtype}{race_pre}{race}{race_post}{diff_pre}{diff}{diff_post}{count_pre}{count}{count_post}{multi}{ext_pre}{ext}{ext_post}",
+                    "type7_r": "{emoji} Эвакуируйтесь, успешно выполнив {mtype}{diff_pre}{diff}{diff_post}{count_pre}{count}{count_post}{multi}{ext_pre}{ext}{ext_post}",
                     "type9_f_p": "{emoji} Выполните **Операцию**{race_pre}{race}{race_post}{diff_pre}{diff}{diff_post}{count_pre}{count}{count_post}{multi}{ext_pre}{ext}{ext_post}",
                     "type9_r": "{emoji} Выполните **Операцию**{diff_pre}{diff}{diff_post}{count_pre}{count}{count_post}{multi}{ext_pre}{ext}{ext_post}",
                     "type10": "{emoji} Пожертвуйте **{count} {item}** {item_type}",
@@ -207,9 +213,7 @@
                     "type14_f": "{emoji} Освободите **{count}** планет от **{race}**",
                     "type14_r": "{emoji} Освободите **{count}** планет",
                     "type15_f": "{emoji} Освободите больше планет, чем перешло под контроль **{race}** за время действия приказа",
-                    "type15_r": "{emoji} Освободите больше планет, чем было потеряно за время действия приказа",
-                    "type15_from_loss": "\n-# **-1** из-за потери планеты **{planet}** {timestamp}",
-                    "type15_from_lib": "\n-# **+1** из-за освобождения планеты **{planet}** {timestamp}"
+                    "type15_r": "{emoji} Освободите больше планет, чем было потеряно за время действия приказа"
                 }
             },
             "DSSEmbed": {
@@ -246,9 +250,12 @@
                     }
                 }
             },
+            "UrgentLiberationsEmbed": {
+                "title": "Срочные кампании",
+                "urgency_level": "Уровень опасности"
+            },
             "DefenceEmbed": {
                 "title": "Оборона",
-                "defence_held_by_dss": "\n-# ОБОРОНА ВЕДЕТСЯ ДКС",
                 "invasion_level": "Уровень вторжения",
                 "victory": "Победа",
                 "loss": "Проигрыш",
@@ -312,6 +319,7 @@
     "complete": "Успех",
     "failure": "Провал",
     "regions": {
+        "megafactory": "Мегафабрика класса {number}",
         "4": "Мегаполис",
         "3": "Город",
         "2": "Поселок",
@@ -332,7 +340,10 @@
         "Illuminate": "Просветленные",
         "Terminids_plural": "Терминидов",
         "Automaton_plural": "Автоматонов",
-        "Illuminate_plural": "Просветленных"
+        "Illuminate_plural": "Просветленных",
+        "the_Terminids_plural": "Терминидов",
+        "the_Automaton_plural": "Автоматонов",
+        "the_Illuminate_plural": "Просветленных"
     },
     "difficulty": {
         "1": "Простейшая",
@@ -354,15 +365,17 @@
         "Rare Sample": "Редкий образец",
         "Super Sample": "Суперобразец"
     },
-    "special_units": {
-        "THE JET BRIGADE": "РЕАКТИВНАЯ БРИГАДА",
+    "subfactions": {
+        "JET BRIGADE": "РЕАКТИВНАЯ БРИГАДА",
         "PREDATOR STRAIN": "ШТАММ ХИЩНИК",
-        "GLOOM BURSTER STRAIN": "ШТАММ СПОРОВИКОВ",
+        "SPORE BURST STRAIN": "ШТАММ СПОРОВИКОВ",
         "INCINERATION CORPS": "ИСПЕПЕЛЯЮЩИЙ ОТРЯД",
         "THE GREAT HOST": "ВЕЛИКОЕ ВОЙСКО",
         "RUPTURE STRAIN": "ПРОРЫВНОЙ ШТАММ",
         "DRAGONROACHES": "ДРАКОРАКАНЫ",
         "HIVE LORDS": "ВЛАСТЕЛИНЫ УЛЬЯ",
-        "CYBORGS": "КИБОРГИ"
+        "CYBORGS": "КИБОРГИ",
+        "MINDLESS MASSES": "БЕЗМОЗГЛЫЕ МАССЫ",
+        "APPROPRIATORS": "КОНФИСКАТОРЫ"
     }
 }

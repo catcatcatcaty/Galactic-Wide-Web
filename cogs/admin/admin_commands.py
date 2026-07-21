@@ -1,8 +1,11 @@
-from typing import TYPE_CHECKING
-from disnake import AppCmdInter, Guild, MessageInteraction, Permissions, ui
+from datetime import datetime, timezone
+from disnake import AppCmdInter, Guild, MessageInteraction, NotFound, Permissions
 from disnake.ext import commands
-from main import GalacticWideWebBot
+from disnake.ui import ActionRow, components_from_message
+from random import choice, choices
 from re import search
+from typing import TYPE_CHECKING
+from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
 from utils.containers import GuildContainer
 from utils.dataclasses import Config
@@ -12,6 +15,13 @@ from utils.interactables import ConfirmButton
 
 if TYPE_CHECKING:
     from utils.dbv2 import GWWGuild
+
+LEAVE_AND_RESET_BUTTON_IDS = {
+    "leave_guild_button",
+    "reset_guild_button",
+    "leave_confirm_button",
+    "reset_confirm_button",
+}
 
 
 class AdminCommandsCog(commands.Cog):
@@ -29,9 +39,19 @@ class AdminCommandsCog(commands.Cog):
         self,
         inter: AppCmdInter,
         feature: str = commands.Param(
-            choices=["Dashboard", "Map", "MO Update", "PO Update"]
+            choices=[
+                "Dashboard",
+                "Map",
+                "MO Update",
+                "PO Update",
+                "Global Event",
+                "Dispatch",
+                "DSS changes",
+                "Steam",
+            ],
         ),
     ) -> None:
+        command_start = datetime.now(tz=timezone.utc)
         await inter.response.defer(ephemeral=True)
         match feature:
             case "Dashboard":
@@ -42,11 +62,33 @@ class AdminCommandsCog(commands.Cog):
                 await self.bot.get_cog(name="MajorOrderCog").major_order_updates()
             case "PO Update":
                 await self.bot.get_cog(name="PersonalOrderCog").personal_order_updates()
-        await inter.send(content="Completed", ephemeral=True)
+            case "Global Event":
+                self.bot.databases.war_info.global_event_id -= 1
+                self.bot.databases.war_info.save_changes()
+                await self.bot.get_cog(name="GlobalEventsCog").global_event_check()
+            case "Dispatch":
+                self.bot.databases.war_info.dispatch_id -= 1
+                self.bot.databases.war_info.save_changes()
+                await self.bot.get_cog(name="DispatchesCog").dispatch_check()
+            case "DSS changes":
+                self.bot.databases.dss_info.planet_index -= 1
+                self.bot.databases.dss_info.tactical_action_statuses = {
+                    ta: choice([i for i in (1, 2, 3) if i != status])
+                    for ta, status in self.bot.databases.dss_info.tactical_action_statuses.items()
+                }
+                self.bot.databases.dss_info.save_changes()
+                await self.bot.get_cog(name="WarUpdatesCog").dss_check()
+            case "Steam":
+                self.bot.databases.war_info.patch_notes_id -= 1
+                self.bot.databases.war_info.save_changes()
+                await self.bot.get_cog(name="SteamCog").steam_check()
+        await inter.send(
+            content=f"{feature} update completed in {(datetime.now(tz=timezone.utc) - command_start).total_seconds():.3f} seconds",
+            ephemeral=True,
+        )
 
     def extension_names_autocomp(inter: AppCmdInter, user_input: str) -> list[str]:
-        """Returns the name of each cog currently loaded"""
-        if not inter.bot.extensions:
+        if not inter.bot.ready or not inter.bot.extensions:
             return []
         return sorted(
             [
@@ -100,7 +142,7 @@ class AdminCommandsCog(commands.Cog):
     ) -> None:
         await inter.response.defer(ephemeral=True)
         all_guilds = GWWGuilds(fetch_all=True)
-        db_guild: GWWGuild = next(
+        db_guild = next(
             (
                 g
                 for g in all_guilds
@@ -111,9 +153,14 @@ class AdminCommandsCog(commands.Cog):
             None,
         )
         if db_guild:
-            discord_guild = self.bot.get_guild(
-                db_guild.guild_id
-            ) or await self.bot.fetch_guild(db_guild.guild_id)
+            try:
+                discord_guild = self.bot.get_guild(
+                    db_guild.guild_id
+                ) or await self.bot.fetch_guild(db_guild.guild_id)
+            except NotFound:
+                db_guild.delete()
+                await inter.send("Guild not found, deleted from DB")
+                return
             container = GuildContainer(
                 guild=discord_guild, db_guild=db_guild, fetching=True
             )
@@ -125,54 +172,61 @@ class AdminCommandsCog(commands.Cog):
 
     @commands.Cog.listener("on_button_click")
     async def on_button_clicks(self, inter: MessageInteraction) -> None:
-        allowed_ids = {
-            "leave_guild_button",
-            "reset_guild_button",
-            "leave_confirm_button",
-            "reset_confirm_button",
-        }
-        if inter.component.custom_id not in allowed_ids:
+        if (
+            not self.bot.ready
+            or inter.component.custom_id not in LEAVE_AND_RESET_BUTTON_IDS
+        ):
+            return
+        if inter.author != self.bot.owner:
+            self.bot.logger.warning(
+                f"{inter.author.name} tried to press the button '{inter.component.custom_id}'"
+            )
+            await inter.send("You arent allowed to do this.")
             return
         await inter.response.defer()
-        guild_id_text_display: str = (
+        guild_id_text_display = (
             inter.message.components[0].children[0].children[0].content
         )
-        guild_id: int = int(
-            search(r"Guild ID:\s*(\d+)", guild_id_text_display).group(1)
-        )
+        guild_id = int(search(r"Guild ID:\s*(\d+)", guild_id_text_display).group(1))
         discord_guild = self.bot.get_guild(guild_id) or await self.bot.fetch_guild(
             guild_id
         )
         if inter.component.custom_id == "leave_guild_button":
             await inter.edit_original_response(
-                components=[ui.components_from_message(inter.message)[0]]
-                + [ui.ActionRow(ConfirmButton("leave", discord_guild))]
+                components=[components_from_message(inter.message)[0]]
+                + [ActionRow(ConfirmButton("leave", discord_guild))]
             )
         elif inter.component.custom_id == "reset_guild_button":
             await inter.edit_original_response(
-                components=[ui.components_from_message(inter.message)[0]]
-                + [ui.ActionRow(ConfirmButton("reset", discord_guild))]
+                components=[components_from_message(inter.message)[0]]
+                + [ActionRow(ConfirmButton("reset", discord_guild))]
             )
         elif "confirm_button" in inter.component.custom_id:
-            split_button_id = inter.component.custom_id.split("_")
+            button_type = inter.component.custom_id.split("_")[0]
             db_guild: GWWGuild = GWWGuilds.get_specific_guild(id=guild_id)
-            try:
-                for interface_list in self.bot.interface_handler.lists.values():
+            for interface_list in self.bot.interface_handler.lists.values():
+                try:
                     interface_list.remove_entry(guild_id_to_remove=guild_id)
-            except:
-                pass
-            match split_button_id[0]:
+                except:
+                    pass
+            match button_type:
                 case "leave":
                     await discord_guild.leave()
                     await inter.send(
                         content=f"Successfully left **{discord_guild.name}**",
                         ephemeral=True,
                     )
+                    self.bot.logger.info(
+                        f"Discord Guild '{discord_guild.name}' left via admin button"
+                    )
                 case "reset":
                     db_guild.reset()
                     await inter.send(
                         content=f"Successfully reset **{discord_guild.name}**",
                         ephemeral=True,
+                    )
+                    self.bot.logger.info(
+                        f"DB Guild '{discord_guild.name}' reset via admin button"
                     )
             await inter.edit_original_response(
                 components=GuildContainer(
@@ -216,7 +270,9 @@ class AdminCommandsCog(commands.Cog):
                     and discord_guild.member_count < 100
                 ):
                     possible_fake_guilds.append(discord_guild)
-        fake_guilds_sample = "\n".join([str(g.id) for g in possible_fake_guilds[:10]])
+        fake_guilds_sample = "\n".join(
+            [str(g.id) + f" - {g.name}" for g in choices(possible_fake_guilds, k=10)]
+        )
         await inter.send(
             f"Possible fake guilds: {len(possible_fake_guilds)}\n{fake_guilds_sample}"
         )

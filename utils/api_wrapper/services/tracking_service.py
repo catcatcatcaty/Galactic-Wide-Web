@@ -1,7 +1,7 @@
 from collections import deque
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
-from ...mixins import ReprMixin
+from utils.mixins import ReprMixin
 
 
 class TrackingService:
@@ -46,12 +46,13 @@ class TrackerEntry(ReprMixin):
             return int(((1 - self.value) / rate) * 3600)
         elif rate < 0:
             return abs(int(((self.value) / rate) * 3600))
-        return None
 
     @property
     def complete_time(self) -> datetime:
         if self.change_rate_per_hour > 0:
-            return datetime.now() + timedelta(seconds=self.seconds_until_complete)
+            return datetime.now(tz=timezone.utc) + timedelta(
+                seconds=self.seconds_until_complete
+            )
         else:
             return None
 
@@ -60,7 +61,7 @@ class TrackerEntry(ReprMixin):
             self.value
             + (
                 (self.change_rate_per_hour / 3600)
-                * (time - datetime.now()).total_seconds()
+                * (time - datetime.now(tz=timezone.utc)).total_seconds()
             )
             if self.change_rate_per_hour != 0
             else self.value

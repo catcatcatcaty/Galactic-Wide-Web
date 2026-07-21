@@ -1,7 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from disnake import ButtonStyle, MessageInteraction, ui
 from disnake.ext import commands, tasks
 from main import GalacticWideWebBot
-from utils.dataclasses import Config
+from utils.dataclasses import Config, VIP
 from utils.dbv2 import Feature, GWWGuild, GWWGuilds
 
 
@@ -23,7 +24,9 @@ class HealthCheckCog(commands.Cog):
 
     @tasks.loop(minutes=1)
     async def health_check(self) -> None:
-        now = datetime.now()
+        if not self.bot.ready:
+            return
+        now = datetime.now(tz=timezone.utc)
         guild: GWWGuild | None = GWWGuilds.get_specific_guild(
             id=Config.SUPPORT_SERVER_ID
         )
@@ -44,26 +47,33 @@ class HealthCheckCog(commands.Cog):
                     ) or await self.bot.fetch_channel(dashboard.channel_id)
                     message = await channel.fetch_message(dashboard.message_id)
                     cutoff = now - timedelta(minutes=17)
-                    if (
-                        message.edited_at is not None and message.edited_at.replace(tzinfo=None) < cutoff
-                        and self.bot.startup_time < cutoff
-                    ):
-                        await self.bot.channels.moderator_channel.send(
-                            content=f"<@{self.bot.owner.id}> {message.jump_url} was last edited <t:{int(message.edited_at.timestamp())}:R> :warning:"
+                    if message.edited_at < cutoff and self.bot.startup_time < cutoff:
+                        await self.send_warning(
+                            error=f"Dashboards are late to being updated"
                         )
             except Exception as e:
                 self.bot.logger.error(
                     f"{self.qualified_name} | dashboard_checking | {e}"
                 )
+        else:
+            self.bot.logger.critical(
+                f"{self.qualified_name} | dashboard_checking | Support server not found in Database"
+            )
+            return
+
         if self.bot.data.formatted_data:
             if self.bot.data.formatted_data.formatted_at < now - timedelta(minutes=5):
                 await self.send_warning(
                     error=f"Data was last formatted <t:{int(self.bot.data.formatted_data.formatted_at.timestamp())}:R>"
                 )
-            elif not self.bot.data.formatted_data.personal_order:
-                await self.send_warning(error=f"PO is missing")
-            elif not self.bot.data.formatted_data.dss.votes:
-                await self.send_warning(error=f"DSS votes are missing")
+            if not self.bot.data.formatted_data.personal_order:
+                await self.send_warning(
+                    error=f"PO is missing", vips_to_cc=[VIP.catcatcatcaty]
+                )
+            if not self.bot.data.formatted_data.dss.votes:
+                await self.send_warning(
+                    error=f"DSS votes are missing", vips_to_cc=[VIP.catcatcatcaty]
+                )
         else:
             if self.bot.ready_time < now:
                 await self.send_warning(error=f"Data has not been formatted yet")
@@ -78,20 +88,48 @@ class HealthCheckCog(commands.Cog):
         if error_handler:
             await error_handler.log_error(None, error, "health_check loop")
 
-    async def send_warning(self, error: str) -> None:
+    async def send_warning(self, error: str, vips_to_cc: list[str] = None) -> None:
         self.bot.logger.error(error)
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
+        mentions = f"<@{self.bot.owner.id}>" + (
+            "".join([f"<@{i}>" for i in vips_to_cc]) if vips_to_cc else ""
+        )
+        components = [
+            ui.Button(
+                label="Snooze",
+                style=ButtonStyle.danger,
+                custom_id=f"snooze_{error}",
+            )
+        ]
         if error_time := self.error_dict.get(error):
             if error_time < now - timedelta(minutes=29):
                 await self.bot.channels.moderator_channel.send(
-                    content=f"<@{self.bot.owner.id}> {error} :warning:"
+                    content=f"{mentions} {error} :warning:", components=components
                 )
                 self.error_dict[error] = now
         else:
             await self.bot.channels.moderator_channel.send(
-                content=f"<@{self.bot.owner.id}> {error} :warning:"
+                content=f"{mentions} {error} :warning:", components=components
             )
             self.error_dict[error] = now
+
+    @commands.Cog.listener("on_button_click")
+    async def snooze_listener(self, inter: MessageInteraction) -> None:
+        if not self.bot.ready:
+            return
+        if "snooze" in inter.component.custom_id:
+            error = inter.component.custom_id.split("_")[1]
+            if error in self.error_dict:
+                self.error_dict[error] += timedelta(hours=6)
+                await inter.message.edit(
+                    components=None,
+                    content=(
+                        inter.message.content
+                        + f"\nSnoozed until <t:{int((datetime.now(tz=timezone.utc) + timedelta(hours=6)).timestamp())}:f>"
+                    ),
+                )
+            else:
+                await inter.send(f"{self.bot.owner.mention} I couldn't find that error")
 
 
 def setup(bot: GalacticWideWebBot):

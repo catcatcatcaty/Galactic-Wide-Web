@@ -1,12 +1,14 @@
-from datetime import datetime, timedelta
-from disnake import HTTPException, NotFound, ui, Embed
-from disnake.ext import commands, tasks
+from datetime import datetime, timedelta, timezone
+from disnake import DiscordServerError, HTTPException, NotFound, Embed
+from disnake.ext.commands import Cog
+from disnake.ext.tasks import loop
+from disnake.ui import TextDisplay
 from utils.bot import GalacticWideWebBot
 from utils.embeds.bot_dashboard_embed import bot_dashboardEmbed
 from utils.dbv2 import BotDashboard
 
 
-class BotDashboardCog(commands.Cog):
+class BotDashboardCog(Cog):
     def __init__(self, bot: GalacticWideWebBot) -> None:
         self.bot = bot
         self.bot_dashboard_db = None
@@ -25,21 +27,37 @@ class BotDashboardCog(commands.Cog):
         if self.bot_dashboard in self.bot.loops:
             self.bot.loops.remove(self.bot_dashboard)
 
-    @tasks.loop(minutes=1)
+    @loop(minutes=1)
     async def bot_dashboard(self) -> None:
-        bot_dashboard = self.bot_dashboard_db
+        if not self.bot.ready:
+            self.bot.logger.warning(
+                "bot_dashboard loop returning - the bot isn't ready"
+            )
+            return
         if not self.bot.bot_dashboard_channel:
+            self.bot.logger.warning(
+                "bot_dashboard loop - bot_dashboard_channel missing"
+            )
             self.bot.bot_dashboard_channel = self.bot.get_channel(
-                bot_dashboard.channel_id
-            ) or await self.bot.fetch_channel(bot_dashboard.channel_id)
+                self.bot_dashboard_db.channel_id
+            ) or await self.bot.fetch_channel(self.bot_dashboard_db.channel_id)
         if not self.bot.bot_dashboard_message:
+            self.bot.logger.warning(
+                "bot_dashboard loop - bot_dashboard_message missing"
+            )
             try:
                 self.bot.bot_dashboard_message = (
                     await self.bot.bot_dashboard_channel.fetch_message(
-                        bot_dashboard.message_id
+                        self.bot_dashboard_db.message_id
                     )
                 )
+                self.bot.logger.warning(
+                    "bot_dashboard loop - bot_dashboard_message fetched"
+                )
             except NotFound:
+                self.bot.logger.error(
+                    "bot_dashboard loop - dashboard message not found, sending new one"
+                )
                 embed = Embed()
                 embed.add_field("Placeholder please ignore", "")
                 self.bot.bot_dashboard_message = (
@@ -47,12 +65,24 @@ class BotDashboardCog(commands.Cog):
                         embed=embed
                     )
                 )
-                bot_dashboard.message_id = self.bot.bot_dashboard_message.id
-                bot_dashboard.save_changes()
-            except HTTPException:
+                self.bot_dashboard_db.message_id = self.bot.bot_dashboard_message.id
+                self.bot_dashboard_db.save_changes()
+            except HTTPException as e:
+                self.bot.logger.error(f"bot_dashboard loop returning - {e}")
                 return
+        now = datetime.now(tz=timezone.utc)
+        if now.minute == 0 or now - timedelta(minutes=2) < self.bot.startup_time:
+            try:
+                app_info = await self.bot.application_info()
+                self.user_installs = app_info.approximate_user_install_count
+            except HTTPException as e:
+                self.bot.logger.error(f"bot_dashboard loop application_info - {e}")
+
         dashboard = bot_dashboardEmbed(bot=self.bot)
-        await self.bot.bot_dashboard_message.edit(embed=dashboard)
+        try:
+            await self.bot.bot_dashboard_message.edit(embed=dashboard)
+        except DiscordServerError:
+            self.bot.logger.error(f"bot_dashboard loop returning - {e}")
 
     @bot_dashboard.before_loop
     async def before_bot_dashboard(self) -> None:

@@ -1,11 +1,20 @@
-from datetime import datetime
-from ...mixins import ReprMixin
-from ...dataclasses import Faction, Factions, PlanetFeatures, SpecialUnits
-from ...emojis import Emojis
-from .galactic_war import GalacticWarEffect
-from ...trackers import BaseTrackerEntry
-from ...functions.health_bar import health_bar
-from ..utils.constants import DEFENCE_LEVEL_EXCLAMATION_DICT, RegionType
+from datetime import datetime, timezone
+from utils.api_wrapper.models.galactic_war import GalacticWarEffect
+from utils.api_wrapper.utils.constants import DEFENCE_LEVEL_EXCLAMATION_DICT, RegionType
+from utils.dataclasses import (
+    Community,
+    Faction,
+    Factions,
+    PlanetFeature,
+    PlanetFeatures,
+    Subfaction,
+    Subfactions,
+)
+from utils.dataclasses.enums import EventType
+from utils.emojis import Emojis
+from utils.functions.health_bar import health_bar
+from utils.mixins import ReprMixin
+from utils.trackers import BaseTrackerEntry
 
 
 class Planet(ReprMixin):
@@ -13,6 +22,7 @@ class Planet(ReprMixin):
         "index",
         "names",
         "sector",
+        "active_campaign",
         "event",
         "dss_in_orbit",
         "in_assignment",
@@ -31,8 +41,9 @@ class Planet(ReprMixin):
         self.description: str = planets_json.get("description", "")
         self.position: dict = raw_planet_info["position"]
         self.waypoints: list[int] = raw_planet_info["waypoints"]
-        self._sector = raw_planet_info["sector"]
-        self.sector: int = sectors_json.get(str(raw_planet_info["sector"]))
+        self.nearby: list[int] = self.waypoints.copy()
+        self._sector: int = raw_planet_info["sector"]
+        self.sector: str = sectors_json.get(str(raw_planet_info["sector"]), "UNKNOWN")
         self.dss_in_orbit: bool = False
         self.active_campaign: bool = False
         self.eagle_storm_active: bool = False
@@ -52,12 +63,23 @@ class Planet(ReprMixin):
         self.tracker: BaseTrackerEntry | None = None
         self.stats: Planet.Stats = Planet.Stats()
 
+        # community choices
+        self.community_targets: list[Community] = []
+
     def add_data_from_status(self, raw_planet_status: dict) -> None:
         self.owner: int = raw_planet_status["owner"]
         self.health: int = raw_planet_status["health"]
         self.regen_per_second: float = raw_planet_status["regenPerSecond"]
         self.stats.player_count = raw_planet_status["players"]
         self.position = raw_planet_status["position"]
+
+    @property
+    def name(self) -> str:
+        return self.names.get("en-GB", f"UNKNOWN PLANET #{self.index}")
+
+    @property
+    def is_hidden(self) -> bool:
+        return 1190 in [ae.id for ae in self.active_effects]
 
     @property
     def faction(self) -> Faction:
@@ -96,21 +118,35 @@ class Planet(ReprMixin):
     @property
     def exclamations(self) -> str:
         result = ""
-        if self.event:
-            result += f":shield:{self.event.faction.emoji}"
+        if self.event and self.event.type != EventType.UrgentLiberation:
+            result += getattr(
+                Emojis.DefenceIcons,
+                self.event.faction.full_name.lower(),
+                ":shield:",
+            )
         if self.in_assignment:
             result += Emojis.Icons.mo
         if self.dss_in_orbit:
-            result += Emojis.DSS.icon
-        for special_unit in SpecialUnits.get_from_effects_list(
-            active_effects=self.active_effects
-        ):
-            result += special_unit[1]
-        for feature in PlanetFeatures.get_from_effects_list(
-            active_effects=self.active_effects
-        ):
-            result += feature[1]
+            result += Emojis.SpaceStations.DSS.icon
+        for subfactions in self.subfactions:
+            result += subfactions.emoji
+        for feature in self.planet_features:
+            result += feature.emoji
+        for comm in self.community_targets:
+            result += comm.emoji
         return result
+
+    @property
+    def subfactions(self) -> set[Subfaction]:
+        if division_effects := [e for e in self.active_effects if e.effect_type == 40]:
+            return Subfactions.get_from_effects_list(division_effects)
+        return set()
+
+    @property
+    def planet_features(self) -> list[PlanetFeature]:
+        return PlanetFeatures.get_many(
+            [ae.id for ae in self.active_effects if ae.effect_type == 71]
+        )
 
     class Event(ReprMixin):
         __slots__ = (
@@ -129,20 +165,21 @@ class Planet(ReprMixin):
         def __init__(self, raw_event_data: dict, war_start_timestamp: int) -> None:
             """Organised data for a planet's event (defence campaign)"""
             self.id: int = raw_event_data["id"]
-            self.type: int = raw_event_data["eventType"]
+            self._type: int = raw_event_data["eventType"]
+            self.type: EventType = EventType(self._type)
             self.faction: Faction | None = Factions.get_from_identifier(
                 number=raw_event_data["race"]
             )
             self.health: int = raw_event_data["health"]
             self.max_health: int = raw_event_data["maxHealth"]
-            self.start_time: str = raw_event_data["startTime"]
+            self.start_time: str = raw_event_data.get("startTime", 0)
             self.end_time: str = raw_event_data["expireTime"]
             self.start_time_datetime: datetime = datetime.fromtimestamp(
-                self.start_time + war_start_timestamp
-            ).replace(tzinfo=None)
+                self.start_time + war_start_timestamp, tz=timezone.utc
+            )
             self.end_time_datetime: datetime = datetime.fromtimestamp(
-                self.end_time + war_start_timestamp
-            ).replace(tzinfo=None)
+                self.end_time + war_start_timestamp, tz=timezone.utc
+            )
             self.progress: float = 1 - (self.health / self.max_health)
             """A float from 0-1"""
             self.level: int = int(self.max_health / 50000)
@@ -167,7 +204,7 @@ class Planet(ReprMixin):
         __slots__ = (
             "planet_index",
             "index",
-            "name",
+            "names",
             "description",
             "owner",
             "availability_factor",
@@ -188,7 +225,6 @@ class Planet(ReprMixin):
             self.planet_index: int = raw_planet_region_data["planetIndex"]
             self.planet: Planet | None = None
             self.index: int = raw_planet_region_data["regionIndex"]
-            self.name: str = json_entry.get("name", "COLONY")
             self.names: dict[str, str] = json_entry.get("names", {})
             self.description: str | None = json_entry.get("description")
             self.descriptions: dict[str, str] | None = json_entry.get(
@@ -208,10 +244,15 @@ class Planet(ReprMixin):
             self.tracker: BaseTrackerEntry | None = None
             self._connection_indices: list[int] = json_entry.get("connections", [])
             self.connections: list[Planet.Region] = []
+            self.is_factory: bool = json_entry.get("is_factory", False)
+
+        @property
+        def name(self) -> str:
+            return self.names.get("en-GB", f"{self.type.name} #{self.index}")
 
         @property
         def emoji(self) -> str:
-            if self.flags == 1:
+            if self.is_factory == 1 and not self.owner == Factions.humans:
                 return getattr(
                     getattr(Emojis.RegionIcons, self.owner.full_name),
                     f"special{self.size}",

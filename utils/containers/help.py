@@ -1,11 +1,15 @@
-from disnake import APISlashCommand, Colour, ui, OptionType
+from disnake import APISlashCommand, Colour, OptionType
+from disnake.ui import ActionRow, Container, Separator, TextDisplay
 from disnake.ext.commands.slash_core import InvokableSlashCommand
-from utils.interactables.support_server_button import SupportServerButton
-from utils.mixins import ReprMixin
+from utils.interactables import (
+    GuildInstallButton,
+    SupportServerButton,
+    UserInstallButton,
+)
 
 
 # DOESNT NEED LOCALIZATION (YET)
-class HelpContainer(ui.Container, ReprMixin):
+class HelpContainer(Container):
     def __init__(
         self,
         commands: list[APISlashCommand] = None,
@@ -13,11 +17,7 @@ class HelpContainer(ui.Container, ReprMixin):
     ):
         components = []
         if commands:
-            for global_command in sorted(
-                (cmd for cmd in commands if cmd.name not in ("global_event", "gwe")),
-                key=lambda cmd: cmd.name,
-            ):
-
+            for global_command in sorted(commands, key=lambda cmd: cmd.name):
                 options = "*Options:*\n" if global_command.options != [] else ""
                 for option in global_command.options:
                     if option.type == OptionType.sub_command:
@@ -28,10 +28,10 @@ class HelpContainer(ui.Container, ReprMixin):
                         options += f"- **`{option.name}`**: `{option.type.name}` {'**[Required]**' if option.required else '**<Optional>**'} - {option.description}\n"
                 components.extend(
                     [
-                        ui.TextDisplay(
-                            f"## </{global_command.name}:{global_command.id}>\n-# {global_command.description}\n{options}"
+                        TextDisplay(
+                            f"## </{global_command.name}:{global_command.id}>\n-# {global_command.description if global_command.description != '-' else 'WIP'}\n{options}"
                         ),
-                        ui.Separator(),
+                        Separator(),
                     ]
                 )
         elif command:
@@ -44,11 +44,13 @@ class HelpContainer(ui.Container, ReprMixin):
                 else:
                     options += f"- **`{option.name}`** {'**[Required]**' if option.required else '**<Optional>**'} - {option.description}\n"
             components.append(
-                ui.TextDisplay(
-                    f"# /{command.name}\n{command.extras['long_description']}\n\n{options}\n**Example usage:**\n- {command.extras['example_usage']}"
+                TextDisplay(
+                    f"# /{command.name}\n{command.extras.get('long_description') or 'WIP'}\n{options}\n**Example usage:**\n- {command.extras.get('example_usage') or 'WIP'}"
                 )
             )
 
-        components.append(ui.ActionRow(SupportServerButton()))
+        components.append(
+            ActionRow(SupportServerButton(), GuildInstallButton(), UserInstallButton())
+        )
 
         super().__init__(*components, accent_colour=Colour.green())

@@ -1,7 +1,7 @@
-from datetime import datetime, timedelta
-from data.lists import stratagem_id_dict
-from ...mixins import ReprMixin
-from ...dataclasses import Faction, Factions
+from data.lists import STRATAGEM_ID_DICT
+from datetime import datetime, timedelta, timezone
+from utils.dataclasses import Faction, Factions
+from utils.mixins import ReprMixin
 
 
 class PersonalOrder(ReprMixin):
@@ -19,19 +19,23 @@ class PersonalOrder(ReprMixin):
     def __init__(self, personal_order: dict, json_dict: dict):
         self.id: int = personal_order["id32"]
         self.expiration_secs_from_now: int = personal_order["expiresIn"]
-        self.expiration_datetime: datetime = datetime.now() + timedelta(
+        self.expiration_datetime: datetime = datetime.now(tz=timezone.utc) + timedelta(
             seconds=self.expiration_secs_from_now,
         )
-        self.title: str = personal_order["setting"]["overrideTitle"]
-        self.brief: str = personal_order["setting"]["overrideBrief"]
-        self.description: str = personal_order["setting"]["taskDescription"]
+        self.title: str = personal_order.get("setting", {}).get("overrideTitle", "")
+        self.brief: str = personal_order.get("setting", {}).get("overrideBrief", "")
+        self.description: str = personal_order.get("setting", {}).get(
+            "taskDescription", ""
+        )
         self.tasks: list[PersonalOrder.Task] = [
-            self.Task(task, json_dict) for task in personal_order["setting"]["tasks"]
+            self.Task(task, json_dict)
+            for task in personal_order.get("setting", {}).get("tasks", [])
         ]
         self.rewards: list[PersonalOrder.Reward] = [
-            self.Reward(reward) for reward in personal_order["setting"]["rewards"]
+            self.Reward(reward)
+            for reward in personal_order.get("setting", {}).get("rewards", [])
         ]
-        self.flags: int = personal_order["setting"]["flags"]
+        self.flags: int = personal_order.get("setting", {}).get("flags", None)
 
     class Task(ReprMixin):
         __slots__ = (
@@ -70,10 +74,15 @@ class PersonalOrder(ReprMixin):
                 self.target: int | float = target
             if enemy_id := self.values_dict.get(4):
                 self.enemy_id: int = enemy_id
-                self.found_enemy = json_dict["enemy_ids"].get(str(self.enemy_id), None)
+                self.found_enemy = (
+                    json_dict["enemy_ids"].get(str(self.enemy_id), {}).get("name", None)
+                    or json_dict["strings"].get(str(self.enemy_id))
+                    or "Unknown Enemy"
+                )
+
             if self.values_dict.get(6):
                 self.mix_id = self.values_dict.get(5)
-                if stratagem := stratagem_id_dict.get(self.mix_id):
+                if stratagem := STRATAGEM_ID_DICT.get(self.mix_id):
                     self.found_stratagem: str = stratagem
                 elif booster := json_dict["items"]["boosters"].get(
                     str(self.mix_id), {}

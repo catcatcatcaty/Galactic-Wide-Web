@@ -1,11 +1,12 @@
-from datetime import datetime, time
-from disnake.ext import commands, tasks
+from datetime import datetime, time, timezone
+from disnake.ext.commands import Cog
+from disnake.ext.tasks import loop
 from utils.bot import GalacticWideWebBot
 from utils.dbv2 import GWWGuilds
 from utils.embeds import Dashboard
 
 
-class DashboardCog(commands.Cog):
+class DashboardCog(Cog):
     def __init__(self, bot: GalacticWideWebBot) -> None:
         self.bot = bot
 
@@ -20,7 +21,7 @@ class DashboardCog(commands.Cog):
         if self.dashboard_poster in self.bot.loops:
             self.bot.loops.remove(self.dashboard_poster)
 
-    @tasks.loop(
+    @loop(
         time=[
             time(hour=i, minute=j, second=0)
             for i in range(24)
@@ -28,12 +29,9 @@ class DashboardCog(commands.Cog):
         ]
     )
     async def dashboard_poster(self) -> None:
-        dashboards_start = datetime.now()
-        if (
-            not self.bot.interface_handler.loaded
-            or not self.bot.data.loaded
-            or dashboards_start < self.bot.ready_time
-        ):
+        dashboards_start = datetime.now(tz=timezone.utc)
+        if not self.bot.ready:
+            self.bot.logger.warning("dashboard_poster returning - the bot isn't ready")
             return
         unique_langs = GWWGuilds.unique_languages()
         dashboards = {
@@ -46,7 +44,10 @@ class DashboardCog(commands.Cog):
         }
         for lang, dashboard in dashboards.copy().items():
             compact_level = 0
-            while dashboard.character_count() > 6000 and compact_level < 2:
+            while (
+                dashboard.character_count() > 6000
+                or (len(dashboard.embeds) >= 9 and dashboard.character_count() > 5000)
+            ) and compact_level < 2:
                 compact_level += 1
                 dashboards[lang] = Dashboard(
                     data=self.bot.data.formatted_data,
@@ -57,7 +58,7 @@ class DashboardCog(commands.Cog):
                 dashboard = dashboards[lang]
         await self.bot.interface_handler.send_feature("dashboards", dashboards)
         self.bot.logger.info(
-            f"Updated {len(self.bot.interface_handler.dashboards)} dashboards in {(datetime.now()-dashboards_start).total_seconds():.2f} seconds"
+            f"dashboard_poster loop - updated {len(self.bot.interface_handler.dashboards)} dashboards in {(datetime.now(tz=timezone.utc)-dashboards_start).total_seconds():.2f} seconds"
         )
 
     @dashboard_poster.before_loop

@@ -6,42 +6,46 @@ from disnake import (
     MessageInteraction,
     NotFound,
 )
-from disnake.ext import commands
+from disnake.ext.commands import Cog, slash_command
 from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
 from utils.embeds import CommunityServersEmbed
-from utils.interactables import NextPageButton, PreviousPageButton
+from utils.interactables.community_servers import NextPageButton, PreviousPageButton
+
+ALLOWED_BUTTONS = ["CommunityServerPreviousPageButton", "CommunityServerNextPageButton"]
 
 
-class CommunityServersCog(commands.Cog):
+class CommunityServersCog(Cog):
     def __init__(self, bot: GalacticWideWebBot) -> None:
         self.bot = bot
 
     # should really localize
     @wait_for_startup()
-    @commands.slash_command(
-        description="Get all community servers and their invite links",
+    @slash_command(
+        description="Get a list of community servers with invite links",
         install_types=ApplicationInstallTypes.all(),
         contexts=InteractionContextTypes.all(),
         extras={
-            "long_description": "Returns a list of as many servers the bot can send in one message. These servers are listed as Communities and have a vanity link.",
-            "example_usage": '**`/community_servers`** returns a list of every server the bot is on that is listed as "Community" and has a custom invite URL.',
+            "long_description": "Shows a paged list of servers the bot is in that are marked as Discord Community servers and have a vanity invite URL, sorted by member count. Use the Previous/Next buttons to browse through pages of 10 servers at a time.",
+            "example_usage": "**`/community_servers`** returns a paged list of community servers the bot is in, sorted by member count.",
         },
     )
     async def community_servers(self, inter: AppCmdInter) -> None:
         await inter.response.defer(ephemeral=True)
         embed = CommunityServersEmbed(
             guilds=self.communities_with_links,
-            new_index=min(16, len(self.communities_with_links)),
+            new_index=min(10, len(self.communities_with_links)),
         )
         components = [
             PreviousPageButton(disabled=True),
-            NextPageButton(disabled=len(self.communities_with_links) < 16),
+            NextPageButton(disabled=len(self.communities_with_links) < 10),
         ]
         await inter.send(embed=embed, components=components, ephemeral=True)
 
     @property
     def communities_with_links(self) -> list[Guild]:
+        if not self.bot.ready:
+            return []
         return sorted(
             [
                 guild
@@ -52,12 +56,9 @@ class CommunityServersCog(commands.Cog):
             reverse=True,
         )
 
-    @commands.Cog.listener("on_button_click")
+    @Cog.listener("on_button_click")
     async def on_button_clicks(self, inter: MessageInteraction) -> None:
-        if inter.component.custom_id not in (
-            "CommunityServerPreviousPageButton",
-            "CommunityServerNextPageButton",
-        ):
+        if inter.component.custom_id not in ALLOWED_BUTTONS:
             return
         await inter.response.defer()
         try:
@@ -68,20 +69,20 @@ class CommunityServersCog(commands.Cog):
             index = (
                 int(footer_text.split("/")[0])
                 if footer_text and "/" in footer_text
-                else 16
+                else 10
             )
         except (IndexError, AttributeError, ValueError):
-            index = 16
+            index = 10
         match inter.component.custom_id:
             case "CommunityServerPreviousPageButton":
-                new_index = max(16, index - 16)
+                new_index = max(10, index - 10)
                 embed = CommunityServersEmbed(
                     guilds=self.communities_with_links,
                     new_index=new_index,
                 )
                 components = [
-                    PreviousPageButton(disabled=new_index <= 16),
-                    NextPageButton(disabled=len(self.communities_with_links) < 16),
+                    PreviousPageButton(disabled=new_index <= 10),
+                    NextPageButton(disabled=len(self.communities_with_links) < 10),
                 ]
                 try:
                     await inter.edit_original_response(
@@ -95,13 +96,13 @@ class CommunityServersCog(commands.Cog):
                     )
                     return
             case "CommunityServerNextPageButton":
-                new_index = min(len(self.communities_with_links), index + 16)
+                new_index = min(len(self.communities_with_links), index + 10)
                 embed = CommunityServersEmbed(
                     guilds=self.communities_with_links,
                     new_index=new_index,
                 )
                 components = [
-                    PreviousPageButton(disabled=len(self.communities_with_links) < 16),
+                    PreviousPageButton(disabled=len(self.communities_with_links) < 10),
                     NextPageButton(
                         disabled=new_index >= len(self.communities_with_links)
                     ),

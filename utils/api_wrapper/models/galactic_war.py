@@ -1,10 +1,11 @@
+from data.lists import STRATAGEM_ID_DICT, STRATAGEM_CAT_DICT
+from datetime import datetime, timezone
 from disnake import Colour
-from ...mixins import GWEReprMixin, ReprMixin
-from ...dataclasses import Faction, Factions
-from ...functions import dispatch_format
-from ...functions.health_bar import health_bar
-from ..services.tracking_service import TrackerEntry
-from data.lists import stratagem_id_dict
+from utils.api_wrapper.services.tracking_service import TrackerEntry
+from utils.dataclasses import Faction, Factions
+from utils.functions import arrowhead_format
+from utils.functions.health_bar import health_bar
+from utils.mixins import GWEReprMixin, ReprMixin
 
 
 class GlobalResource(ReprMixin):
@@ -96,12 +97,15 @@ class GalacticWarEffect(GWEReprMixin):
         "effect_type",
         "flags",
         "name_hash",
+        "name",
         "fluff_description_hash",
+        "fluff_description",
         "long_description_hash",
+        "long_description",
         "short_description_hash",
-        "values_dict",
+        "short_description",
+        "values_list",
         "effect_description",
-        "planet_effect",
         "count",
         "percent",
         "faction",
@@ -118,31 +122,12 @@ class GalacticWarEffect(GWEReprMixin):
         "planet_body_type",
         "value15",
         "resource_hash",
+        "resource",
+        "stratagem_category",
     )
 
     def __init__(self, gwa: dict, json_dict: dict) -> None:
         """Organised data for a galactic war effect"""
-        self.id: int = gwa["id"]
-        self.gameplay_effect_id32: int = gwa["gameplayEffectId32"]
-        self.effect_type: int = gwa["effectType"]
-        self.flags: int = gwa["flags"]
-        self.name_hash: int = gwa["nameHash"]
-        self.fluff_description_hash: int = gwa["descriptionFluffHash"]
-        self.long_description_hash: int = gwa["descriptionGamePlayLongHash"]
-        self.short_description_hash: int = gwa["descriptionGamePlayShortHash"]
-        self.values_dict: dict = dict(zip(gwa["valueTypes"], gwa["values"]))
-        self.effect_description: dict = json_dict["galactic_war_effects"].get(
-            str(gwa["effectType"]),
-            {"name": "UNKNOWN", "simplified_name": "", "description": ""},
-        )
-        self.planet_effect: dict | None = json_dict["planet_effects"].get(
-            str(self.id),
-            {
-                "name": f"UNKNOWN [{self.id}]",
-                "description_long": "",
-                "description_short": "",
-            },
-        )
         self.count = self.percent = self.faction = self.mix_id = self.value5 = (
             self.DEPRECATED_enemy_group
         ) = self.DEPRECATED_item_package = self.value8 = self.value9 = (
@@ -151,57 +136,128 @@ class GalacticWarEffect(GWEReprMixin):
             self.value15
         ) = self.resource_hash = self.found_enemy = self.found_stratagem = (
             self.found_booster
-        ) = None
+        ) = self.fluff_description = self.name = self.long_description = (
+            self.short_description
+        ) = self.resource = self.stratagem_category = None
+        self.id: int = gwa["id"]
+        self.gameplay_effect_id32: int = gwa["gameplayEffectId32"]
+        self.effect_type: int = gwa["effectType"]
+        self.flags: int = gwa["flags"]
+        self.name_hash: int = gwa["nameHash"]
+        self.fluff_description_hash: int = gwa["descriptionFluffHash"]
+        self.long_description_hash: int = gwa["descriptionGamePlayLongHash"]
+        self.short_description_hash: int = gwa["descriptionGamePlayShortHash"]
+        self.values_list: list = list(zip(gwa["valueTypes"], gwa["values"]))
+        self.effect_description: dict = json_dict["galactic_war_effects"].get(
+            str(gwa["effectType"]),
+            {"name": "UNKNOWN", "simplified_name": "", "description": ""},
+        )
+        for value_type, value in self.values_list:
+            match value_type:
+                case 1:
+                    if (
+                        len([v[0] == 1 for v in self.values_list]) > 1
+                        and self.effect_type == 36
+                        and not self.stratagem_category
+                    ):
+                        self.stratagem_category = STRATAGEM_CAT_DICT.get(value)
+                    else:
+                        self.count: int | float = value
+                case 2:
+                    self.percent: int | float = value
+                case 3:
+                    self.faction: Faction | None = Factions.get_from_identifier(
+                        number=value
+                    )
+                case 4:
+                    self.mix_id: int = value
+                    if stratagem := STRATAGEM_ID_DICT.get(self.mix_id):
+                        self.found_stratagem: str = stratagem
+                    elif booster := json_dict["items"]["boosters"].get(
+                        str(self.mix_id), {}
+                    ):
+                        self.found_booster: str = booster["name"]
+                case 5:
+                    self.value5 = value
+                    print(f"VALUE5 (AssaultType) USED: {self.id} {self.value5 = }")
+                case 6:
+                    self.DEPRECATED_enemy_group = value
+                    print(
+                        f"DEPRECATED_enemy_group USED: {self.id} {self.DEPRECATED_enemy_group = }"
+                    )
+                case 7:
+                    self.DEPRECATED_item_package = value
+                case 8:
+                    self.value8 = value
+                    print(
+                        f"VALUE8 (StoreWideDiscountId) USED: {self.id} {self.value8 = }"
+                    )
+                case 9:
+                    self.value9 = value
+                    print(f"VALUE9 (BadgeId) USED: {self.id} {self.value9 = }")
+                case 10:
+                    # refer to: /api/Mission/RewardEntries
+                    self.reward_multiplier_id = value
+                case 11:
+                    self.value11 = value
+                    print(f"VALUE11 (BadgeGroupId) USED: {self.id} {self.value11 = }")
+                case 12:
+                    # or item group; gets used in /Progression/Items
+                    self.item_tag = value
+                    print(f"item_tag USED: {self.id} {self.item_tag = }")
+                case 13:
+                    self.hash_id = value
+                    if enemy := json_dict["enemy_ids"].get(str(self.hash_id), None):
+                        self.found_enemy: str = enemy["name"]
+                case 14:
+                    # BlackHole = 1, UNKNOWN = 2
+                    self.planet_body_type = value
+                case 15:
+                    # might be a boolean flag, only used with game_OperationModToggle so far
+                    self.value15 = value
+                case 16:
+                    # resource hash
+                    self.resource_hash = value
+                    if enemy := json_dict["enemy_ids"].get(
+                        str(self.resource_hash), None
+                    ):
+                        self.found_enemy = enemy["name"]
 
-        if count := self.values_dict.get(1):
-            self.count: int | float = count
-        if percent := self.values_dict.get(2):
-            self.percent: int | float = percent
-        if faction := self.values_dict.get(3):
-            self.faction: Faction | None = Factions.get_from_identifier(number=faction)
-        if mix_id := self.values_dict.get(4):
-            self.mix_id: int = mix_id
-            if stratagem := stratagem_id_dict.get(self.mix_id):
-                self.found_stratagem: str = stratagem
-            elif booster := json_dict["items"]["boosters"].get(str(self.mix_id), {}):
-                self.found_booster: dict = booster
-        if value5 := self.values_dict.get(5):
-            self.value5 = value5
-            print(f"VALUE5 USED: {self.id} {self.value5 = }")
-        if DEPRECATED_enemy_group := self.values_dict.get(6):
-            self.DEPRECATED_enemy_group = DEPRECATED_enemy_group
-        if DEPRECATED_item_package := self.values_dict.get(7):
-            self.DEPRECATED_item_package = DEPRECATED_item_package
-        if value8 := self.values_dict.get(8):
-            self.value8 = value8
-            print(f"VALUE8 USED: {self.id} {self.value8 = }")
-        if value9 := self.values_dict.get(9):
-            self.value9 = value9
-            print(f"VALUE9 USED: {self.id} {self.value9 = }")
-        if reward_multiplier_id := self.values_dict.get(10):
-            # refer to: /api/Mission/RewardEntries
-            self.reward_multiplier_id = reward_multiplier_id
-        if value11 := self.values_dict.get(11):
-            self.value11 = value11
-            print(f"VALUE11 USED: {self.id} {self.value11 = }")
-        if item_tag := self.values_dict.get(12):
-            # or item group; gets used in /Progression/Items
-            self.item_tag = item_tag
-        if hash_id := self.values_dict.get(13):
-            self.hash_id = hash_id
-            if enemy := json_dict["enemy_ids"].get(str(self.hash_id), None):
-                self.found_enemy: str = enemy
-        if planet_body_type := self.values_dict.get(14):
-            # BlackHole = 1, UNKNOWN = 2
-            self.planet_body_type = planet_body_type
-        if value15 := self.values_dict.get(15):
-            # might be a boolean flag, only used with game_OperationModToggle so far
-            self.value15 = value15
-        if resource_hash := self.values_dict.get(16):
-            # murmur2 resource hash
-            self.resource_hash = resource_hash
-            if enemy := json_dict["enemy_ids"].get(str(self.resource_hash), None):
-                self.found_enemy = enemy
+        if self.name_hash:
+            self.name = json_dict["strings"].get(str(self.name_hash))
+        if self.fluff_description_hash:
+            self.fluff_description = json_dict["strings"].get(
+                str(self.fluff_description_hash)
+            )
+        if self.long_description_hash:
+            self.long_description = json_dict["strings"].get(
+                str(self.long_description_hash)
+            )
+        if self.short_description_hash:
+            short_desc = json_dict["strings"].get(str(self.short_description_hash))
+            if short_desc:
+                value = iter(
+                    i
+                    for i in [
+                        self.found_stratagem,
+                        self.found_enemy,
+                        self.found_booster,
+                        self.percent,
+                        self.count,
+                    ]
+                    if i
+                )
+                short_desc = arrowhead_format(short_desc)
+                if "#V_ONE" in short_desc:
+                    short_desc = short_desc.replace(
+                        "#V_ONE", str(next(value, "NOT FOUND"))
+                    )
+                if "#V_TWO" in short_desc:
+                    short_desc = short_desc.replace(
+                        "#V_TWO", str(next(value, "NOT FOUND"))
+                    )
+                short_desc = short_desc.replace("\n", " ")
+                self.short_description = short_desc
 
     def __hash__(self):
         return hash((self.id))
@@ -233,8 +289,8 @@ class GlobalEvent(ReprMixin):
     ) -> None:
         """Organised data of a global event"""
         self.id: int = raw_global_event_data["eventId"]
-        self.title: str = dispatch_format(raw_global_event_data.get("title", ""))
-        self.message: str = dispatch_format(
+        self.title: str = arrowhead_format(raw_global_event_data.get("title", ""))
+        self.message: str = arrowhead_format(
             text=raw_global_event_data.get("message", "")
         )
         self.faction: Faction = Factions.get_from_identifier(
@@ -248,6 +304,8 @@ class GlobalEvent(ReprMixin):
         ]
         self.planet_indices: list[int] = raw_global_event_data["planetIndices"]
         self.expire_time: int = raw_global_event_data["expireTime"] + war_time
+        self.intro_image_id: int = raw_global_event_data.get("introMediaId32", 0)
+        self.outro_image_id: int = raw_global_event_data.get("outroMediaId32", 0)
 
     @property
     def split_message(self) -> list[str]:

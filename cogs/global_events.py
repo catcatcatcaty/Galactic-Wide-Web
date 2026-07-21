@@ -1,14 +1,17 @@
-from datetime import datetime
-from disnake import AppCmdInter, ApplicationInstallTypes, InteractionContextTypes
-from disnake.ext import commands, tasks
-from main import GalacticWideWebBot
+from datetime import datetime, timezone
+from disnake import AppCmdInter, ApplicationInstallTypes, File, InteractionContextTypes
+from disnake.ext import commands
+from disnake.ext.commands import Cog, Param, slash_command
+from disnake.ext.tasks import loop
+from os import listdir
+from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
-from utils.containers import GlobalEventCommandContainer, GlobalEventsContainer
+from utils.containers import GlobalEventsContainer
 from utils.dbv2 import GWWGuild, GWWGuilds
 from utils.embeds.global_events_embed import global_events_embed, global_events_command_embed
 
 
-class GlobalEventsCog(commands.Cog):
+class GlobalEventsCog(Cog):
     def __init__(self, bot: GalacticWideWebBot) -> None:
         self.bot = bot
 
@@ -23,17 +26,30 @@ class GlobalEventsCog(commands.Cog):
         if self.global_event_check in self.bot.loops:
             self.bot.loops.remove(self.global_event_check)
 
-    @tasks.loop(minutes=1)
+    @loop(minutes=1)
     async def global_event_check(self) -> None:
-        ge_start = datetime.now()
-        if (
-            not self.bot.interface_handler.loaded
-            or ge_start < self.bot.ready_time
-            or not self.bot.data.loaded
-            or self.bot.interface_handler.busy
-            or not self.bot.data.formatted_data.global_events["en"]
-        ):
+        ge_start = datetime.now(tz=timezone.utc)
+        if not self.bot.ready:
+            self.bot.logger.warning(
+                "global_event_check loop returning - the bot isn't ready"
+            )
             return
+        if self.bot.interface_handler.busy:
+            self.bot.logger.warning(
+                "global_event_check loop returning - the interface_handler is busy"
+            )
+            return
+        if not self.bot.data.formatted_data.global_events.get("en"):
+            self.bot.logger.warning(
+                "global_event_check loop returning - english global events are missing"
+            )
+            return
+        if not self.bot.data.formatted_data:
+            self.bot.logger.error(
+                "global_event_check loop returning - NO FORMATTED DATA"
+            )
+            return
+
         for index, global_event in enumerate(
             self.bot.data.formatted_data.global_events["en"]
         ):
@@ -49,13 +65,34 @@ class GlobalEventsCog(commands.Cog):
                     )
                     or "BRIEFING" in global_event.title.upper()
                 ):
+                    self.bot.logger.info(
+                        f"global_event_check loop - global event {global_event.id} identified as MO briefing and is being skipped"
+                    )
                     self.bot.databases.war_info.global_event_id = global_event.id
                     self.bot.databases.war_info.save_changes()
                     continue
                 unique_langs = GWWGuilds.unique_languages()
+
+                image_url = None
+                if (
+                    image_id := (
+                        global_event.outro_image_id or global_event.intro_image_id
+                    )
+                ) and f"{image_id}.png" in listdir("resources/news_images"):
+                    try:
+                        image_message = await self.bot.channels.waste_bin_channel.send(
+                            file=File(f"resources/news_images/{image_id}.png")
+                        )
+                    except:
+                        pass
+                    image_url = image_message.attachments[0].url
+
                 containers = {
                     lang: [
                         global_events_embed(
+                            lang_code=self.bot.json_dict["languages"][lang][
+                                "code_long"
+                            ],
                             container_json=self.bot.json_dict["languages"][lang][
                                 "containers"
                             ]["GlobalEventsContainer"],
@@ -63,6 +100,7 @@ class GlobalEventsCog(commands.Cog):
                                 lang
                             ][index],
                             planets=self.bot.data.formatted_data.planets,
+                            image_url=image_url,
                         )
                     ]
                     for lang in unique_langs
@@ -73,7 +111,7 @@ class GlobalEventsCog(commands.Cog):
                 self.bot.databases.war_info.global_event_id = global_event.id
                 self.bot.databases.war_info.save_changes()
                 self.bot.logger.info(
-                    f"Sent Global Event out to {len(self.bot.interface_handler.detailed_dispatches)} channels in {(datetime.now() - ge_start).total_seconds():.2f}s"
+                    f"global_event_check loop - sent global event {global_event.id} out to {len(self.bot.interface_handler.detailed_dispatches)} channels in {(datetime.now(tz=timezone.utc) - ge_start).total_seconds():.2f} seconds"
                 )
                 break
 
@@ -88,19 +126,19 @@ class GlobalEventsCog(commands.Cog):
             await error_handler.log_error(None, error, "global_event_check loop")
 
     @wait_for_startup()
-    @commands.slash_command(
-        description="[WIP] Returns information on the current global event(s) - if available.",
+    @slash_command(
+        description="Show currently active global events",
         install_types=ApplicationInstallTypes.all(),
         contexts=InteractionContextTypes.all(),
         extras={
-            "long_description": "[WIP] Returns information on the current Global Event(s) if any are active",
-            "example_usage": "**`/global_events public:Yes`** would return information on the current Global Events that other members in the server can see.",
+            "long_description": "Shows any global events that are currently active.",
+            "example_usage": "**`/global_events public:Yes`** returns any active global events, visible to everyone in the channel.",
         },
     )
     async def global_events(
         self,
         inter: AppCmdInter,
-        public: str = commands.Param(
+        public: str = Param(
             choices=["Yes", "No"],
             default="No",
             description="If you want the response to be seen by others in the server.",
@@ -108,24 +146,38 @@ class GlobalEventsCog(commands.Cog):
     ) -> None:
         await inter.response.defer(ephemeral=public != "Yes")
         if inter.guild:
-            guild = GWWGuilds.get_specific_guild(id=inter.guild_id)
+            guild = GWWGuilds.get_specific_guild(id=inter.guild.id)
             if not guild:
                 self.bot.logger.error(
-                    f"Guild {inter.guild_id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
+                    f"Guild {inter.guild.id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
                 )
-                guild = GWWGuilds.add(inter.guild_id, "en", [])
+                guild = GWWGuilds.add(inter.guild.id, "en", [])
         else:
             guild = GWWGuild.default()
-        # guild_language = self.bot.json_dict["languages"][guild.language] TODO
+
         containers = []
+        images = []
         for global_event in sorted(
             self.bot.data.formatted_data.global_events[guild.language],
             key=lambda x: x.expire_time,
         ):
-            if global_event.assignment_id:
-                continue
-            container = GlobalEventCommandContainer(
-                global_event=global_event, planets=self.bot.data.formatted_data.planets
+            attachment_url = None
+            if (
+                image_id := global_event.outro_image_id or global_event.intro_image_id
+            ) and f"{image_id}.png" in listdir("resources/news_images"):
+                event_image = File(f"resources/news_images/{image_id}.png")
+                images.append(event_image)
+                attachment_url = f"attachment://{image_id}.png"
+
+            container = GlobalEventsContainer(
+                lang_code=guild.language,
+                container_json=self.bot.json_dict["languages"][guild.language][
+                    "containers"
+                ]["GlobalEventsContainer"],
+                global_event=global_event,
+                planets=self.bot.data.formatted_data.planets,
+                with_expiry_time=True,
+                attachment_url=attachment_url,
             )
             containers.append(container)
         if not containers:
@@ -133,6 +185,7 @@ class GlobalEventsCog(commands.Cog):
             return
         await inter.send(
             components=containers,
+            files=images,
             ephemeral=public != "Yes",
         )
 
@@ -155,14 +208,28 @@ class GlobalEventsCog(commands.Cog):
         else:
             guild = GWWGuild.default()
         containers = []
+        images = []
         for global_event in sorted(
                 self.bot.data.formatted_data.global_events[guild.language],
                 key=lambda x: x.expire_time,
         ):
-            if global_event.assignment_id:
-                continue
-            container = global_events_command_embed(
-                global_event=global_event, planets=self.bot.data.formatted_data.planets
+            attachment_url = None
+            if (
+                image_id := global_event.outro_image_id or global_event.intro_image_id
+            ) and f"{image_id}.png" in listdir("resources/news_images"):
+                event_image = File(f"resources/news_images/{image_id}.png")
+                images.append(event_image)
+                attachment_url = f"attachment://{image_id}.png"
+
+            container = global_events_embed(
+                lang_code=guild.language,
+                container_json=self.bot.json_dict["languages"][guild.language][
+                    "containers"
+                ]["GlobalEventsContainer"],
+                global_event=global_event,
+                planets=self.bot.data.formatted_data.planets,
+                with_expiry_time=True,
+                attachment_url=attachment_url,
             )
             containers.append(container)
         if not containers:

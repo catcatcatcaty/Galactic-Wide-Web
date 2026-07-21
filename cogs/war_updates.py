@@ -1,19 +1,21 @@
 from asyncio import to_thread
-from datetime import datetime
+from datetime import datetime, timezone
 from disnake import File
-from disnake.ext import commands, tasks
-from main import GalacticWideWebBot
+from disnake.ext.commands import Cog
+from disnake.ext.tasks import loop
+from utils.bot import GalacticWideWebBot
 from utils.containers import (
     DSSChangesContainer,
     RegionChangesContainer,
     CampaignChangesContainer,
 )
 from utils.dataclasses import CampaignChangesJson, DSSChangesJson, RegionChangesJson
+from utils.dataclasses.enums import EventType
 from utils.dbv2 import GWWGuilds
 from utils.maps import Maps
 
 
-class WarUpdatesCog(commands.Cog):
+class WarUpdatesCog(Cog):
     def __init__(self, bot: GalacticWideWebBot) -> None:
         self.bot = bot
         self.loops = (self.campaign_check, self.dss_check, self.region_check)
@@ -31,28 +33,33 @@ class WarUpdatesCog(commands.Cog):
             if loop in self.bot.loops:
                 self.bot.loops.remove(loop)
 
-    @tasks.loop(minutes=1)
+    @loop(minutes=1)
     async def campaign_check(self) -> None:
-        update_start = datetime.now()
-        if (
-            not self.bot.interface_handler.loaded
-            or not self.bot.data.loaded
-            or not self.bot.data.previous_data
-            or update_start < self.bot.ready_time
-            or self.bot.interface_handler.busy
-        ):
+        update_start = datetime.now(tz=timezone.utc)
+        if not self.bot.ready:
+            self.bot.logger.warning(
+                "campaign_check loop returning - the bot isn't ready"
+            )
+            return
+        if self.bot.interface_handler.busy:
+            self.bot.logger.warning(
+                "campaign_check loop returning - the interface_handler is busy"
+            )
+            return
+        if not self.bot.data.previous_data:
+            self.bot.logger.warning(
+                "campaign_check loop returning - previous data is missing"
+            )
             return
         unique_langs = GWWGuilds.unique_languages()
-        components = {
+        components: dict[str, CampaignChangesContainer] = {
             lang: CampaignChangesContainer(
                 CampaignChangesJson(
                     lang_code_long=self.bot.json_dict["languages"][lang]["code_long"],
                     container=self.bot.json_dict["languages"][lang]["containers"][
                         "CampaignChangesContainer"
                     ],
-                    special_units=self.bot.json_dict["languages"][lang][
-                        "special_units"
-                    ],
+                    subfactions=self.bot.json_dict["languages"][lang]["subfactions"],
                     factions=self.bot.json_dict["languages"][lang]["factions"],
                     regions=self.bot.json_dict["languages"][lang]["regions"],
                 )
@@ -69,7 +76,7 @@ class WarUpdatesCog(commands.Cog):
                     planet_owner=new_campaign.planet.faction.full_name,
                     event=bool(new_campaign.planet.event),
                     event_type=(
-                        new_campaign.planet.event.type
+                        new_campaign.planet.event.type.value
                         if new_campaign.planet.event
                         else None
                     ),
@@ -96,9 +103,9 @@ class WarUpdatesCog(commands.Cog):
                     previous_data_planet = self.bot.data.previous_data.planets.get(
                         old_campaign.planet_index
                     )
-                    hours_remaining = 0.0
                     if not previous_data_planet:
                         continue
+                    hours_remaining = 0.0
                     if previous_data_planet.event:
                         hours_remaining = (
                             previous_data_planet.event.end_time_datetime - update_start
@@ -129,6 +136,30 @@ class WarUpdatesCog(commands.Cog):
                 old_campaign.delete()
                 self.bot.databases.war_campaigns.remove(old_campaign)
                 need_to_update_sectors = True
+            else:
+                if new_campaign := next(
+                    (
+                        nc
+                        for nc in self.bot.data.formatted_data.campaigns
+                        if nc.id == old_campaign.campaign_id
+                    ),
+                    None,
+                ):
+                    if (
+                        new_campaign.planet.event
+                        and new_campaign.planet.event.type == EventType.UrgentLiberation
+                    ) and not old_campaign.event:
+                        # Liberation has become urgent
+                        for container in components.values():
+                            container.new_urgent_liberation(
+                                campaign=new_campaign,
+                                gambit_planets=self.bot.data.formatted_data.gambit_planets,
+                            )
+                        old_campaign.event = True
+                        old_campaign.event_faction = new_campaign.faction.full_name
+                        old_campaign.event_type = new_campaign.planet.event.type.value
+                        old_campaign.save_event_changes()
+                        new_updates = True
 
         old_campaign_ids = [
             old_campaign.campaign_id
@@ -136,11 +167,13 @@ class WarUpdatesCog(commands.Cog):
         ]
         for new_campaign in self.bot.data.formatted_data.campaigns:
             # loop through new campaigns
+            if new_campaign.planet.is_hidden:
+                continue
             if new_campaign.id not in old_campaign_ids:
                 # if campaign is brand new
                 if (
                     new_campaign.planet.event
-                    and new_campaign.planet.event.type == 2
+                    and new_campaign.planet.event.type == EventType.Invasion
                     and new_campaign.planet.event.potential_buildup == 0
                 ):
                     # if campaign is an illuminate invasion but doesnt have the buildup data
@@ -156,7 +189,7 @@ class WarUpdatesCog(commands.Cog):
                     planet_owner=new_campaign.planet.faction.full_name,
                     event=bool(new_campaign.planet.event),
                     event_type=(
-                        new_campaign.planet.event.type
+                        new_campaign.planet.event.type.value
                         if new_campaign.planet.event
                         else None
                     ),
@@ -174,7 +207,7 @@ class WarUpdatesCog(commands.Cog):
                 feature_type="war_announcements", content=components
             )
             self.bot.logger.info(
-                f"Sent war announcements out to {len(self.bot.interface_handler.war_announcements)} channels in {(datetime.now() - update_start).total_seconds():.2f}s"
+                f"campaign_check loop - sent campaign announcement out to {len(self.bot.interface_handler.war_announcements)} channels in {(datetime.now(tz=timezone.utc) - update_start).total_seconds():.2f} seconds"
             )
             if need_to_update_sectors:
                 await to_thread(
@@ -208,7 +241,7 @@ class WarUpdatesCog(commands.Cog):
                     )
                 )
                 self.bot.maps.latest_maps[lang["code"]] = Maps.LatestMap(
-                    datetime.now(), message.attachments[0].url
+                    datetime.now(tz=timezone.utc), message.attachments[0].url
                 )
 
     @campaign_check.before_loop
@@ -221,21 +254,25 @@ class WarUpdatesCog(commands.Cog):
         if error_handler:
             await error_handler.log_error(None, error, "campaign_check loop")
 
-    @tasks.loop(minutes=1)
+    @loop(minutes=1)
     async def dss_check(self) -> None:
-        update_start = datetime.now()
-        if (
-            not self.bot.interface_handler.loaded
-            or not self.bot.data.loaded
-            or not self.bot.data.previous_data
-            or update_start < self.bot.ready_time
-            or self.bot.interface_handler.busy
-        ):
+        update_start = datetime.now(tz=timezone.utc)
+        if not self.bot.ready:
+            self.bot.logger.warning("dss_check loop returning - the bot isn't ready")
+            return
+        if self.bot.interface_handler.busy:
+            self.bot.logger.warning(
+                "dss_check loop returning - the interface_handler is busy"
+            )
+            return
+        if not self.bot.data.previous_data:
+            self.bot.logger.warning(
+                "dss_check loop returning - previous data is missing"
+            )
             return
         dss_updates = False
         unique_langs = GWWGuilds.unique_languages()
         if self.bot.data.formatted_data.dss != None:
-            # DSS updates
             containers = {
                 lang: DSSChangesContainer(
                     json=DSSChangesJson(
@@ -245,16 +282,17 @@ class WarUpdatesCog(commands.Cog):
                         container=self.bot.json_dict["languages"][lang]["containers"][
                             "DSSChangesContainer"
                         ],
-                        special_units=self.bot.json_dict["languages"][lang][
-                            "special_units"
+                        subfactions=self.bot.json_dict["languages"][lang][
+                            "subfactions"
                         ],
                         regions=self.bot.json_dict["languages"][lang]["regions"],
+                        currencies=self.bot.json_dict["languages"][lang]["currencies"],
                     )
                 )
                 for lang in unique_langs
             }
             if (
-                self.bot.databases.dss_info.planet_index == None
+                self.bot.databases.dss_info.planet_index is None
                 or not self.bot.databases.dss_info.tactical_action_statuses
             ):
                 self.bot.databases.dss_info.planet_index = (
@@ -292,7 +330,7 @@ class WarUpdatesCog(commands.Cog):
                 old_status = self.bot.databases.dss_info.tactical_action_statuses.get(
                     ta.id
                 )
-                if old_status == None or old_status != ta.status:
+                if old_status is None or old_status != ta.status:
                     for container in containers.values():
                         container.ta_status_changed(tactical_action=ta)
                         self.bot.databases.dss_info.tactical_action_statuses[ta.id] = (
@@ -306,7 +344,7 @@ class WarUpdatesCog(commands.Cog):
                 feature_type="dss_announcements", content=containers
             )
             self.bot.logger.info(
-                f"Sent DSS announcements out to {len(self.bot.interface_handler.dss_announcements)} channels in {(datetime.now() - update_start).total_seconds():.2f}s"
+                f"dss_check loop - sent DSS announcement out to {len(self.bot.interface_handler.dss_announcements)} channels in {(datetime.now(tz=timezone.utc) - update_start).total_seconds():.2f} seconds"
             )
             if dss_has_moved:
                 self.bot.maps.update_planets(
@@ -332,7 +370,7 @@ class WarUpdatesCog(commands.Cog):
                         )
                     )
                     self.bot.maps.latest_maps[lang] = Maps.LatestMap(
-                        datetime.now(), message.attachments[0].url
+                        datetime.now(tz=timezone.utc), message.attachments[0].url
                     )
 
     @dss_check.before_loop
@@ -345,16 +383,21 @@ class WarUpdatesCog(commands.Cog):
         if error_handler:
             await error_handler.log_error(None, error, "dss_check loop")
 
-    @tasks.loop(minutes=1)
+    @loop(minutes=1)
     async def region_check(self) -> None:
-        update_start = datetime.now()
-        if (
-            not self.bot.interface_handler.loaded
-            or not self.bot.data.loaded
-            or not self.bot.data.previous_data
-            or update_start < self.bot.ready_time
-            or self.bot.interface_handler.busy
-        ):
+        update_start = datetime.now(tz=timezone.utc)
+        if not self.bot.ready:
+            self.bot.logger.warning("region_check loop returning - the bot isn't ready")
+            return
+        if self.bot.interface_handler.busy:
+            self.bot.logger.warning(
+                "region_check loop returning - the interface_handler is busy"
+            )
+            return
+        if not self.bot.data.previous_data:
+            self.bot.logger.warning(
+                "region_check loop returning - previous data is missing"
+            )
             return
         region_updates = False
         unique_langs = GWWGuilds.unique_languages()
@@ -362,6 +405,7 @@ class WarUpdatesCog(commands.Cog):
             r
             for p in self.bot.data.formatted_data.planets.values()
             for r in p.regions.values()
+            if not p.is_hidden
         ]
         if not self.bot.databases.planet_regions:
             for region in all_regions:
@@ -376,9 +420,7 @@ class WarUpdatesCog(commands.Cog):
                     container=self.bot.json_dict["languages"][lang]["containers"][
                         "RegionChangesContainer"
                     ],
-                    special_units=self.bot.json_dict["languages"][lang][
-                        "special_units"
-                    ],
+                    subfactions=self.bot.json_dict["languages"][lang]["subfactions"],
                     factions=self.bot.json_dict["languages"][lang]["factions"],
                 )
             )
@@ -449,7 +491,7 @@ class WarUpdatesCog(commands.Cog):
                     "region_announcements", components
                 )
                 self.bot.logger.info(
-                    f"Sent region announcements out to {len(self.bot.interface_handler.region_announcements)} channels in {(datetime.now() - update_start).total_seconds():.2f}s"
+                    f"region_check loop - sent region announcements out to {len(self.bot.interface_handler.region_announcements)} channels in {(datetime.now(tz=timezone.utc) - update_start).total_seconds():.2f} seconds"
                 )
 
     @region_check.before_loop

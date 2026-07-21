@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from utils.dataclasses import CalculatedEndTime, Factions
 from ..api_wrapper.models.planet import Planet
 
@@ -19,7 +19,7 @@ def get_end_time(
         if final_region.tracker and final_region.tracker.change_rate_per_hour > 0:
             results.end_time = final_region.tracker.complete_time
             results.regions.append(final_region)
-            return results
+        return results
 
     if source_planet.event:
         # Regular defence win
@@ -112,7 +112,10 @@ def get_end_time(
                                 - source_planet.event.start_time_datetime
                             ).total_seconds()
                             elapsed_time = (
-                                (datetime.now() + timedelta(hours=hours_from_now))
+                                (
+                                    datetime.now(tz=timezone.utc)
+                                    + timedelta(hours=hours_from_now)
+                                )
                                 - source_planet.event.start_time_datetime
                             ).total_seconds()
                             target_duration = event_duration * next_avail
@@ -127,7 +130,9 @@ def get_end_time(
                     hours_from_now += (
                         1 - current_perc
                     ) / source_planet.tracker.change_rate_per_hour
-                end_time = datetime.now() + timedelta(hours=hours_from_now)
+                end_time = datetime.now(tz=timezone.utc) + timedelta(
+                    hours=hours_from_now
+                )
                 if results.end_time and end_time < results.end_time:
                     results.clear()
                     results.end_time = end_time
@@ -149,13 +154,15 @@ def get_end_time(
         )
         if non_lib_regions:
             regions_liberated = []
-            region_rates = [
+            region_health_rates = [
                 r.tracker.change_rate_per_hour * r.max_health
                 for r in non_lib_regions
                 if r.tracker and r.tracker.change_rate_per_hour > 0
             ]
             average_region_hp_per_hour = (
-                sum(region_rates) / len(region_rates) if region_rates else 0
+                sum(region_health_rates) / len(region_health_rates)
+                if region_health_rates
+                else 0
             )
             average_planet_hp_per_hour = (
                 source_planet.tracker.change_rate_per_hour * source_planet.max_health
@@ -167,20 +174,13 @@ def get_end_time(
             )
             current_perc = 1 - source_planet.health_perc
             hours_from_now = 0
-            region_rate_to_use = (
-                average_total_hp_per_hour
-                if average_region_hp_per_hour == 0
-                else average_region_hp_per_hour
-            )
             for index, region in enumerate(non_lib_regions):
                 if region.tracker and region.tracker.change_rate_per_hour > 0:
                     est_rate_pct = region.tracker.change_rate_per_hour
-                elif region_rate_to_use == average_total_hp_per_hour:
-                    est_rate_pct = (
-                        region_rate_to_use / source_planet.max_health
-                    ) * 1.35
                 else:
-                    est_rate_pct = region_rate_to_use / region.max_health
+                    est_rate_pct = average_region_hp_per_hour / region.max_health
+                if est_rate_pct == 0:
+                    break
                 est_lib_time = (
                     ((1 - region.perc) / est_rate_pct)
                     if region.is_available
@@ -233,7 +233,7 @@ def get_end_time(
                 hours_from_now += (1 - current_perc) / (
                     average_total_hp_per_hour / source_planet.max_health
                 )
-            end_time = datetime.now() + timedelta(hours=hours_from_now)
+            end_time = datetime.now(tz=timezone.utc) + timedelta(hours=hours_from_now)
             if regions_liberated:
                 results.regions = regions_liberated
             else:

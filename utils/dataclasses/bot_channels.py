@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from disnake import TextChannel
 from disnake.ext import commands
-from utils.dataclasses.config import Config
+from disnake.ext.commands import AutoShardedInteractionBot
+from utils.dataclasses import Config
 
 
 @dataclass

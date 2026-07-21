@@ -1,29 +1,29 @@
 from disnake import AppCmdInter, ApplicationInstallTypes, InteractionContextTypes
-from disnake.ext import commands
+from disnake.ext.commands import Cog, Param, slash_command
 from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
 from utils.dbv2 import GWWGuild, GWWGuilds
 from utils.embeds import DSSEmbed
 
 
-class DSSCog(commands.Cog):
+class DSSCog(Cog):
     def __init__(self, bot: GalacticWideWebBot) -> None:
         self.bot = bot
 
     @wait_for_startup()
-    @commands.slash_command(
-        description="Show info on the Democracy Space Station",
+    @slash_command(
+        description="Show current info on the Democracy Space Station",
         install_types=ApplicationInstallTypes.all(),
         contexts=InteractionContextTypes.all(),
         extras={
-            "long_description": "Directly opens the DSS tab of the Wiki, instead of using the menu.",
-            "example_usage": "**`/dss`** opens the Wiki to the DSS tab.",
+            "long_description": "Shows the current status of the Democracy Space Station, including its active tactical actions and the next planets being considered for a DSS vote (if available).",
+            "example_usage": "**`/dss public:Yes`** returns the DSS status embed visible to everyone in the channel.",
         },
     )
     async def dss(
         self,
         inter: AppCmdInter,
-        public: str = commands.Param(
+        public: str = Param(
             choices=["Yes", "No"],
             default="No",
             description="Do you want other people to see the response to this command?",
@@ -31,12 +31,12 @@ class DSSCog(commands.Cog):
     ) -> None:
         await inter.response.defer(ephemeral=public != "Yes")
         if inter.guild:
-            guild = GWWGuilds.get_specific_guild(id=inter.guild_id)
+            guild = GWWGuilds.get_specific_guild(id=inter.guild.id)
             if not guild:
                 self.bot.logger.error(
-                    f"Guild {inter.guild_id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
+                    f"Guild {inter.guild.id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
                 )
-                guild = GWWGuilds.add(inter.guild_id, "en", [])
+                guild = GWWGuilds.add(inter.guild.id, "en", [])
         else:
             guild = GWWGuild.default()
         guild_language = self.bot.json_dict["languages"][guild.language]

@@ -3736,5 +3736,103 @@
             "zh-Hant": "\u83ab\u514b\u65af"
         },
         "description": "Constant eruptions keep this planet covered in lava flows and utterly inhospitable to Democratic life. It also makes it a treasure trove of rare minerals."
+    },
+    "267": {
+        "names": {
+            "en-GB": "BIG ROCK",
+            "de-DE": "BIG ROCK",
+            "es-ES": "ROCA GRANDE",
+            "fr-FR": "GROS-ROC",
+            "it-IT": "GROSSO MASSO",
+            "pt-BR": "ROCHA GRANDE",
+            "ru-RU": "\u0411\u041e\u041b\u042c\u0428\u041e\u0419 \u041a\u0410\u041c\u0415\u041d\u042c",
+            "zh-Hans": "\u5de8\u5ca9",
+            "zh-Hant": "\u5de8\u77f3"
+        },
+        "description": ""
+    },
+    "268": {
+        "names": {
+            "en-GB": "LUXURIANT",
+            "de-DE": "LUXURIANT",
+            "es-ES": "EXUBERANTE",
+            "fr-FR": "LUXURIANCE",
+            "it-IT": "LUXURIANT",
+            "pt-BR": "LUXURIANTE",
+            "ru-RU": "\u0420\u041e\u0421\u041a\u041e\u0428\u0415\u0421\u0422\u0412\u041e",
+            "zh-Hans": "\u5bcc\u6e90",
+            "zh-Hant": "\u8c50\u8302"
+        },
+        "description": ""
+    },
+    "269": {
+        "names": {
+            "en-GB": "BRILLIANCE",
+            "de-DE": "BRILLIANCE",
+            "es-ES": "BRILLO",
+            "fr-FR": "\u00c9CLAT",
+            "it-IT": "SPLENDOR",
+            "pt-BR": "BRILHANTISMO",
+            "ru-RU": "\u0413\u0415\u041d\u0418\u0410\u041b\u042c\u041d\u041e\u0421\u0422\u042c",
+            "zh-Hans": "\u74a8\u5149",
+            "zh-Hant": "\u8f1d\u714c"
+        },
+        "description": ""
+    },
+    "270": {
+        "names": {
+            "en-GB": "FRONTERIA",
+            "de-DE": "FRONTERIA",
+            "es-ES": "FRONTERIA",
+            "fr-FR": "FRONT\u00c9RIA",
+            "it-IT": "FRONTERIA",
+            "pt-BR": "FRONTERIA",
+            "ru-RU": "\u0424\u0420\u041e\u041d\u0422\u0415\u0420\u0418\u042f",
+            "zh-Hans": "\u8fb9\u9672",
+            "zh-Hant": "\u4f5b\u9686\u6cf0\u91cc\u4e9e"
+        },
+        "description": ""
+    },
+    "271": {
+        "names": {
+            "en-GB": "ZYGOS",
+            "de-DE": "ZYGOS",
+            "es-ES": "ZYGOS",
+            "fr-FR": "ZYGOS",
+            "it-IT": "ZYGOS",
+            "pt-BR": "ZYGOS",
+            "ru-RU": "\u0417\u0418\u0413\u041e\u0421",
+            "zh-Hans": "\u9f50\u6208\u65af",
+            "zh-Hant": "\u9f4a\u6208\u65af"
+        },
+        "description": ""
+    },
+    "272": {
+        "names": {
+            "en-GB": "BASQUINE VIII",
+            "de-DE": "BASQUINE VIII",
+            "es-ES": "BASQUINE VIII",
+            "fr-FR": "BASQUINE\u00a0VIII",
+            "it-IT": "BASQUINE VIII",
+            "pt-BR": "BASQUINE VIII",
+            "ru-RU": "\u0411\u0410\u0421\u041a\u0421\u041a\u0410\u042f VIII",
+            "zh-Hans": "\u5df4\u65af\u91d1VIII",
+            "zh-Hant": "\u5df4\u65af\u594eVIII"
+        },
+        "description": ""
+    },
+    "273": {
+        "names": {
+            "en-GB": "SANGIS",
+            "de-DE": "SANGIS",
+            "es-ES": "SANGIS",
+            "fr-FR": "SANGIS",
+            "it-IT": "SANGIS",
+            "pt-BR": "SANGIS",
+            "ru-RU": "\u0421\u0410\u041d\u0413\u0418\u0421",
+            "zh-Hans": "\u8d64\u8840",
+            "zh-Hant": "\u8840\u8272"
+        },
+        "description": ""
     }
 }

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from disnake import (
     AppCmdInter,
     ApplicationInstallTypes,
@@ -6,12 +6,12 @@ from disnake import (
     File,
     InteractionContextTypes,
     MediaGalleryItem,
-    ui,
 )
 from disnake.ext import commands
-from disnake.ext.commands import Command
+from disnake.ext.commands import Cog, slash_command, Param, Command
+from disnake.ui import Container, MediaGallery
 
-from main import GalacticWideWebBot
+from utils.bot import GalacticWideWebBot
 from utils.containers import PlanetContainers
 from utils.checks import wait_for_startup
 from utils.dbv2 import GWWGuild, GWWGuilds
@@ -20,46 +20,46 @@ from utils.embeds.region_embed import RegionEmbed
 from utils.maps import Maps
 
 
-class PlanetCog(commands.Cog):
+class PlanetCog(Cog):
     def __init__(self, bot: GalacticWideWebBot):
         self.bot = bot
 
     async def planet_autocomp(inter: AppCmdInter, user_input: str) -> list[str]:
-        if not inter.bot.data.loaded:
+        if not inter.bot.ready:
             return []
         return [
-            f"{p.index}-{p.names.get('en-GB', str(p.index))}"
+            f"{p.index}-{p.names.get('en-GB', p.name)}"
             for p in sorted(
                 inter.bot.data.formatted_data.planets.values(),
                 key=lambda x: x.stats.player_count,
                 reverse=True,
             )
-            if user_input.lower() in p.names.get("en-GB", str(p.index)).lower()
+            if user_input.lower() in p.names.get("en-GB", p.name).lower()
             or user_input in str(p.index)
         ][:25]
 
     @wait_for_startup()
-    @commands.slash_command(
-        description="Returns the war details on a specific planet.",
+    @slash_command(
+        description="Get detailed war stats for a specific planet",
         install_types=ApplicationInstallTypes.all(),
         contexts=InteractionContextTypes.all(),
         extras={
-            "long_description": "Returns the war details on a specific planet. This includes a lot of stats that arent available in the dashboard.",
-            "example_usage": "**`/planet planet:Heeth with_map:Yes public:Yes`** returns a large embed with all of the stats the planet has. It also includes a map with an arrow pointing to the planet. It can also be seen by others in discord.",
+            "long_description": "Shows detailed war information for a specific planet, including stats not visible in the dashboard. Autocomplete is sorted by current player count so the most active planets appear first. Use `with_map:Yes` to attach a galactic map with an arrow pointing to that planet's location.",
+            "example_usage": "**`/planet planet:Heeth public:Yes`** returns detailed stats for Heeth, visible to everyone.\n- **`/planet planet:Heeth with_map:Yes`** also includes a map with an arrow pointing to Heeth.",
         },
     )
     async def planet(
         self,
         inter: AppCmdInter,
-        planet: str = commands.Param(
+        planet: str = Param(
             autocomplete=planet_autocomp, description="The planet you want to lookup"
         ),
-        with_map: str = commands.Param(
+        with_map: str = Param(
             choices=["Yes", "No"],
             default="No",
             description="Do you want a map showing where this planet is?",
         ),
-        public: str = commands.Param(
+        public: str = Param(
             choices=["Yes", "No"],
             default="No",
             description="Do you want other people to see the response to this command?",
@@ -71,7 +71,7 @@ class PlanetCog(commands.Cog):
             planet_data_list = [
                 p
                 for p in self.bot.data.formatted_data.planets.values()
-                if p.names.get("en-GB", str(p.index)).lower() == planet
+                if p.names.get("en-GB", p.name).lower() == planet
             ]
             if planet_data_list:
                 planet_data = planet_data_list[0]
@@ -90,12 +90,12 @@ class PlanetCog(commands.Cog):
                 ephemeral=public != "Yes",
             )
         if inter.guild:
-            guild = GWWGuilds.get_specific_guild(id=inter.guild_id)
+            guild = GWWGuilds.get_specific_guild(id=inter.guild.id)
             if not guild:
                 self.bot.logger.error(
-                    f"Guild {inter.guild_id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
+                    f"Guild {inter.guild.id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
                 )
-                guild = GWWGuilds.add(inter.guild_id, "en", [])
+                guild = GWWGuilds.add(inter.guild.id, "en", [])
         else:
             guild = GWWGuild.default()
         guild_language = self.bot.json_dict["languages"][guild.language]
@@ -108,7 +108,7 @@ class PlanetCog(commands.Cog):
         )
 
         if with_map == "Yes":
-            fifteen_minutes_ago = datetime.now() - timedelta(minutes=15)
+            fifteen_minutes_ago = datetime.now(tz=timezone.utc) - timedelta(minutes=15)
             latest_map = self.bot.maps.latest_maps.get(guild.language)
             if not latest_map or (
                 latest_map and latest_map.updated_at < fifteen_minutes_ago
@@ -138,7 +138,7 @@ class PlanetCog(commands.Cog):
                     )
                 )
                 self.bot.maps.latest_maps[language_json["code"]] = Maps.LatestMap(
-                    datetime.now(), message.attachments[0].url
+                    datetime.now(tz=timezone.utc), message.attachments[0].url
                 )
                 latest_map = self.bot.maps.latest_maps[language_json["code"]]
             self.bot.maps.draw_arrow(language_code=guild.language, planet=planet_data)
@@ -146,8 +146,8 @@ class PlanetCog(commands.Cog):
                 file=File(fp=self.bot.maps.FileLocations.arrow_map)
             )
             components.append(
-                ui.Container(
-                    ui.MediaGallery(
+                Container(
+                    MediaGallery(
                         MediaGalleryItem(arrow_map_message.attachments[0].url)
                     ),
                     accent_colour=Colour.dark_embed(),
@@ -182,7 +182,7 @@ class PlanetCog(commands.Cog):
                 planet_data_list = [
                     p
                     for p in self.bot.data.formatted_data.planets.values()
-                    if p.names.get("en-GB", str(p.index)).lower() == planet
+                    if p.names.get("en-GB", p.name).lower() == planet
                 ]
                 if planet_data_list:
                     planet_data = planet_data_list[0]

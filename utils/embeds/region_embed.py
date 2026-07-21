@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from disnake import Embed
 
@@ -15,7 +15,7 @@ class RegionEmbed(Embed, EmbedReprMixin):
         container_json: dict,
     ):
         super().__init__()
-        now_seconds = int(datetime.now().timestamp())
+        now_seconds = int(datetime.now(tz=timezone.utc).timestamp())
         for region in sorted(planet.regions.values(), key=lambda x: x.size):
             text_display = []
             if (
@@ -26,7 +26,7 @@ class RegionEmbed(Embed, EmbedReprMixin):
                 )
             ):
                 text_display = [f"~~", "".join(text_display), "~~"]
-            if region.flags == 1 and planet.faction == Factions.automaton:
+            if region.is_factory:
                 text_display.append(
                     f"\n-# {region.emoji} Class {region.size} Megafactory"
                 )

@@ -1,48 +1,55 @@
-from disnake import AppCmdInter, ApplicationInstallTypes, InteractionContextTypes
-from disnake.ext import commands
-from main import GalacticWideWebBot
+from disnake import (
+    AppCmdInter,
+    ApplicationInstallTypes,
+    InteractionContextTypes,
+    MessageInteraction,
+)
+from disnake.ext.commands import Cog, Param, slash_command
+from utils.bot import GalacticWideWebBot
 from utils.containers import HelpContainer
 from utils.checks import wait_for_startup
 
+PRIVATE_COMMANDS = ("global_event", "gwe", "pmajor_order")
 
-class HelpCog(commands.Cog):
+
+class HelpCog(Cog):
     def __init__(self, bot: GalacticWideWebBot) -> None:
         self.bot = bot
 
     async def help_autocomp(inter: AppCmdInter, user_input: str) -> list[str]:
-        if not inter.bot.global_slash_commands:
+        if not inter.bot.ready:
             return []
-        commands_list = ["all"] + sorted(
-            [
-                i.name
-                for i in inter.bot.global_slash_commands
-                if i.name not in ["gwe", "global_event"]
-            ]
-        )
         return [
             command
-            for command in commands_list
+            for command in ["all"]
+            + sorted(
+                [
+                    i.name
+                    for i in inter.bot.global_slash_commands
+                    if i.name not in PRIVATE_COMMANDS
+                ]
+            )
             if user_input.lower() in command.lower()
         ][:25]
 
     @wait_for_startup()
-    @commands.slash_command(
-        description='Get some help for a specific command, or a list of every command by using "all".',
+    @slash_command(
+        description='Get help for a specific command, or use "all" for a full command list',
         install_types=ApplicationInstallTypes.all(),
         contexts=InteractionContextTypes.all(),
         extras={
-            "long_description": "Get some help for a specific command or all commands. You can obtain longer descriptions and examples when you lookup a specific command.",
-            "example_usage": "**`/help command:Automatons public:Yes`** would return an embed with useful information about the Automatons command including example usage that other members in the server can see.",
+            "long_description": 'Shows a detailed description and example usage for a specific command. Use "all" to see a list of every available command. Autocomplete will suggest command names as you type.',
+            "example_usage": "**`/help command:planet public:Yes`** returns a detailed description and example usage for the `/planet` command, visible to everyone.\n- **`/help command:all`** lists every available command.",
         },
     )
     async def help(
         self,
         inter: AppCmdInter,
-        command: str = commands.Param(
+        command: str = Param(
             autocomplete=help_autocomp,
             description='The command you want to lookup, use "all" for a list of all available commands',
         ),
-        public: str = commands.Param(
+        public: str = Param(
             choices=["Yes", "No"],
             default="No",
             description="Do you want other people to see the response to this command?",
@@ -54,15 +61,11 @@ class HelpCog(commands.Cog):
         if command != "all":
             slash_command = self.bot.get_slash_command(command)
         else:
-            slash_commands = (
-                self.bot.global_application_commands
-                if inter.guild
-                else [
-                    command
-                    for command in self.bot.global_slash_commands
-                    if command.contexts and command.contexts.private_channel
-                ]
-            )
+            slash_commands = [
+                c
+                for c in self.bot.global_application_commands
+                if c.name not in PRIVATE_COMMANDS
+            ]
 
         if not slash_command and not slash_commands:
             await inter.send(
@@ -77,6 +80,22 @@ class HelpCog(commands.Cog):
                 ),
                 ephemeral=public != "Yes",
             )
+
+    @Cog.listener("on_button_click")
+    async def on_button_clicks(self, inter: MessageInteraction) -> None:
+        if inter.component.custom_id != "welcome_help_button":
+            return
+
+        await inter.send(
+            components=HelpContainer(
+                commands=[
+                    c
+                    for c in self.bot.global_application_commands
+                    if c.name not in PRIVATE_COMMANDS
+                ],
+            ),
+            ephemeral=True,
+        )
 
 
 def setup(bot: GalacticWideWebBot) -> None:
