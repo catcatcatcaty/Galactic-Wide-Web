@@ -11,7 +11,7 @@ class RegionType(Enum):
 
 
 class EndpointBase(Enum):
-    HELLDIVERS = Config.API_BASE
+    HELLDIVERS = "https://api.live.prod.thehelldiversgame.com/api/"
     STEAM_PLAYER_COUNT = (
         "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/"
     )

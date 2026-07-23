@@ -59,7 +59,7 @@ class BotDashboardCog(Cog):
                     "bot_dashboard loop - dashboard message not found, sending new one"
                 )
                 embed = Embed()
-                embed.add_field("Placeholder please ignore", "")
+                embed.add_field("Placeholder please ignore", "-")
                 self.bot.bot_dashboard_message = (
                     await self.bot.bot_dashboard_channel.send(
                         embed=embed

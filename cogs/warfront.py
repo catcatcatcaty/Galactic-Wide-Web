@@ -121,8 +121,10 @@ class WarfrontCog(Cog):
                 guild = GWWGuilds.add(ctx.guild.id, "en", [])
         else:
             guild = GWWGuild.default()
-
-        faction = arg[1]
+        if not arg:
+            await ctx.send(":warning: Value must be one of: Automaton, Terminids, Illuminate")
+            return
+        faction = arg[1:]
         if faction not in ["Automaton", "Terminids", "Illuminate"]:
             await ctx.send(":warning: Value must be one of: Automaton, Terminids, Illuminate")
             return

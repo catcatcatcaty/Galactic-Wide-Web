@@ -12,6 +12,9 @@ from utils.containers import (
 from utils.dataclasses import CampaignChangesJson, DSSChangesJson, RegionChangesJson
 from utils.dataclasses.enums import EventType
 from utils.dbv2 import GWWGuilds
+from utils.embeds.campaign_changes_embed import campaign_changes_embed
+from utils.embeds.dss_changes_embed import dss_changes_embed
+from utils.embeds.region_changes_embed import region_changes_embed
 from utils.maps import Maps
 
 
@@ -52,8 +55,8 @@ class WarUpdatesCog(Cog):
             )
             return
         unique_langs = GWWGuilds.unique_languages()
-        components: dict[str, CampaignChangesContainer] = {
-            lang: CampaignChangesContainer(
+        components: dict[str, campaign_changes_embed] = {
+            lang: campaign_changes_embed(
                 CampaignChangesJson(
                     lang_code_long=self.bot.json_dict["languages"][lang]["code_long"],
                     container=self.bot.json_dict["languages"][lang]["containers"][
@@ -235,6 +238,8 @@ class WarUpdatesCog(Cog):
                     planets=self.bot.data.formatted_data.planets,
                     dss=self.bot.data.formatted_data.dss,
                 )
+                #TODO fluxer image support
+                '''
                 message = await self.bot.channels.waste_bin_channel.send(
                     file=File(
                         fp=self.bot.maps.FileLocations.localized_map_path(lang["code"])
@@ -243,6 +248,7 @@ class WarUpdatesCog(Cog):
                 self.bot.maps.latest_maps[lang["code"]] = Maps.LatestMap(
                     datetime.now(tz=timezone.utc), message.attachments[0].url
                 )
+                '''
 
     @campaign_check.before_loop
     async def before_campaign_check(self) -> None:
@@ -274,7 +280,7 @@ class WarUpdatesCog(Cog):
         unique_langs = GWWGuilds.unique_languages()
         if self.bot.data.formatted_data.dss != None:
             containers = {
-                lang: DSSChangesContainer(
+                lang: dss_changes_embed(
                     json=DSSChangesJson(
                         lang_code_long=self.bot.json_dict["languages"][lang][
                             "code_long"
@@ -364,6 +370,8 @@ class WarUpdatesCog(Cog):
                         planets=self.bot.data.formatted_data.planets,
                         dss=self.bot.data.formatted_data.dss,
                     )
+                    #TODO fluxer file support
+                    """
                     message = await self.bot.channels.waste_bin_channel.send(
                         file=File(
                             fp=self.bot.maps.FileLocations.localized_map_path(lang)
@@ -372,6 +380,7 @@ class WarUpdatesCog(Cog):
                     self.bot.maps.latest_maps[lang] = Maps.LatestMap(
                         datetime.now(tz=timezone.utc), message.attachments[0].url
                     )
+                    """
 
     @dss_check.before_loop
     async def before_dss_check(self) -> None:
@@ -414,7 +423,7 @@ class WarUpdatesCog(Cog):
             return
 
         components = {
-            lang: RegionChangesContainer(
+            lang: region_changes_embed(
                 container_json=RegionChangesJson(
                     lang_code_long=self.bot.json_dict["languages"][lang]["code_long"],
                     container=self.bot.json_dict["languages"][lang]["containers"][
@@ -490,6 +499,8 @@ class WarUpdatesCog(Cog):
                 await self.bot.interface_handler.send_feature(
                     "region_announcements", components
                 )
+
+
                 self.bot.logger.info(
                     f"region_check loop - sent region announcements out to {len(self.bot.interface_handler.region_announcements)} channels in {(datetime.now(tz=timezone.utc) - update_start).total_seconds():.2f} seconds"
                 )

@@ -201,9 +201,10 @@ class Dashboard:
         for embed in self.embeds.copy():
             if len(embed.fields) == 0:
                 self.embeds.remove(embed)
-            else:
+            #TODO fluxer image support
+            #else:
                 # add blank line (max size, dont change)
-                embed.set_image("https://i.imgur.com/cThNy4f.png")
+                # embed.set_image("https://i.imgur.com/cThNy4f.png")
 
         embeds_to_skip = (self.DSSEmbed, self.FooterEmbed, self.GlobalResourceEmbed)
         if self.compact_level > 0:
@@ -732,7 +733,7 @@ class Dashboard:
             text: str = tasks_json["typeUNK"]
             text = self._add_progress_emoji(text=text, task=task)
 
-            self.add_field(text, "", inline=False)
+            self.add_field(text, "-", inline=False)
 
         def _add_type_1(self, task: Assignment.Task) -> None:
             """Type 1: Extract from locations"""
@@ -2073,7 +2074,7 @@ class Dashboard:
                     field_value += f"\n-# 100% <t:{int(datetime.now(tz=timezone.utc).timestamp() + global_resource.tracker.seconds_until_complete)}:R>"
                 else:
                     field_value += f"\n-# 0% <t:{int(datetime.now(tz=timezone.utc).timestamp() + global_resource.tracker.seconds_until_complete)}:R>"
-            self.add_field("", field_value)
+            self.add_field("-", field_value)
 
     class InvasionEventsEmbed(Embed, EmbedReprMixin):
         def __init__(
@@ -2711,7 +2712,7 @@ class Dashboard:
             super().__init__(colour=Colour.dark_embed())
             now = datetime.now(tz=timezone.utc)
             self.add_field(
-                "",
+                "-",
                 (
                     f"-# {language_json['embeds']['Dashboard']['FooterEmbed']['other_updated']}\n"
                     f"-# <t:{int(now.timestamp())}:f> - <t:{int(now.timestamp())}:R>\n"
@@ -2720,7 +2721,7 @@ class Dashboard:
                 inline=False,
             )
             self.add_field(
-                "",
+                "-",
                 (
                     f"-# {language_json['embeds']['Dashboard']['FooterEmbed']['total_players']}\n"
                     f"-# {Emojis.Icons.steam} {steam_players:,}\n"

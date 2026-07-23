@@ -8,7 +8,7 @@ from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
 from utils.containers import GlobalEventsContainer
 from utils.dbv2 import GWWGuild, GWWGuilds
-from utils.embeds.global_events_embed import global_events_embed, global_events_command_embed
+from utils.embeds.global_events_embed import global_events_embed
 
 
 class GlobalEventsCog(Cog):
@@ -72,7 +72,8 @@ class GlobalEventsCog(Cog):
                     self.bot.databases.war_info.save_changes()
                     continue
                 unique_langs = GWWGuilds.unique_languages()
-
+                #TODO fluxer image support
+                '''
                 image_url = None
                 if (
                     image_id := (
@@ -86,6 +87,7 @@ class GlobalEventsCog(Cog):
                     except:
                         pass
                     image_url = image_message.attachments[0].url
+                '''
 
                 containers = {
                     lang: [
@@ -100,7 +102,7 @@ class GlobalEventsCog(Cog):
                                 lang
                             ][index],
                             planets=self.bot.data.formatted_data.planets,
-                            image_url=image_url,
+                            #image_url=image_url,
                         )
                     ]
                     for lang in unique_langs
@@ -108,6 +110,7 @@ class GlobalEventsCog(Cog):
                 await self.bot.interface_handler.send_feature(
                     feature_type="detailed_dispatches", content=containers
                 )
+
                 self.bot.databases.war_info.global_event_id = global_event.id
                 self.bot.databases.war_info.save_changes()
                 self.bot.logger.info(
@@ -236,7 +239,7 @@ class GlobalEventsCog(Cog):
             await ctx.send("No global events active")
             return
         await ctx.send(
-            components=containers
+            embeds=containers
         )
 
 

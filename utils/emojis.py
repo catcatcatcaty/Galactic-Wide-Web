@@ -133,7 +133,7 @@ class Emojis:
     class SpaceStations:
         @dataclass
         class DSS:
-            icon = "<:s:1417971465311223808>"
+            icon = "<:1417971465311223808:1529612065889583104>"
             orbital_blockade = "<:s:1318875016909029388>"
             planetary_bombardment = "<:s:1318874283350687816>"
             eagle_storm = "<:s:1318874257773690881>"

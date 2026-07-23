@@ -79,19 +79,6 @@ class DispatchesCog(Cog):
                     unique_langs = GWWGuilds.unique_languages()
                     containers = {
                         lang: [
-                            DispatchContainer(
-                                dispatch_json=self.bot.json_dict["languages"][lang][
-                                    "containers"
-                                ]["DispatchContainer"],
-                                dispatch=self.bot.data.formatted_data.dispatches[lang][
-                                    index
-                                ],
-                            )
-                        ]
-                        for lang in unique_langs
-                    }
-                    embeds = {
-                        lang: [
                             dispatch_embed(
                                 dispatch_json=self.bot.json_dict["languages"][lang][
                                     "containers"
@@ -105,9 +92,10 @@ class DispatchesCog(Cog):
                     }
                     await self.bot.interface_handler.send_feature(
                         feature_type="war_announcements",
-                        content=embeds,
+                        content=containers,
                         announcement_type="dispatch",
                     )
+
                     self.bot.databases.war_info.dispatch_id = dispatch.id
                     self.bot.databases.war_info.save_changes()
                     self.bot.logger.info(

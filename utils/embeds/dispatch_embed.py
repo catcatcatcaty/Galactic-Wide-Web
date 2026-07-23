@@ -12,7 +12,7 @@ class dispatch_embed(Embed, EmbedReprMixin):
         self, dispatch_json: dict, dispatch: Dispatch, with_time: bool = False
     ):
         super().__init__(
-            accent_colour=Colour.from_rgb(*CUSTOM_COLOURS["MO"]),
+            colour=Colour.from_rgb(*CUSTOM_COLOURS["MO"]),
         )
 
         title, description = dispatch.title, dispatch.description

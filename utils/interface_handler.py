@@ -187,10 +187,10 @@ class InterfaceHandler:
         self,
         feature_type: str,
         channel: TextChannel,
-        container: Container,
+        container: Embed,
     ):
         try:
-            await channel.send(components=container)
+            await channel.send(embed=container)
         except (NotFound, Forbidden) as e:
             feature_list: BaseFeatureInteractionHandler = getattr(self, feature_type)
             if channel in feature_list:
@@ -267,9 +267,7 @@ class InterfaceHandler:
                     else:
                         if announcement_type == "MO":
                             components = [
-                                WikiButton(
-                                    link=f"https://helldivers.wiki.gg/wiki/Major_Orders#Recent"
-                                )
+                                Embed(title=f"https://helldivers.wiki.gg/wiki/Major_Orders#Recent"),
                             ]
                             self.bot.loop.create_task(
                                 self.send_embeds(

@@ -158,7 +158,7 @@ class SteamCog(Cog):
                 self.bot.logger.error(
                     f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
                 )
-            guild = GWWGuilds.add(ctx.guild.id, "en", [])
+                guild = GWWGuilds.add(ctx.guild.id, "en", [])
         else:
             guild = GWWGuild.default()
         embed = SteamEmbed(

@@ -1,7 +1,8 @@
 from disnake import Embed, Colour
 
-from data.lists import CUSTOM_COLOURS, STRATAGEM_IMAGE_LINKS
+from data.lists import CUSTOM_COLOURS
 from utils.api_wrapper.models import GlobalEvent, Planet
+from utils.containers import GWEContainer
 from utils.mixins import EmbedReprMixin
 
 
@@ -17,7 +18,7 @@ class global_events_embed(Embed, EmbedReprMixin):
         attachment_url: str = None,
     ):
         super().__init__(
-            accent_colour=Colour.from_rgb(*CUSTOM_COLOURS["MO"])
+            colour=Colour.from_rgb(*CUSTOM_COLOURS["MO"])
         )
         content = f""
         ### FLUXER ATTACHMENTS BROKEN
@@ -25,7 +26,10 @@ class global_events_embed(Embed, EmbedReprMixin):
             #self.set_image(image_url)
         #elif attachment_url:
             #self.set_image(attachment_url)
-        if global_event.flag == 0:
+        title = f"# {global_event.title if global_event.title else container_json['new_event']}"
+        if global_event.assignment_id:
+            title += f"\n-# Related to Assignment #{global_event.assignment_id}"
+        if global_event.effects != []:
             if not global_event.planet_indices:
                 specific_planets = container_json["all_planets"]
             else:
@@ -35,33 +39,18 @@ class global_events_embed(Embed, EmbedReprMixin):
                 specific_planets = "\n-# " + "\n- ".join(
                     [p.names.get(lang_code, p.name) for p in spec_planets_list if p]
                 )
+            effects_text = ""
             for effect in global_event.effects:
-                if "UNKNOWN" in effect.planet_effect["name"]:
-                    content += f"\nUNKNOWN effect (ID {effect.id})\n{effect.effect_description['simplified_name']}{container_json['active_on_planets'].format(planets=specific_planets)}"
-                    if effect.found_enemy:
-                        content += f"\n{container_json['enemy_identified']}: {effect.found_enemy}"
-                    if effect.found_stratagem:
-                        content += f"\n{container_json['strat_identified']}: {effect.found_stratagem}"
-                    if effect.found_booster:
-                        content += f"\n{container_json['booster_identified']}: {effect.found_booster['name']}"
-                else:
-                    content += f"\n{effect.planet_effect['name']}"
-                    if effect.planet_effect["description_long"]:
-                        content += (
-                            f"\n-# {effect.planet_effect['description_long']}"
-                        )
-                    if effect.planet_effect["description_short"]:
-                        if effect.effect_type == 32:
-                            if effect.found_stratagem:
-                                effect.planet_effect["description_short"] = (
-                                    effect.planet_effect["description_short"].replace(
-                                        "#V_ONE", effect.found_stratagem
-                                    )
-                                )
-                        content += (
-                            f"\n-# {effect.planet_effect['description_short']}"
-                        )
-                    content += f"{container_json['active_on_planets'].format(planets=specific_planets)}"
+                effect_container = GWEContainer(effect, [], False, False)
+                gwe_content = (
+                    "\n"
+                    + effect_container.components[0].content
+                    + effect_container.components[1].content
+                    + "\n"
+                )
+                effects_text += gwe_content
+                effects_text += f"\n ### {container_json['active_on_planets']}:{specific_planets}"
+                content += effects_text or "No effects present"
         else:
             for chunk in global_event.split_message:
                 content += f"\n{chunk}"
@@ -73,4 +62,4 @@ class global_events_embed(Embed, EmbedReprMixin):
             f"\n-# {container_json['global_event']} #{global_event.id}"
         )
 
-        self.add_field(f"# {global_event.title if global_event.title else container_json['new_event']}", content)
+        self.add_field(title, content)

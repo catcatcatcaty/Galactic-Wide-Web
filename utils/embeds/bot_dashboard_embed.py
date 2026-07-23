@@ -19,7 +19,7 @@ class bot_dashboardEmbed(Embed, EmbedReprMixin):
         public_commands = [
             c
             for c in bot.commands
-            if c.name not in ["gwe", "global_event", "major_order"]
+            if c.name not in ["gwe", "global_event", "pmajor_order"]
         ]
         commands_text = ""
         for global_command in sorted(public_commands, key=lambda sc: sc.name):
@@ -72,7 +72,8 @@ class bot_dashboardEmbed(Embed, EmbedReprMixin):
                 cpu_text += f"          "
             cpu_text += f"Core {i:2}: {bar} {percent:4.1f}%"
 
-        self.add_field(":desktop: Hardware Info", f"-# **CPU**: {cpu_percent()}%"
+        self.add_field(":desktop: Hardware Info",
+              f"```**CPU**: {cpu_percent()}%"
                     f"\nOverall: {overall_bar} {overall_cpu:4.1f}%"
                     f"\n{cpu_text}"
                     f"\n\nRAM: {memory_bar} {memory_used:.2f}GB/{total_system_memory:.2f}GB```"

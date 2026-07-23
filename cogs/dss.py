@@ -1,4 +1,5 @@
 from disnake import AppCmdInter, ApplicationInstallTypes, InteractionContextTypes
+from disnake.ext import commands
 from disnake.ext.commands import Cog, Param, slash_command
 from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup

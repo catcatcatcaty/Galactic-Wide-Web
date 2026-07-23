@@ -1,13 +1,13 @@
 from disnake import Embed, Colour
 
 from data.lists import CUSTOM_COLOURS
-from utils.api_wrapper.models import GalacticWarEffect, Planet
-from utils.dataclasses import CampaignChangesJson, SpecialUnits, PlanetFeatures
+from utils.api_wrapper.models import GalacticWarEffect, Planet, Campaign
+from utils.dataclasses import CampaignChangesJson, PlanetFeatures, Subfaction, PlanetFeature
 from utils.emojis import Emojis
 from utils.mixins import EmbedReprMixin
 
 
-class dispatch_embed(Embed, EmbedReprMixin):
+class campaign_changes_embed(Embed, EmbedReprMixin):
     def __init__(
         self, json: CampaignChangesJson
     ):
@@ -15,22 +15,11 @@ class dispatch_embed(Embed, EmbedReprMixin):
             color=Colour.dark_theme()
         )
         self.json = json
-        self.title =  f"# {Emojis.Decoration.left_banner} {self.json.container['title']} {Emojis.Decoration.right_banner}"
-        self.victories = [
-            (
-                f"## {self.json.container['victories']} {Emojis.Icons.victory}"
-            )
-        ]
-        self.losses = [
-            (
-                f"## {self.json.container['losses']} {Emojis.Decoration.alert_icon}"
-            ),
-        ]
-        self.new_campaigns = [
-            (
-                f"## {self.json.container['new_campaigns']} {Emojis.Icons.new_icon}"
-            )
-        ]
+        self.title =  f"{Emojis.Decoration.left_banner} {self.json.container['title']} {Emojis.Decoration.right_banner}"
+        self.victories = f"## {self.json.container['victories']} {Emojis.Icons.victory}"
+        self.losses = f"## {self.json.container['losses']} {Emojis.Decoration.alert_icon}"
+        self.new_campaigns = f"## {self.json.container['new_campaigns']} {Emojis.Icons.new_icon}"
+        self.planet_buttons: dict[str, str] = {}
         self.container_colours = [
             {"list": self.victories, "colour": Colour.brand_green()},
             {"list": self.losses, "colour": Colour.brand_red()},
@@ -40,41 +29,42 @@ class dispatch_embed(Embed, EmbedReprMixin):
             },
         ]
 
-    def _add_special_units(
-        self, embed: Embed, active_effects: set[GalacticWarEffect]
-    ):
-        for su_name, su_emoji in SpecialUnits.get_from_effects_list(
-            active_effects=active_effects
-        ):
-            embed.add_field(".", f"\n-# {su_emoji} **{self.json.special_units[su_name]}**"
+
+    def _add_subfactions(self, text_display: str, subfactions: set[Subfaction]):
+        for sf in subfactions:
+            text_display += (
+                f"\n-# {sf.emoji} **{self.json.subfactions[sf.eng_name]}**"
             )
 
-    def _add_regions(self, embed: Embed, regions: list[Planet.Region]):
+    def _add_regions(self, text_display: str, regions: list[Planet.Region]):
         for region in regions:
-            embed.add_field(".", f"\n-# {region.emoji} {self.json.regions[str(region.type.value)]} **{region.names[self.json.lang_code_long]}**")
+            descriptor = (
+                self.json.regions[str(region.type.value)]
+                if not region.is_factory
+                else self.json.regions["megafactory"].format(number=region.size)
+            )
+            text_display += f"\n-# {region.emoji} {descriptor} **{region.names.get(self.json.lang_code_long, region.name)}**"
 
     def _add_features(
-        self, embed: Embed, active_effects: set[GalacticWarEffect]
+        self, text_display: str, planet_features: list[PlanetFeature]
     ):
-        for feature_name, feature_emoji in PlanetFeatures.get_from_effects_list(
-            active_effects
-        ):
-            embed.add_field(".", f"\n-# {feature_emoji} **{feature_name}**")
+        for feature in planet_features:
+            text_display += f"\n-# {feature.emoji} **{feature.name}**"
 
     def _add_gambit(
         self,
-        embed: Embed,
+        text_display: str,
         gambit_planet: Planet,
     ):
         if gambit_planet.regen_perc_per_hour < 0.03:
-            embed.add_field(".", f"\n-# :chess_pawn: {self.json.container['gambit']}: **{gambit_planet.names.get(self.json.lang_code_long, gambit_planet.index)}**")
+            text_display += f"\n-# :chess_pawn: {self.json.container['gambit']}: **{gambit_planet.names.get(self.json.lang_code_long, gambit_planet.name)}**"
             if gambit_planet.names.get(
-                self.json.lang_code_long, str(gambit_planet.index)
-            ) not in [b.label for b in self.planet_buttons]:
-                embed.add_field(str(gambit_planet.names.get(
-                            self.json.lang_code_long, str(gambit_planet.index))), f"https://helldiverscompanion.com/#hellpad/planets/{gambit_planet.index}")
+                    self.json.lang_code_long, gambit_planet.name
+            ) not in [self.planet_buttons.keys()]:
+                self.planet_buttons.update(
+                    {gambit_planet.names.get(self.json.lang_code_long, gambit_planet.name):
+                         f"https://helldiverscompanion.com/#hellpad/planets/{gambit_planet.index}"})
 
-    #what does this even do
     def _update_containers(self):
         colour = Colour.dark_theme()
         longest_length = 0
@@ -82,31 +72,15 @@ class dispatch_embed(Embed, EmbedReprMixin):
             if len(container_info["list"]) - 1 > longest_length:
                 longest_length = len(container_info["list"]) - 1
                 colour = container_info["colour"]
-        planet_button_chunks = [
-            self.planet_buttons[i: i + 3]
-            for i in range(0, len(self.planet_buttons), 3)
-        ]
-        """
         super().__init__(
-            *(
-                    self.title
-                    + self.non_empty_components
-                    + (
-                        [ui.ActionRow(*chunk) for chunk in planet_button_chunks]
-                        if self.planet_buttons
-                        else []
-                    )
-            ),
-            accent_colour=colour,
+            title=self.title,
+            colour=colour,
         )
-        """
-        #pretend it works for now
-        embed = super().__init__(
-            color=colour,
-            title=self.title
-        )
-        for text in self.non_empty_components:
-            embed.add_field(text, ".")
+        self.clear_fields()
+        self.add_field("-", self.components)
+        if self.planet_buttons:
+            for planet_info in self.planet_buttons.keys():
+                self.add_field(planet_info, self.planet_buttons[planet_info])
 
 
     def update_containers(func):
@@ -117,13 +91,217 @@ class dispatch_embed(Embed, EmbedReprMixin):
         return wrapper
 
     @property
-    def non_empty_components(self):
-        results = []
-        for list_ in [self.victories, self.losses, self.new_campaigns]:
-            if len(list_) > 1:
-                results.extend(list_)
-        return results
-
-    @property
-    def components(self) -> list:
+    def components(self) -> str:
         return self.victories + self.losses + self.new_campaigns
+
+    @update_containers
+    def add_liberation_victory(self, planet: Planet, taken_from: str):
+        text_display = self.json.container["liberated"].format(
+            planet_name=planet.names.get(self.json.lang_code_long, planet.name),
+            faction_name=self.json.factions[f"{taken_from}_plural"],
+        )
+        self._add_features(
+            text_display=text_display,
+            planet_features=planet.planet_features,
+        )
+        self._add_subfactions(
+            text_display=text_display,
+            subfactions=planet.subfactions,
+        )
+        self.victories += "\n"
+        self.victories += text_display
+
+        if planet.names.get(
+            self.json.lang_code_long, planet.name
+        ) not in [self.planet_buttons.keys()]:
+            self.planet_buttons.update({planet.names.get(self.json.lang_code_long, planet.name):
+                f"https://helldiverscompanion.com/#hellpad/planets/{planet.index}"})
+
+    @update_containers
+    def add_defence_victory(
+        self, planet: Planet, defended_against: str, hours_remaining: int
+    ):
+        text_display = self.json.container["defended"].format(
+            planet_name=planet.names.get(self.json.lang_code_long, planet.name),
+            faction_name=self.json.factions[f"{defended_against}_plural"],
+        )
+        if hours_remaining != 0:
+            text_display += self.json.container[
+                "ahead_of_schedule"
+            ].format(
+                hours_remaining=f"{hours_remaining:.0f}",
+            )
+        self._add_features(
+            text_display=text_display,
+            planet_features=planet.planet_features,
+        )
+        self._add_subfactions(
+            text_display=text_display,
+            subfactions=planet.subfactions,
+        )
+        self.victories += "\n"
+        self.victories += text_display
+
+        if planet.names.get(
+            self.json.lang_code_long, planet.name
+        ) not in [self.planet_buttons.keys()]:
+            self.planet_buttons.update({planet.names.get(self.json.lang_code_long, planet.name):
+                f"https://helldiverscompanion.com/#hellpad/planets/{planet.index}"})
+
+    @update_containers
+    def add_new_campaign(self, campaign: Campaign, gambit_planets: dict[int, Planet]):
+        if campaign.planet.event:
+            text_display = self.json.container["defend"].format(
+                planet_name=campaign.planet.names.get(
+                    self.json.lang_code_long, campaign.planet.name
+                ),
+                emojis=campaign.planet.exclamations,
+            )
+            text_display += self.json.container["invasion_level"].format(
+                level=campaign.planet.event.level,
+                emoji=campaign.planet.event.level_exclamation,
+            )
+            text_display += self.json.container["ends"].format(
+                timestamp=int(
+                    campaign.planet.event.end_time_datetime.timestamp()
+                )
+            )
+            self._add_features(
+                text_display=text_display,
+                planet_features=campaign.planet.planet_features,
+            )
+
+            self._add_subfactions(
+                text_display=text_display,
+                subfactions=campaign.planet.subfactions,
+            )
+
+            self._add_regions(
+                text_display=text_display,
+                regions=campaign.planet.regions.values(),
+            )
+
+            if campaign.planet.index in gambit_planets:
+                self._add_gambit(
+                    text_display=text_display,
+                    gambit_planet=gambit_planets[campaign.planet.index],
+                )
+
+            # last step
+            self.new_campaigns.append("\n")
+            self.new_campaigns.append(text_display)
+
+            if campaign.planet.names.get(
+                    self.json.lang_code_long, campaign.planet.name
+            ) not in [self.planet_buttons.keys()]:
+                self.planet_buttons.update({campaign.planet.names.get(self.json.lang_code_long, campaign.planet.name):
+                    f"https://helldiverscompanion.com/#hellpad/planets/{campaign.planet.index}"})
+        else:
+            text_display = self.json.container["liberate"].format(
+                planet_name=campaign.planet.names.get(
+                    self.json.lang_code_long, campaign.planet.name
+                ),
+                emojis=campaign.faction.emoji + campaign.planet.exclamations,
+                )
+            text_display += self.json.container["resistance"].format(
+                regen=f"{campaign.planet.regen_perc_per_hour:+.2%}"
+            )
+
+            self._add_features(
+                text_display=text_display,
+                planet_features=campaign.planet.planet_features,
+            )
+            self._add_subfactions(
+                text_display=text_display,
+                subfactions=campaign.planet.subfactions,
+            )
+            self._add_regions(
+                text_display=text_display,
+                regions=campaign.planet.regions.values(),
+            )
+
+            # last step
+            self.new_campaigns += "\n"
+            self.new_campaigns += text_display
+
+            if campaign.planet.names.get(
+                    self.json.lang_code_long, campaign.planet.name
+            ) not in [self.planet_buttons.keys()]:
+                self.planet_buttons.update({campaign.planet.names.get(self.json.lang_code_long, campaign.planet.name):
+                    f"https://helldiverscompanion.com/#hellpad/planets/{campaign.planet.index}"})
+
+    @update_containers
+    def new_urgent_liberation(
+        self, campaign: Campaign, gambit_planets: dict[int, Planet]
+    ):
+        text_display = self.json.container["urgently_liberate"].format(
+            planet_name=campaign.planet.names.get(
+                self.json.lang_code_long, campaign.planet.name
+            ),
+            emojis=campaign.planet.exclamations,
+        )
+        text_display += self.json.container["urgency_level"].format(
+            level=campaign.planet.event.level,
+            emoji=campaign.planet.event.level_exclamation,
+        )
+        text_display += self.json.container["ends"].format(
+            timestamp=int(
+                campaign.planet.event.end_time_datetime.timestamp()
+            )
+        )
+        self._add_features(
+            text_display=text_display,
+            planet_features=campaign.planet.planet_features,
+        )
+
+        self._add_subfactions(
+            text_display=text_display,
+            subfactions=campaign.planet.subfactions,
+        )
+
+        self._add_regions(
+            text_display=text_display,
+            regions=campaign.planet.regions.values(),
+        )
+
+        if campaign.planet.index in gambit_planets:
+            self._add_gambit(
+                text_display=text_display,
+                gambit_planet=gambit_planets[campaign.planet.index],
+            )
+
+        # last step
+        self.new_campaigns += "\n"
+        self.new_campaigns += text_display
+
+        if campaign.planet.names.get(
+                self.json.lang_code_long, campaign.planet.name
+        ) not in [self.planet_buttons.keys()]:
+            self.planet_buttons.update({campaign.planet.names.get(self.json.lang_code_long, campaign.planet.name):
+                f"https://helldiverscompanion.com/#hellpad/planets/{campaign.planet.index}"})
+
+    @update_containers
+    def add_planet_lost(self, planet: Planet):
+        text_display = self.json.container["planet_lost"].format(
+            planet_name=planet.names.get(self.json.lang_code_long, planet.name),
+            emojis=planet.exclamations,
+            faction_name=self.json.factions[
+                f"{planet.faction.full_name}_plural"
+            ],
+        )
+        self._add_features(
+            text_display=text_display,
+            planet_features=planet.planet_features,
+        )
+        self._add_subfactions(
+            text_display=text_display,
+            subfactions=planet.subfactions,
+        )
+        self.losses += "\n"
+        self.losses += text_display
+
+        if planet.names.get(
+                self.json.lang_code_long, planet.name
+        ) not in [self.planet_buttons.keys()]:
+            self.planet_buttons.update({planet.names.get(self.json.lang_code_long, planet.name):
+                f"https://helldiverscompanion.com/#hellpad/planets/{planet.index}"})

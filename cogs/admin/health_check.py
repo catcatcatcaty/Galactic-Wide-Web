@@ -47,7 +47,7 @@ class HealthCheckCog(commands.Cog):
                     ) or await self.bot.fetch_channel(dashboard.channel_id)
                     message = await channel.fetch_message(dashboard.message_id)
                     cutoff = now - timedelta(minutes=17)
-                    if message.edited_at < cutoff and self.bot.startup_time < cutoff:
+                    if message.edited_at is not None and message.edited_at < cutoff and self.bot.startup_time < cutoff:
                         await self.send_warning(
                             error=f"Dashboards are late to being updated"
                         )
@@ -66,7 +66,8 @@ class HealthCheckCog(commands.Cog):
                 await self.send_warning(
                     error=f"Data was last formatted <t:{int(self.bot.data.formatted_data.formatted_at.timestamp())}:R>"
                 )
-            if not self.bot.data.formatted_data.personal_order:
+            #we're not getting these any time soon
+            '''if not self.bot.data.formatted_data.personal_order:
                 await self.send_warning(
                     error=f"PO is missing", vips_to_cc=[VIP.catcatcatcaty]
                 )
@@ -74,6 +75,7 @@ class HealthCheckCog(commands.Cog):
                 await self.send_warning(
                     error=f"DSS votes are missing", vips_to_cc=[VIP.catcatcatcaty]
                 )
+            '''
         else:
             if self.bot.ready_time < now:
                 await self.send_warning(error=f"Data has not been formatted yet")
