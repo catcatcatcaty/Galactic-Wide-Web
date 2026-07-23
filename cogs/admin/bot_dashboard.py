@@ -81,7 +81,7 @@ class BotDashboardCog(Cog):
         dashboard = bot_dashboardEmbed(bot=self.bot)
         try:
             await self.bot.bot_dashboard_message.edit(embed=dashboard)
-        except DiscordServerError:
+        except DiscordServerError as e:
             self.bot.logger.error(f"bot_dashboard loop returning - {e}")
 
     @bot_dashboard.before_loop

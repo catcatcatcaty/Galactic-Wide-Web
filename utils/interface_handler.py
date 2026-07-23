@@ -149,7 +149,7 @@ class InterfaceHandler:
         try:
             await message.edit(embed=embed)
         except (NotFound, Forbidden) as e:
-            self.maps.remove(message)
+            self.maps.remove_entry(message.guild.id)
             guild: GWWGuild = GWWGuilds.get_specific_guild(message.guild.id)
             guild.features = [f for f in guild.features if f.name != "maps"]
             guild.update_features()
@@ -291,7 +291,8 @@ class InterfaceHandler:
                     channel: TextChannel
                     guild = guild_map.get(channel.guild.id)
                     if not guild:
-                        list_to_use.remove(channel)
+                        if channel in list_to_use:
+                            list_to_use.remove(channel)
                         self.bot.logger.error(
                             f"send_feature {feature_type} {announcement_type} | guild not found in DB | {channel.guild.id = }"
                         )
