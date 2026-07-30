@@ -6,7 +6,7 @@ class SteamPlayerCountClient(BaseAPIClient):
         super().__init__(
             base_url=base_url,
             logger=logger,
-            rate_limit_delay=3
+            rate_limit_delay=3,
         )
 
     async def get_steam_count(self) -> dict:

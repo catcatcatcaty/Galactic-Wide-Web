@@ -21,14 +21,13 @@ class global_events_embed(Embed, EmbedReprMixin):
             colour=Colour.from_rgb(*CUSTOM_COLOURS["MO"])
         )
         content = f""
-        ### FLUXER ATTACHMENTS BROKEN
-        #if image_url:
-            #self.set_image(image_url)
-        #elif attachment_url:
-            #self.set_image(attachment_url)
-        title = f"# {global_event.title if global_event.title else container_json['new_event']}"
+        if image_url:
+            self.set_image(image_url)
+        elif attachment_url:
+            self.set_image(attachment_url)
+        title = f"{global_event.title if global_event.title else container_json['new_event']}"
         if global_event.assignment_id:
-            title += f"\n-# Related to Assignment #{global_event.assignment_id}"
+            title += f"\nRelated to Assignment #{global_event.assignment_id}"
         if global_event.effects != []:
             if not global_event.planet_indices:
                 specific_planets = container_json["all_planets"]
@@ -56,7 +55,7 @@ class global_events_embed(Embed, EmbedReprMixin):
                 content += f"\n{chunk}"
         if with_expiry_time:
             content += (
-                f"-# {container_json['expires']} <t:{global_event.expire_time}:R>"
+                f"\n-# {container_json['expires']} <t:{global_event.expire_time}:R>"
             )
         content += (
             f"\n-# {container_json['global_event']} #{global_event.id}"

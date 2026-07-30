@@ -266,15 +266,12 @@ class InterfaceHandler:
                         continue
                     else:
                         if announcement_type == "MO":
-                            components = [
-                                Embed(title=f"https://helldivers.wiki.gg/wiki/Major_Orders#Recent"),
-                            ]
+                            content[guild.language].set_footer(text=f"https://helldivers.wiki.gg/wiki/Major_Orders#Recent")
                             self.bot.loop.create_task(
-                                self.send_embeds(
-                                    feature_type,
-                                    channel,
-                                    content[guild.language],
-                                    components,
+                                self.send_component(
+                                    feature_type=feature_type,
+                                    channel=channel,
+                                    container=content[guild.language],
                                 )
                             )
                         else:
@@ -299,11 +296,10 @@ class InterfaceHandler:
                         continue
                     else:
                         self.bot.loop.create_task(
-                            self.send_embeds(
-                                feature_type,
-                                channel,
-                                content[guild.language],
-                                components,
+                            self.send_component(
+                                feature_type=feature_type,
+                                channel=channel,
+                                container=content[guild.language],
                             )
                         )
                         await sleep(self.wait_time)

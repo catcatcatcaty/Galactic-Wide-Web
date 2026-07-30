@@ -50,9 +50,9 @@ class DSSEmbed(Embed, EmbedReprMixin):
             timestamp=f"<t:{int(dss_data.move_timer_datetime.timestamp())}:R>"
         )
         self.set_thumbnail(
-            "https://media.discordapp.net/attachments/1212735927223590974/1413612410819969114/0xfbbeedfa99b09fec.png?ex=68bc90a6&is=68bb3f26&hm=cd8bf236a355bbed28f4847d3d62b5908d050a7eeb7396bb9a891e108acc0241&=&format=webp&quality=lossless"
+            "https://fluxerusercontent.com/attachments/1476525402340249794/1530880774960582656/1000108518.png"
         ).set_image(
-            "https://cdn.discordapp.com/attachments/1212735927223590974/1312448218398986331/dss.jpg?ex=674c8827&is=674b36a7&hm=def01cbdf1920b85617b1028a95ec982484c70a5cf9bed14b9072319fd018246&"
+            "https://fluxerusercontent.com/attachments/1476525402340249794/1530881335462199296/1000108519.jpg"
         )
         for tactical_action in dss_data.tactical_actions:
             tactical_action: DSS.TacticalAction

@@ -79,9 +79,7 @@ class MapCog(Cog):
         for language_code, embed in map_embeds.items():
             latest_map = self.bot.maps.latest_maps[language_code]
             embed.set_image(url=latest_map.map_link)
-            embed.add_field(
-                "", f"-# Updated <t:{int(datetime.now(tz=timezone.utc).timestamp())}:R>"
-            )
+            embed.set_footer(text=f"Updated <t:{int(datetime.now(tz=timezone.utc).timestamp())}:R>")
         await self.bot.interface_handler.send_feature("maps", map_embeds)
         self.bot.logger.info(
             f"map_poster loop - updated {len(self.bot.interface_handler.maps)} maps in {(datetime.now(tz=timezone.utc)-maps_start).total_seconds():.2f} seconds"

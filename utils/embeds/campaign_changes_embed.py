@@ -1,6 +1,6 @@
 from disnake import Embed, Colour
 
-from data.lists import CUSTOM_COLOURS
+from data.lists import CUSTOM_COLOURS, VICTORY_ICONS, DEFENCE_EMBED_ICONS, ATTACK_EMBED_ICONS, URGENT_ICONS, LOSS_ICONS
 from utils.api_wrapper.models import GalacticWarEffect, Planet, Campaign
 from utils.dataclasses import CampaignChangesJson, PlanetFeatures, Subfaction, PlanetFeature
 from utils.emojis import Emojis
@@ -16,9 +16,9 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
         )
         self.json = json
         self.title =  f"{Emojis.Decoration.left_banner} {self.json.container['title']} {Emojis.Decoration.right_banner}"
-        self.victories = f"## {self.json.container['victories']} {Emojis.Icons.victory}"
-        self.losses = f"## {self.json.container['losses']} {Emojis.Decoration.alert_icon}"
-        self.new_campaigns = f"## {self.json.container['new_campaigns']} {Emojis.Icons.new_icon}"
+        self.victories = ""
+        self.losses = ""
+        self.new_campaigns = ""
         self.planet_buttons: dict[str, str] = {}
         self.container_colours = [
             {"list": self.victories, "colour": Colour.brand_green()},
@@ -77,10 +77,16 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
             colour=colour,
         )
         self.clear_fields()
-        self.add_field("-", self.components)
+        if self.victories != "":
+            self.add_field(f"{self.json.container['victories']} {Emojis.Icons.victory}\n", self.victories)
+        if self.losses != "":
+            self.add_field(f"{self.json.container['losses']} {Emojis.Decoration.alert_icon}\n", self.losses)
+        if self.new_campaigns != "":
+            self.add_field(f"{self.json.container['new_campaigns']} {Emojis.Icons.new_icon}\n", self.new_campaigns)
         if self.planet_buttons:
             for planet_info in self.planet_buttons.keys():
                 self.add_field(planet_info, self.planet_buttons[planet_info])
+        self.set_thumbnail(self.thumbnail)
 
 
     def update_containers(func):
@@ -90,16 +96,13 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
 
         return wrapper
 
-    @property
-    def components(self) -> str:
-        return self.victories + self.losses + self.new_campaigns
-
     @update_containers
     def add_liberation_victory(self, planet: Planet, taken_from: str):
         text_display = self.json.container["liberated"].format(
             planet_name=planet.names.get(self.json.lang_code_long, planet.name),
             faction_name=self.json.factions[f"{taken_from}_plural"],
         )
+        self.set_thumbnail(VICTORY_ICONS.get(taken_from.lower(), VICTORY_ICONS["default"]))
         self._add_features(
             text_display=text_display,
             planet_features=planet.planet_features,
@@ -125,6 +128,7 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
             planet_name=planet.names.get(self.json.lang_code_long, planet.name),
             faction_name=self.json.factions[f"{defended_against}_plural"],
         )
+        self.set_thumbnail(VICTORY_ICONS.get(defended_against.lower(), VICTORY_ICONS["default"]))
         if hours_remaining != 0:
             text_display += self.json.container[
                 "ahead_of_schedule"
@@ -166,6 +170,11 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
                     campaign.planet.event.end_time_datetime.timestamp()
                 )
             )
+            self.set_thumbnail(
+                DEFENCE_EMBED_ICONS.get(
+                    campaign.planet.event.faction.full_name.lower(),
+                    DEFENCE_EMBED_ICONS["default"],
+                ))
             self._add_features(
                 text_display=text_display,
                 planet_features=campaign.planet.planet_features,
@@ -188,8 +197,8 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
                 )
 
             # last step
-            self.new_campaigns.append("\n")
-            self.new_campaigns.append(text_display)
+            self.new_campaigns += "\n"
+            self.new_campaigns += text_display
 
             if campaign.planet.names.get(
                     self.json.lang_code_long, campaign.planet.name
@@ -206,7 +215,11 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
             text_display += self.json.container["resistance"].format(
                 regen=f"{campaign.planet.regen_perc_per_hour:+.2%}"
             )
-
+            self.set_thumbnail(
+                ATTACK_EMBED_ICONS.get(
+                    campaign.faction.full_name.lower(),
+                    ATTACK_EMBED_ICONS["default"],
+                ))
             self._add_features(
                 text_display=text_display,
                 planet_features=campaign.planet.planet_features,
@@ -249,6 +262,11 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
                 campaign.planet.event.end_time_datetime.timestamp()
             )
         )
+        self.set_thumbnail(
+            URGENT_ICONS.get(
+                campaign.planet.event.faction.full_name.lower(),
+                URGENT_ICONS["default"],
+            ))
         self._add_features(
             text_display=text_display,
             planet_features=campaign.planet.planet_features,
@@ -289,6 +307,7 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
                 f"{planet.faction.full_name}_plural"
             ],
         )
+        self.set_thumbnail(LOSS_ICONS.get(planet.faction.full_name.lower(), LOSS_ICONS["default"]))
         self._add_features(
             text_display=text_display,
             planet_features=planet.planet_features,

@@ -78,7 +78,7 @@ class DispatchesCog(Cog):
                         continue
                     unique_langs = GWWGuilds.unique_languages()
                     containers = {
-                        lang: [
+                        lang:
                             dispatch_embed(
                                 dispatch_json=self.bot.json_dict["languages"][lang][
                                     "containers"
@@ -87,7 +87,6 @@ class DispatchesCog(Cog):
                                     index
                                 ],
                             )
-                        ]
                         for lang in unique_langs
                     }
                     await self.bot.interface_handler.send_feature(

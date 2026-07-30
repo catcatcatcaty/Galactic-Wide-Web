@@ -4,20 +4,20 @@ from utils.dataclasses.enums import AssignmentTaskType
 
 @dataclass
 class AssignmentImages:
-    _2 = "https://cdn.discordapp.com/attachments/1212735927223590974/1415964775007129661/Type_13_MO.png?ex=68c51f75&is=68c3cdf5&hm=586104cd845e87c2c59e44c3c82419ea2b21ea2c4a042cb573e3cd06a48dbcef&"
-    _3 = "https://cdn.discordapp.com/attachments/1212735927223590974/1415964773211967561/mo_icon_kill.PNG?ex=68c51f75&is=68c3cdf5&hm=3c4ddd02b7333c9d6415eab3f5e0b4a365c672831bbcfc89393c8eda421edabe&"
-    _7 = "https://cdn.discordapp.com/attachments/1212735927223590974/1415964775007129661/Type_13_MO.png?ex=68c51f75&is=68c3cdf5&hm=586104cd845e87c2c59e44c3c82419ea2b21ea2c4a042cb573e3cd06a48dbcef&"
-    _8 = "https://cdn.discordapp.com/attachments/1212735927223590974/1329395683861594132/personal_order_icon.png?ex=678a2fb6&is=6788de36&hm=2f38b1b89aa5475862c8fdbde8d8fdbd003b39e8a4591d868a51814d57882da2&"
-    _9 = "https://cdn.discordapp.com/attachments/1212735927223590974/1415964775007129661/Type_13_MO.png?ex=68c51f75&is=68c3cdf5&hm=586104cd845e87c2c59e44c3c82419ea2b21ea2c4a042cb573e3cd06a48dbcef&"
-    _11 = "https://cdn.discordapp.com/attachments/1212735927223590974/1415964773949902848/mo_icon_liberate.png?ex=68c51f75&is=68c3cdf5&hm=b019701f6c7ae76be3d0cf18db2ee2f53385be4ac52eaf14874cd6cadfae789a&"
-    _12 = "https://cdn.discordapp.com/attachments/1212735927223590974/1415964772368777220/mo_icon_defend.png?ex=68c51f75&is=68c3cdf5&hm=893a16ca781bad19865b474932f1d2c54271a6f6c7bcb9eaa5cdd49559015547&"
-    _13 = "https://cdn.discordapp.com/attachments/1212735927223590974/1415964772368777220/mo_icon_defend.png?ex=68c51f75&is=68c3cdf5&hm=893a16ca781bad19865b474932f1d2c54271a6f6c7bcb9eaa5cdd49559015547&"
-    _15 = "https://cdn.discordapp.com/attachments/1212735927223590974/1415964775007129661/Type_13_MO.png?ex=68c51f75&is=68c3cdf5&hm=586104cd845e87c2c59e44c3c82419ea2b21ea2c4a042cb573e3cd06a48dbcef&"
+    _2 = "https://fluxerusercontent.com/attachments/1476525402340249794/1530882684606222336/1000108521.png"
+    _3 = "https://fluxerusercontent.com/attachments/1476525402340249794/1530883185666170880/1000108522.png"
+    _7 = "https://fluxerusercontent.com/attachments/1476525402340249794/1530882684606222336/1000108521.png"
+    _8 = "https://fluxerusercontent.com/attachments/1476525402340249794/1530883756234117120/1000108523.png"
+    _9 = "https://fluxerusercontent.com/attachments/1476525402340249794/1530882684606222336/1000108521.png"
+    _11 = "https://fluxerusercontent.com/attachments/1476525402340249794/1530882334553804800/1000108520.png"
+    _12 = "https://fluxerusercontent.com/attachments/1476525402340249794/1530883989068328960/1000108524.png"
+    _13 = "https://fluxerusercontent.com/attachments/1476525402340249794/1530883989068328960/1000108524.png"
+    _15 = "https://fluxerusercontent.com/attachments/1476525402340249794/1530882684606222336/1000108521.png"
 
     def get(task_type: AssignmentTaskType) -> str:
         """Gets the appropriate Assignment Icon"""
         return getattr(
             AssignmentImages,
             f"_{task_type.value}",
-            "https://cdn.discordapp.com/attachments/1212735927223590974/1415964773949902848/mo_icon_liberate.png?ex=68c51f75&is=68c3cdf5&hm=b019701f6c7ae76be3d0cf18db2ee2f53385be4ac52eaf14874cd6cadfae789a&",
+            "https://fluxerusercontent.com/attachments/1476525402340249794/1530882334553804800/1000108520.png",
         )

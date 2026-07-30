@@ -54,9 +54,8 @@ class SteamCog(Cog):
             if steam_news.id > self.bot.databases.war_info.patch_notes_id:
                 unique_langs = GWWGuilds.unique_languages()
                 embeds = {
-                    lang: [
+                    lang:
                         SteamEmbed(steam_news, self.bot.json_dict["languages"][lang])
-                    ]
                     for lang in unique_langs
                 }
                 await self.bot.interface_handler.send_feature("patch_notes", embeds)

@@ -12,7 +12,8 @@ from disnake import (
     NotFound,
     Permissions,
 )
-from disnake.ext.commands import Cog, slash_command
+from disnake.ext import commands
+from disnake.ext.commands import Cog, slash_command, Command
 from disnake.ui import ActionRow, Container, TextDisplay
 from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
@@ -560,6 +561,198 @@ class SetupCog(Cog):
                     shard_info=self.bot.shards[inter.guild.shard_id],
                 ),
             )
+
+
+###FLUXER
+
+
+    @wait_for_startup()
+    @commands.command("setup", Command, rest_is_raw=True)
+    async def setup(
+            self,
+            ctx: commands.Context,
+            *,
+            arg
+    ) -> None:
+        guild: GWWGuild = GWWGuilds.get_specific_guild(ctx.guild.id)
+        guild_language = self.bot.json_dict["languages"][guild.language]
+        if not ctx.author.guild_permissions.administrator:
+            await ctx.channel.send(
+                "Administrator permissions required to run this command."
+            )
+            return
+        if not arg:
+            await ctx.channel.send(
+                f"Argument must be one of the following: dashboards, maps, detailed_dispatches, dss_announcements, major_order_updates, patch_notes, region_announcements, war_announcements, reset, reset_all"
+            )
+            return
+        arg = arg.split(" ")
+        setting = arg[1]
+        match setting:
+            case "dashboards":
+                dashboard = Dashboard(
+                    data=self.bot.data.formatted_data,
+                    language_code=guild.language,
+                    json_dict=self.bot.json_dict,
+                )
+                compact_level = 0
+                while (
+                        dashboard.character_count() > 6000 or len(dashboard.embeds) >= 9
+                ) and compact_level < 2:
+                    compact_level += 1
+                    dashboard = Dashboard(
+                        data=self.bot.data.formatted_data,
+                        language_code=guild.language,
+                        json_dict=self.bot.json_dict,
+                        compact_level=compact_level,
+                    )
+                try:
+                    message = await ctx.channel.send(
+                        embeds=dashboard.embeds,
+                        file=File("resources/dashboard/banner.png"),
+                    )
+                except DiscordServerError:
+                    await ctx.channel.send(
+                        "There was an Discord Server error when setting up the dashboard, please try again."
+                        "\nIf this persists, there is nothing I can do, sorry. :pensive:")
+                    return
+
+                guild.features = [f for f in guild.features if f.name != "dashboards"]
+                guild.features.append(
+                    Feature(
+                        name="dashboards",
+                        guild_id=guild.guild_id,
+                        channel_id=ctx.channel.id,
+                        message_id=message.id,
+                    )
+                )
+                guild.update_features()
+                self.bot.interface_handler.dashboards.append(message)
+            case "maps":
+                firstmessage = await ctx.channel.send(
+                    "Generating map, please wait..."
+                )
+                self.bot.maps.update_base_map(
+                    planets=self.bot.data.formatted_data.planets,
+                    assignments=self.bot.data.formatted_data.assignments.get(
+                        "en", []
+                    ),
+                )
+                self.bot.maps.localize_map(
+                    language_code_short=guild_language["code"],
+                    language_code_long=guild_language["code_long"],
+                    planets=self.bot.data.formatted_data.planets,
+                    planet_names_json=self.bot.json_dict["planets"],
+                )
+                message = await self.bot.channels.waste_bin_channel.send(
+                    file=File(
+                        fp=self.bot.maps.FileLocations.localized_map_path(
+                            guild_language["code"]
+                        )
+                    )
+                )
+                self.bot.maps.latest_maps[guild_language["code"]] = Maps.LatestMap(
+                    datetime.now(tz=timezone.utc), message.attachments[0].url
+                )
+                self.bot.maps.add_icons(
+                    lang=guild_language["code"],
+                    long_code=guild_language["code_long"],
+                    planets=self.bot.data.formatted_data.planets,
+                    dss=self.bot.data.formatted_data.dss,
+                )
+                latest_map = self.bot.maps.latest_maps[guild_language["code"]]
+                await firstmessage.delete()
+                message = await ctx.channel.send(
+                    embed=Embed(colour=Colour.dark_embed())
+                    .set_image(url=latest_map.map_link)
+                    .set_footer(text=f"Updated <t:{int(datetime.now(tz=timezone.utc).timestamp())}:R>")
+                )
+                guild.features = [f for f in guild.features if f.name != "maps"]
+                guild.features.append(
+                    Feature(
+                        name="maps",
+                        guild_id=guild.guild_id,
+                        channel_id=ctx.channel.id,
+                        message_id=message.id,
+                    )
+                )
+                guild.update_features()
+                self.bot.interface_handler.maps.append(message)
+            case "detailed_dispatches" | "dss_announcements" | "major_order_updates" | "patch_notes" | "region_announcements" | "war_announcements":
+                guild.features = [f for f in guild.features if f.name != setting]
+                guild.features.append(
+                    Feature(
+                        name=setting,
+                        guild_id=guild.guild_id,
+                        channel_id=ctx.channel.id,
+                    )
+                )
+                guild.update_features()
+            case "reset":
+                feature_type = arg[2]
+                match feature_type:
+                    case "dashboards":
+                        guild.features = [f for f in guild.features if f.name != "dashboards"]
+                        guild.update_features()
+                        try:
+                            message = [
+                                m
+                                for m in self.bot.interface_handler.dashboards
+                                if m.guild.id == guild.guild_id
+                            ][0]
+                            await message.delete()
+                        except:
+                            pass
+                        self.bot.interface_handler.dashboards.remove_entry(guild.guild_id)
+                    case "maps":
+                        guild.features = [f for f in guild.features if f.name != "maps"]
+                        guild.update_features()
+                        try:
+                            message = [
+                                m
+                                for m in self.bot.interface_handler.maps
+                                if m.guild.id == guild.guild_id
+                            ][0]
+                            await message.delete()
+                        except:
+                            pass
+                        self.bot.interface_handler.maps.remove_entry(guild.guild_id)
+                    case "detailed_dispatches" | "dss_announcements" | "major_order_updates" | "patch_notes" | "region_announcements" | "war_announcements":
+                        guild.features = [f for f in guild.features if f.name != feature_type]
+                        guild.update_features()
+                        getattr(self.bot.interface_handler, feature_type).remove_entry(guild.guild_id)
+                    case _:
+                        await ctx.channel.send(
+                            f"Secondary argument must be one of the following: dashboards, maps, detailed_dispatches, dss_announcements, major_order_updates, patch_notes, region_announcements, war_announcements, reset, reset_all"
+                        )
+            case "reset_all":
+                guild.features = []
+                guild.update_features()
+                try:
+                    message = [
+                        m
+                        for m in self.bot.interface_handler.dashboards
+                        if m.guild.id == guild.guild_id
+                    ][0]
+                    await message.delete()
+                except:
+                    pass
+                self.bot.interface_handler.dashboards.remove_entry(guild.guild_id)
+                try:
+                    message = [
+                        m
+                        for m in self.bot.interface_handler.maps
+                        if m.guild.id == guild.guild_id
+                    ][0]
+                    await message.delete()
+                except:
+                    pass
+                self.bot.interface_handler.maps.remove_entry(guild.guild_id)
+                await ctx.channel.send("Reset all Features!")
+            case _:
+                await ctx.channel.send(
+                    f"Secondary argument must be one of the following: dashboards, maps, detailed_dispatches, dss_announcements, major_order_updates, patch_notes, region_announcements, war_announcements, reset, reset_all"
+                )
 
 
 def setup(bot: GalacticWideWebBot) -> None:

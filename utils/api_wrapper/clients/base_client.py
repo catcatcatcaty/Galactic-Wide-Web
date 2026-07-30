@@ -10,7 +10,7 @@ class BaseAPIClient(ABC):
         self,
         base_url: str,
         logger: GWWLogger,
-        timeout: int = 5,
+        timeout: int = 20,
         headers: Optional[dict] = None,
         rate_limit_delay: int = 3,
     ):

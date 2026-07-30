@@ -11,6 +11,7 @@ from utils.containers import MOUnavailableContainer
 from utils.dataclasses import Languages
 from utils.dbv2 import GWWGuild, GWWGuilds
 from utils.embeds import Dashboard
+from utils.embeds.mo_unavailable_embed import mo_unavilable_embed
 from utils.interactables import WikiButton
 
 
@@ -86,7 +87,7 @@ class MajorOrderCog(Cog):
                 self.mo_briefing_check_dict.pop(major_order.id, None)
                 unique_langs = GWWGuilds.unique_languages()
                 embeds = {
-                    lang: [
+                    lang:
                         Dashboard.MajorOrderEmbed(
                             assignment=self.bot.data.formatted_data.assignments.get(
                                 lang,
@@ -97,14 +98,12 @@ class MajorOrderCog(Cog):
                             language_json=self.bot.json_dict["languages"][lang],
                             json_dict=self.bot.json_dict,
                         )
-                    ]
                     for lang in unique_langs
                 }
-                for lang, embed_list in embeds.items():
+                for lang, embed in embeds.items():
                     briefing = mo_briefing_dict.get(lang, None)
                     if briefing:
-                        for embed in embed_list:
-                            embed._add_briefing(briefing=briefing)
+                        embed._add_briefing(briefing=briefing)
                 self.bot.databases.war_info.major_order_ids.append(major_order.id)
                 self.bot.databases.war_info.save_changes()
                 await self.bot.interface_handler.send_feature(
@@ -145,7 +144,7 @@ class MajorOrderCog(Cog):
         mo_updates_start = datetime.now(tz=timezone.utc)
         if (
             self.last_mo_update
-            and (mo_updates_start - self.last_mo_update).total_seconds() < 600
+            and (mo_updates_start - self.last_mo_update).total_seconds() < 290
         ):
             self.bot.logger.warning(
                 f"major_order_updates loop - skipping duplicate loop execution"
@@ -326,8 +325,7 @@ class MajorOrderCog(Cog):
                 embeds.append(embed)
             await ctx.channel.send(embeds=embeds)
         else:
-            embed = Embed()
-            embed.add_field(f"Awaiting Major Order\nStand by for further orders from Super Earth High Command", "")
+            embed = mo_unavilable_embed()
             await ctx.channel.send(embed=embed)
 
 

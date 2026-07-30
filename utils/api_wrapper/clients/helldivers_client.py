@@ -8,8 +8,8 @@ class HelldiversClient(BaseAPIClient):
             logger=logger,
             headers={
                 "Accept-Language": "en-GB",
-                "X-Super-Client": "Galactic Wide Web",
-                "X-Super-Contact": "Stonemercy",
+                "X-Super-Client": "Galactic Wide Web Fluxer Port",
+                "X-Super-Contact": "catcatcatcaty",
             },
             rate_limit_delay=3
         )

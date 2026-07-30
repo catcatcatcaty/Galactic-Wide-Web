@@ -238,8 +238,6 @@ class WarUpdatesCog(Cog):
                     planets=self.bot.data.formatted_data.planets,
                     dss=self.bot.data.formatted_data.dss,
                 )
-                #TODO fluxer image support
-                '''
                 message = await self.bot.channels.waste_bin_channel.send(
                     file=File(
                         fp=self.bot.maps.FileLocations.localized_map_path(lang["code"])
@@ -248,7 +246,6 @@ class WarUpdatesCog(Cog):
                 self.bot.maps.latest_maps[lang["code"]] = Maps.LatestMap(
                     datetime.now(tz=timezone.utc), message.attachments[0].url
                 )
-                '''
 
     @campaign_check.before_loop
     async def before_campaign_check(self) -> None:
@@ -370,8 +367,6 @@ class WarUpdatesCog(Cog):
                         planets=self.bot.data.formatted_data.planets,
                         dss=self.bot.data.formatted_data.dss,
                     )
-                    #TODO fluxer file support
-                    """
                     message = await self.bot.channels.waste_bin_channel.send(
                         file=File(
                             fp=self.bot.maps.FileLocations.localized_map_path(lang)
@@ -380,7 +375,6 @@ class WarUpdatesCog(Cog):
                     self.bot.maps.latest_maps[lang] = Maps.LatestMap(
                         datetime.now(tz=timezone.utc), message.attachments[0].url
                     )
-                    """
 
     @dss_check.before_loop
     async def before_dss_check(self) -> None:

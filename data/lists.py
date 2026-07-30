@@ -35,50 +35,50 @@ CUSTOM_COLOURS = {
 }
 
 HOMEWORLD_ICONS = {
-    "humans": "https://cdn.discordapp.com/attachments/1212735927223590974/1470844299867328731/super_earth.png?ex=698cc600&is=698b7480&hm=2b4569859d9e09420085455de5ccd44b906e14d85ebe93914a5147e56c7286db&",
-    "automaton": "https://cdn.discordapp.com/attachments/1212735927223590974/1470848423996555467/auto_homeworld.png?ex=698cc9d7&is=698b7857&hm=010592cc01e4c82ab68cfc85b192ef176a68680c8289cc5f891291e9dbc133b9&",
+    "humans": "https://fluxerusercontent.com/attachments/1476525402340249794/1530948494154530817/1000108539.png",
+    "automaton": "https://fluxerusercontent.com/attachments/1476525402340249794/1530948494154530816/1000108540.png",
 }
 
 ATTACK_EMBED_ICONS = {
-    "default": "https://media.discordapp.net/attachments/1212735927223590974/1484605118543298610/loss_default.png?ex=69bed5c2&is=69bd8442&hm=54e34e4498ddcfeb5838468941ba6a1f821c069e6f3ee9e8e2c2e5e4e3d1d3e7&=&format=webp&quality=lossless",
-    "illuminate": "https://media.discordapp.net/attachments/1212735927223590974/1414959912269643847/illuminate.png?ex=68c1779b&is=68c0261b&hm=f7f450e22f313d28b50f03c5aa9ee5c21ded41f79f5a528ec4f819f5283c479c&=&format=webp&quality=lossless",
-    "automaton": "https://media.discordapp.net/attachments/1212735927223590974/1414959911728709632/automaton.png?ex=68c1779b&is=68c0261b&hm=b5a82963ba2a5010f9a8e1b1f5ea0ab15f3ca29ace1dda6922053105b122fadf&=&format=webp&quality=lossless",
-    "terminids": "https://media.discordapp.net/attachments/1212735927223590974/1414959912815169636/terminids.png?ex=68c1779b&is=68c0261b&hm=3c1ad5eea04d6ca74c0a99d70244780662fa37f5e25866d4039edc921e442b0b&=&format=webp&quality=lossless",
+    "default": "https://fluxerusercontent.com/attachments/1476525402340249794/1530949166967042051/1000108541.png",
+    "illuminate": "https://fluxerusercontent.com/attachments/1476525402340249794/1530949166967042050/1000108542.png",
+    "automaton": "https://fluxerusercontent.com/attachments/1476525402340249794/1530949166967042049/1000108543.png",
+    "terminids": "https://fluxerusercontent.com/attachments/1476525402340249794/1530949166967042048/1000108544.png",
 }
 
 RECON_EMBED_ICONS = {
-    "default": "https://media.discordapp.net/attachments/1212735927223590974/1527048341463105686/recon_default.png?ex=6a593e17&is=6a57ec97&hm=cb11d50a0d256f7cbe6f5188f6b923ea5f8cfb5dd9b8e3b46489b8508d87dfbc&=&format=webp&quality=lossless",
-    "illuminate": "https://media.discordapp.net/attachments/1212735927223590974/1527048343610462338/recon_illuminate.png?ex=6a593e18&is=6a57ec98&hm=a0988c83ed3cfeff0be40182fcbbca0b6eb7d2fce9659dd10442613bbc9769f8&=&format=webp&quality=lossless",
-    "automaton": "https://media.discordapp.net/attachments/1212735927223590974/1527048341031223356/recon_automatons.png?ex=6a593e17&is=6a57ec97&hm=5247962ac3c805ddd2c728f374da394391782027c2846c4fa8a0149a1a7e2e11&=&format=webp&quality=lossless",
-    "terminids": "https://media.discordapp.net/attachments/1212735927223590974/1527048344118231060/recon_terminids.png?ex=6a593e18&is=6a57ec98&hm=ac79214978b8868b26281c6870b9632bc3aeeb9f964d16ca3d6b03a2213557cd&=&format=webp&quality=lossless",
+    "default": "https://fluxerusercontent.com/attachments/1476525402340249794/1530950656758644740/1000108545.png",
+    "illuminate": "https://fluxerusercontent.com/attachments/1476525402340249794/1530950656758644739/1000108546.png",
+    "automaton": "https://fluxerusercontent.com/attachments/1476525402340249794/1530950656758644738/1000108547.png",
+    "terminids": "https://fluxerusercontent.com/attachments/1476525402340249794/1530950656758644737/1000108548.png",
 }
 
 DEFENCE_EMBED_ICONS = {
-    "default": "https://media.discordapp.net/attachments/1212735927223590974/1484605635713700121/0x1453ed31ade4af41.png?ex=69bed63e&is=69bd84be&hm=7d4b2ffd4b7072940e64c7a7b9c787208ae3955340c964891f587a5d05487539&=&format=webp&quality=lossless",
-    "illuminate": "https://media.discordapp.net/attachments/1212735927223590974/1415077451565891705/illuminate.png?ex=68c1e513&is=68c09393&hm=baa0da180398b0273df5e807e89e48270bd635fa9d5b0bcd29135ce4d98d1e11&=&format=webp&quality=lossless",
-    "automaton": "https://media.discordapp.net/attachments/1212735927223590974/1415077450488086588/automaton.png?ex=68c1e513&is=68c09393&hm=48a1b17fe45a3946bf8341619b52eb2c8872a682198f1ac727791a175ff7ad79&=&format=webp&quality=lossless",
-    "terminids": "https://media.discordapp.net/attachments/1212735927223590974/1415077452513939657/terminids.png?ex=68c1e513&is=68c09393&hm=c9589861ef0fd2364083746746d767974150190220a50da44b156e1d85eb9880&=&format=webp&quality=lossless",
+    "default": "https://fluxerusercontent.com/attachments/1476525402340249794/1531224276647022592/1000108597.png",
+    "illuminate": "https://fluxerusercontent.com/attachments/1476525402340249794/1531224276647022593/1000108598.png",
+    "automaton": "https://fluxerusercontent.com/attachments/1476525402340249794/1531224276647022594/1000108599.png",
+    "terminids": "https://fluxerusercontent.com/attachments/1476525402340249794/1531224276647022595/1000108600.png",
 }
 
 VICTORY_ICONS = {
-    "default": "https://media.discordapp.net/attachments/1212735927223590974/1484608194184483089/vic_default.png?ex=69bed8a0&is=69bd8720&hm=61d9f13dd968e2877dc0864abd6e7b0f870334b823595a64d8955327a89bf4ab&=&format=webp&quality=lossless",
-    "illuminate": "https://media.discordapp.net/attachments/1212735927223590974/1417225835894673408/vic_illuminate.png?ex=68c9b5ea&is=68c8646a&hm=4bbada8b099921db08a9548845dccdc9cadf9b8586a0f5b9a953aaed1d27c8fa&=&format=webp&quality=lossless",
-    "automaton": "https://media.discordapp.net/attachments/1212735927223590974/1417225835399741621/vic_automaton.png?ex=68c9b5e9&is=68c86469&hm=0d4d869869fdb5d92077b94f58dbdb9d5f3e74ee0c7af39ee9e763d0d5cfde8a&=&format=webp&quality=lossless",
-    "terminids": "https://media.discordapp.net/attachments/1212735927223590974/1417225836368498688/vic_teriminds.png?ex=68c9b5ea&is=68c8646a&hm=d4a95583a298f8b6d3d9dbf465fad301837a91b4446e9740800325173cb145f4&=&format=webp&quality=lossless",
+    "default": "https://fluxerusercontent.com/attachments/1476525402340249794/1531225330679820288/1000108601.png",
+    "illuminate": "https://fluxerusercontent.com/attachments/1476525402340249794/1531225330679820289/1000108602.png",
+    "automaton": "https://fluxerusercontent.com/attachments/1476525402340249794/1531225330679820290/1000108603.png",
+    "terminids": "https://fluxerusercontent.com/attachments/1476525402340249794/1531225330679820291/1000108604.png",
 }
 
 LOSS_ICONS = {
-    "default": "https://media.discordapp.net/attachments/1212735927223590974/1484605118543298610/loss_default.png?ex=69bed5c2&is=69bd8442&hm=54e34e4498ddcfeb5838468941ba6a1f821c069e6f3ee9e8e2c2e5e4e3d1d3e7&=&format=webp&quality=lossless",
-    "illuminate": "https://media.discordapp.net/attachments/1212735927223590974/1424326308787392633/loss_illuminate.png?ex=68e38abe&is=68e2393e&hm=f388e59a228d25f08b251c262fd8ada7ecd37f639ec546b527ff4cb5542cd06f&=&format=webp&quality=lossless",
-    "automaton": "https://media.discordapp.net/attachments/1212735927223590974/1424326308506107965/loss_automaton.png?ex=68e38abe&is=68e2393e&hm=2e7a9842c392a90a75e890489e0cd4c6315b3a61c44505eaa7510483f91de8d0&=&format=webp&quality=lossless",
-    "terminids": "https://media.discordapp.net/attachments/1212735927223590974/1424326308191670355/loss_terminids.png?ex=68e38abe&is=68e2393e&hm=2b0ed2f554d3aef7761b947312fd59d59a4b7e9c18e636bf9d07385de1b02f8b&=&format=webp&quality=lossless",
+    "default": "https://fluxerusercontent.com/attachments/1476525402340249794/1530949166967042051/1000108541.png",
+    "illuminate": "https://fluxerusercontent.com/attachments/1476525402340249794/1531229574438858752/1000108607.png",
+    "automaton": "https://fluxerusercontent.com/attachments/1476525402340249794/1531229574438858754/1000108605.png",
+    "terminids": "https://fluxerusercontent.com/attachments/1476525402340249794/1531229574438858753/1000108606.png",
 }
 
 URGENT_ICONS = {
-    "default": "https://media.discordapp.net/attachments/1212735927223590974/1510033844315881672/urgent_default.png?ex=6a1b581b&is=6a1a069b&hm=e754028aa63c4e6f45f829fd53bf6dab32da1c3c6949472783b5b402a7ac263b&=&format=webp&quality=lossless",
-    "illuminate": "https://media.discordapp.net/attachments/1212735927223590974/1510033844693110836/urgent_illuminate.png?ex=6a1b581b&is=6a1a069b&hm=7744429ac3791dc06db61213e8c884554874aaea8cf78f3422ffd3749f49f7f7&=&format=webp&quality=lossless",
-    "automaton": "https://media.discordapp.net/attachments/1212735927223590974/1510033843917164674/urgent_automaton.png?ex=6a1b581b&is=6a1a069b&hm=f7dfe6ec47bea6220817632568d0bbf0716d91e9379aa94e69159b6cb9c1684a&=&format=webp&quality=lossless",
-    "terminids": "https://media.discordapp.net/attachments/1212735927223590974/1510033843439140924/urgent_terminids.png?ex=6a1b581b&is=6a1a069b&hm=8fa1b61de67356452f4289fb4cdbc08fdbc7a67778ee7f2577e7b5708c749716&=&format=webp&quality=lossless",
+    "default": "https://fluxerusercontent.com/attachments/1476525402340249794/1531231017069711361/1000108608.png",
+    "illuminate": "https://fluxerusercontent.com/attachments/1476525402340249794/1531231017069711362/1000108609.png",
+    "automaton": "https://fluxerusercontent.com/attachments/1476525402340249794/1531231017069711363/1000108610.png",
+    "terminids": "https://fluxerusercontent.com/attachments/1476525402340249794/1531231017069711364/1000108611.png",
 }
 
 STRATAGEM_CAT_DICT = {

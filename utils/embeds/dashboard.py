@@ -201,10 +201,9 @@ class Dashboard:
         for embed in self.embeds.copy():
             if len(embed.fields) == 0:
                 self.embeds.remove(embed)
-            #TODO fluxer image support
-            #else:
+            else:
                 # add blank line (max size, dont change)
-                # embed.set_image("https://i.imgur.com/cThNy4f.png")
+                embed.set_image("https://fluxerusercontent.com/attachments/1476525402340249794/1530875164747640832/cThNy4f.png")
 
         embeds_to_skip = (self.DSSEmbed, self.FooterEmbed, self.GlobalResourceEmbed)
         if self.compact_level > 0:
@@ -2712,21 +2711,18 @@ class Dashboard:
             super().__init__(colour=Colour.dark_embed())
             now = datetime.now(tz=timezone.utc)
             self.add_field(
-                "-",
+                f"{language_json['embeds']['Dashboard']['FooterEmbed']['other_updated']}",
                 (
-                    f"-# {language_json['embeds']['Dashboard']['FooterEmbed']['other_updated']}\n"
                     f"-# <t:{int(now.timestamp())}:f> - <t:{int(now.timestamp())}:R>\n"
                     f"||-# Data from <t:{int(data_time.timestamp())}:R>||"
                 ),
                 inline=False,
             )
             self.add_field(
-                "-",
-                (
-                    f"-# {language_json['embeds']['Dashboard']['FooterEmbed']['total_players']}\n"
-                    f"-# {Emojis.Icons.steam} {steam_players:,}\n"
-                    f"-# {Emojis.Icons.playstation}/{Emojis.Icons.xbox} {total_players - steam_players:,}"
-                ),
+                f"{language_json['embeds']['Dashboard']['FooterEmbed']['total_players']}",
+                     (
+                          f"-# {Emojis.Icons.steam} {steam_players:,}\n"
+                          f"-# {Emojis.Icons.playstation}/{Emojis.Icons.xbox} {total_players - steam_players:,}"),
                 inline=False,
             )
             special_dates = {

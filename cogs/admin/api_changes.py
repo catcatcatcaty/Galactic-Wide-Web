@@ -6,6 +6,7 @@ from utils.bot import GalacticWideWebBot
 from utils.containers import APIChangesContainer
 from utils.dataclasses import APIChanges
 from utils.embeds import PersonalOrderCommandEmbed
+from utils.embeds.api_changes_embed import api_changes_embed
 
 PLANET_STATS_TO_CHECK = {
     "Location": "position",
@@ -249,15 +250,14 @@ class APIChangesCog(Cog):
             ]
             for chunk in chunked_changes:
                 components = [
-                    APIChangesContainer(
+                    api_changes_embed(
                         api_changes=chunk, planets=self.bot.data.formatted_data.planets
                     )
                 ]
-                if len(components[0].children) != 0:
-                    msg = await self.bot.channels.api_changes_channel.send(
-                        components=components
+                if len(components[0].fields) != 0:
+                    await self.bot.channels.api_changes_channel.send(
+                        embeds=components
                     )
-                    await msg.publish()
                 else:
                     await self.bot.channels.moderator_channel.send(chunk)
             self.bot.logger.info(

@@ -72,8 +72,6 @@ class GlobalEventsCog(Cog):
                     self.bot.databases.war_info.save_changes()
                     continue
                 unique_langs = GWWGuilds.unique_languages()
-                #TODO fluxer image support
-                '''
                 image_url = None
                 if (
                     image_id := (
@@ -87,10 +85,8 @@ class GlobalEventsCog(Cog):
                     except:
                         pass
                     image_url = image_message.attachments[0].url
-                '''
-
                 containers = {
-                    lang: [
+                    lang:
                         global_events_embed(
                             lang_code=self.bot.json_dict["languages"][lang][
                                 "code_long"
@@ -102,9 +98,8 @@ class GlobalEventsCog(Cog):
                                 lang
                             ][index],
                             planets=self.bot.data.formatted_data.planets,
-                            #image_url=image_url,
+                            image_url=image_url,
                         )
-                    ]
                     for lang in unique_langs
                 }
                 await self.bot.interface_handler.send_feature(
