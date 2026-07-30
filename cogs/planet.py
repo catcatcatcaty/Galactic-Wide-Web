@@ -213,20 +213,31 @@ class PlanetCog(Cog):
             else:
                 guild = GWWGuild.default()
                 guild_language = self.bot.json_dict["languages"][guild.language]
+            image_url = None
+            try:
+                image_message = await self.bot.channels.waste_bin_channel.send(
+                    file=File(f"resources/biomes/{planet_data.biome}.png")
+                )
+                image_url = image_message.attachments[0].url
+            except:
+                pass
             embed = PlanetEmbed(
                 planet=planet_data,
                 lang_code=guild_language["code_long"],
                 containers_json=guild_language["containers"]["PlanetContainers"]["PlanetContainer"],
                 faction_json=guild_language["factions"],
                 gambit_planets=self.bot.data.formatted_data.gambit_planets,
+                image_url=image_url
             )
             await ctx.channel.send(embed=embed)
-            embed = RegionEmbed(
-                planet=planet_data,
-                lang_code=guild_language["code_long"],
-                container_json=guild_language["containers"]["PlanetContainers"]["RegionContainer"],
-            )
-            await ctx.channel.send(embed=embed)
+            if planet_data.regions is not None:
+                embed = RegionEmbed(
+                    planet=planet_data,
+                    lang_code=guild_language["code_long"],
+                    container_json=guild_language["containers"]["PlanetContainers"]["RegionContainer"],
+                )
+                await ctx.channel.send(embed=embed)
+
 
 def setup(bot: GalacticWideWebBot) -> None:
     bot.add_cog(PlanetCog(bot))

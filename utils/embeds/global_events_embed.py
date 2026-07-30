@@ -48,7 +48,7 @@ class global_events_embed(Embed, EmbedReprMixin):
                     + "\n"
                 )
                 effects_text += gwe_content
-                effects_text += f"\n ### {container_json['active_on_planets']}:{specific_planets}"
+                effects_text += f"### {container_json['active_on_planets']}:{specific_planets}"
                 content += effects_text or "No effects present"
         else:
             for chunk in global_event.split_message:
@@ -57,8 +57,5 @@ class global_events_embed(Embed, EmbedReprMixin):
             content += (
                 f"\n-# {container_json['expires']} <t:{global_event.expire_time}:R>"
             )
-        content += (
-            f"\n-# {container_json['global_event']} #{global_event.id}"
-        )
-
+        self.set_footer(text=f"{container_json['global_event']} #{global_event.id}")
         self.add_field(title, content)

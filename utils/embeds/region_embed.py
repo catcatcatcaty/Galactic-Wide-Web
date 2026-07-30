@@ -16,8 +16,10 @@ class RegionEmbed(Embed, EmbedReprMixin):
     ):
         super().__init__()
         now_seconds = int(datetime.now(tz=timezone.utc).timestamp())
+        regions = {}
         for region in sorted(planet.regions.values(), key=lambda x: x.size):
             text_display = []
+            title = f"{region.owner.emoji} **{region.names.get(lang_code, region.name)}**"
             if (
                 planet.homeworld
                 and not region.is_available
@@ -25,7 +27,8 @@ class RegionEmbed(Embed, EmbedReprMixin):
                     [r for r in planet.regions.values() if r.size > region.size]
                 )
             ):
-                text_display = [f"~~", "".join(text_display), "~~"]
+                title = "~~" + title + "~~"
+            regions.update({title: ""})
             if region.is_factory:
                 text_display.append(
                     f"\n-# {region.emoji} Class {region.size} Megafactory"
@@ -63,11 +66,11 @@ class RegionEmbed(Embed, EmbedReprMixin):
                     )
                     text_display.append(f"\n-# *from **{percent_at:.2%}** to **{percent_total:.2%}** at time of liberation!*")
                 text_display.append(f"\n{region.health_bar}")
-                text_display.append(f"\n`{region.perc:^25,.2%}`")
+                text_display.append(f"\n`{region.perc:^26,.2%}`")
                 if region.tracker and region.tracker.change_rate_per_hour > 0:
                     change = f"{region.tracker.change_rate_per_hour:.2%}/hr"
                     text_display.append(
-                        f"\n`{change:^25}`"
+                        f"\n`{change:^26}`"
                         + f"\n-# {container_json['liberated']} <t:{int(region.tracker.complete_time.timestamp())}:R>"
                     )
             elif region.owner.full_name != "Humans":
@@ -107,5 +110,6 @@ class RegionEmbed(Embed, EmbedReprMixin):
                         )
                     )
                     text_display.append(f"\n-# <t:{region_avail_timestamp}:R>")
-            for text in text_display:
-                self.add_field(f"{region.owner.emoji} **{region.names.get(lang_code, region.name)}**", text)
+            regions.update({title: "".join(text_display)})
+        for k, v in regions.items():
+            self.add_field(k, v)

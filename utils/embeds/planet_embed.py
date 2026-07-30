@@ -16,10 +16,12 @@ class PlanetEmbed(Embed, EmbedReprMixin):
         containers_json: dict,
         faction_json: dict,
         gambit_planets: dict[int, Planet],
+        image_url: str = None
     ):
         super().__init__(
         )
-        self.set_image(File(f"resources/biomes/{planet.biome}.png"))
+        if image_url:
+            self.set_image(url=image_url)
         self.add_planet_info(
             planet=planet,
             component_json=containers_json["planet_info"],
@@ -81,15 +83,16 @@ class PlanetEmbed(Embed, EmbedReprMixin):
             for sf in planet.subfactions:
                 sf_text += f"\n-# {sf.emoji} {sf.eng_name}"
             if sf_text != "":
-                self.add_field(f"Subfactions:", effects_text + f"\n")
+                self.add_field(f"Subfactions:", sf_text + f"\n")
 
             #COMMUNITY TARGETS
-            comm_target_text = f"### Communities targeting this planet:"
+            comm_target_text = f""
             if len(planet.community_targets) > 0:
                 for comm in planet.community_targets:
                     comm_target_text += (
                         f"\n-# {comm.full_name} [{comm.emoji}](<{comm.discord_link}>)"
                     )
+            if comm_target_text != "":
                 self.add_field(f"Communities targeting this planet:", comm_target_text)
 
             #LIBERATION
@@ -116,8 +119,7 @@ class PlanetEmbed(Embed, EmbedReprMixin):
                     )
                     liberation_text += f"\n**{component_json['liberated']}** <t:{int(end_time_info.end_time.timestamp())}:R>\nIf the following regions are liberated:\n-# {regions_list}"
             self.add_field(f"{component_json['heroes']}: **{planet.stats.player_count:,}**", liberation_text + f"\n")
-            self.set_thumbnail(f"https://helldivers.wiki.gg/images/{url_name}_Planet_Icon.png")
-            self.set_footer(text=f"https://helldivers.wiki.gg/wiki/{url_name}")
+            self.set_footer(text=f"https://helldivers.wiki.gg/wiki/{url_name}", icon_url=f"https://helldivers.wiki.gg/images/{url_name}_Planet_Icon.png")
 
     def add_mission_stats(self, planet: Planet, component_json: dict):
         self.add_field(f"{component_json['title']}",
