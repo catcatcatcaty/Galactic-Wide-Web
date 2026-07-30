@@ -34,8 +34,11 @@ class PlanetCog(Cog):
                 key=lambda x: x.stats.player_count,
                 reverse=True,
             )
-            if user_input.lower() in p.names.get("en-GB", p.name).lower()
-            or user_input in str(p.index)
+            if not p.is_hidden
+            and (
+                user_input.lower() in p.names.get("en-GB", p.name).lower()
+                or user_input in str(p.index)
+            )
         ][:25]
 
     @wait_for_startup()
@@ -122,7 +125,6 @@ class PlanetCog(Cog):
                     language_code_short=language_json["code"],
                     language_code_long=language_json["code_long"],
                     planets=self.bot.data.formatted_data.planets,
-                    planet_names_json=self.bot.json_dict["planets"],
                 )
                 self.bot.maps.add_icons(
                     lang=guild.language,
@@ -155,6 +157,7 @@ class PlanetCog(Cog):
             )
         await inter.send(
             components=components,
+            file=File(f"resources/biomes/{planet_data.biome}.png"),
             ephemeral=public != "Yes",
         )
 
