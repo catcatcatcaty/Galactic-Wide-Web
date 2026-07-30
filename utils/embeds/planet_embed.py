@@ -1,4 +1,6 @@
-from disnake import Embed, Colour, Color
+from re import fullmatch
+
+from disnake import Embed, Colour, Color, File
 
 from utils.api_wrapper.models import Planet
 from utils.dataclasses import PlanetFeatures, Factions
@@ -17,6 +19,7 @@ class PlanetEmbed(Embed, EmbedReprMixin):
     ):
         super().__init__(
         )
+        self.set_image(File(f"resources/biomes/{planet.biome}.png"))
         self.add_planet_info(
             planet=planet,
             component_json=containers_json["planet_info"],
@@ -51,6 +54,15 @@ class PlanetEmbed(Embed, EmbedReprMixin):
     ):
         if planet.faction:
             description = "\n-# " + planet.description if planet.description else ""
+            name_parts = []
+            for word in planet.name.split(" "):
+                parts = word.split("-")
+                formatted_parts = [
+                    p if fullmatch(r"[IVXLCDM]+", p) else p.capitalize()
+                    for p in parts
+                ]
+                name_parts.append("-".join(formatted_parts))
+            url_name = "_".join(name_parts)
             self.add_field(f"{planet.faction.emoji} {planet.names.get(lang_code, planet.name)}, {planet.exclamations}",
               f"\n{component_json['sector']}: **{planet.sector}**"
             + f"\n{component_json['owner']}: **{factions_json[planet.faction.full_name]}**{planet.faction.emoji}"
@@ -83,11 +95,11 @@ class PlanetEmbed(Embed, EmbedReprMixin):
             #LIBERATION
             liberation_text = (
                 f"\n{planet.health_bar}"
-                f"\n`{1 - planet.health_perc if not planet.event else planet.event.progress:^25.2%}`"
+                f"\n`{1 - planet.health_perc if not planet.event else planet.event.progress:^26.2%}`"
             )
             if planet.tracker and planet.tracker.change_rate_per_hour != 0:
                 change = f"{planet.tracker.change_rate_per_hour:+.2%}/hr"
-                liberation_text += f"\n`{change:^25}`"
+                liberation_text += f"\n`{change:^26}`"
 
             end_time_info = get_end_time(planet, gambit_planets)
             if end_time_info.end_time:
@@ -104,6 +116,8 @@ class PlanetEmbed(Embed, EmbedReprMixin):
                     )
                     liberation_text += f"\n**{component_json['liberated']}** <t:{int(end_time_info.end_time.timestamp())}:R>\nIf the following regions are liberated:\n-# {regions_list}"
             self.add_field(f"{component_json['heroes']}: **{planet.stats.player_count:,}**", liberation_text + f"\n")
+            self.set_thumbnail(f"https://helldivers.wiki.gg/images/{url_name}_Planet_Icon.png")
+            self.set_footer(text=f"https://helldivers.wiki.gg/wiki/{url_name}")
 
     def add_mission_stats(self, planet: Planet, component_json: dict):
         self.add_field(f"{component_json['title']}",

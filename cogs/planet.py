@@ -185,7 +185,8 @@ class PlanetCog(Cog):
                 planet_data_list = [
                     p
                     for p in self.bot.data.formatted_data.planets.values()
-                    if p.names.get("en-GB", p.name).lower() == planet
+                    if not p.is_hidden
+                    and p.names.get("en-GB", p.name).lower() == planet
                 ]
                 if planet_data_list:
                     planet_data = planet_data_list[0]
