@@ -573,7 +573,15 @@ class SetupCog(Cog):
             *,
             arg
     ) -> None:
-        guild: GWWGuild = GWWGuilds.get_specific_guild(ctx.guild.id)
+        if ctx.guild:
+            guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
+            if not guild:
+                self.bot.logger.error(
+                    f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
+                )
+                guild = GWWGuilds.add(ctx.guild.id, "en", [])
+        else:
+            guild = GWWGuild.default()
         guild_language = self.bot.json_dict["languages"][guild.language]
         if not ctx.author.guild_permissions.administrator:
             await ctx.channel.send(
