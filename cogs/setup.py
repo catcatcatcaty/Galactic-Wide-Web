@@ -694,6 +694,8 @@ class SetupCog(Cog):
                     )
                 )
                 guild.update_features()
+                list_to_update: list = getattr(self.bot.interface_handler, setting)
+                list_to_update.append(ctx.channel)
             case "reset":
                 feature_type = arg[2]
                 match feature_type:
