@@ -1984,7 +1984,7 @@ class Dashboard:
                 colour=Colour.from_rgb(*CUSTOM_COLOURS["DSS"]),
             )
             self.set_thumbnail(
-                url="https://media.discordapp.net/attachments/1212735927223590974/1413612410819969114/0xfbbeedfa99b09fec.png?ex=68bc90a6&is=68bb3f26&hm=cd8bf236a355bbed28f4847d3d62b5908d050a7eeb7396bb9a891e108acc0241&=&format=webp&quality=lossless"
+                url="https://fluxerusercontent.com/attachments/1476525402340249794/1530880774960582656/1000108518.png"
             )
             move_datetime = dss.move_timer_datetime
             because_of_planet = False
@@ -2693,7 +2693,7 @@ class Dashboard:
                     calc_end_time = get_end_time(campaign.planet)
                     if calc_end_time.end_time:
                         if calc_end_time.regions:
-                            regions_list = f"\n-# ".join(
+                            regions_list = f"\n".join(
                                 [
                                     f" {r.emoji} {r.names.get(language_json['code_long'], r.name)}"
                                     for r in calc_end_time.regions

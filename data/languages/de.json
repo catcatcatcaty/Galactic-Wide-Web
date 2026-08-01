@@ -111,8 +111,8 @@
             "title": "REGION-AKTUALISIERUNGEN",
             "victories": "SIEGE",
             "new_regions": "NEUE REGIONEN VERFÜGBAR",
-            "region_victory": "\n### {region_emoji} {region_name} auf {planet_name} wurde von {faction_name} befreit",
-            "new_region": "### {region_emoji} {region_name} ist jetzt auf {planet_name} verfügbar",
+            "region_victory": "\n{region_emoji} {region_name} auf {planet_name} wurde von {faction_name} befreit",
+            "new_region": "{region_emoji} {region_name} ist jetzt auf {planet_name} verfügbar",
             "resistance": "\n-# Widerstand: **{regen}/Std**"
         },
         "SetupContainer": {

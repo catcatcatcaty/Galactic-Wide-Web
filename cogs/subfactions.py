@@ -139,7 +139,7 @@ class SubfactionCog(commands.Cog):
                 (
                     sf
                     for sf in Subfactions._all
-                    if sf.eng_name.title() == arg[1:]
+                    if sf.eng_name.lower() == arg[1:].lower().replace("_", " ")
                 ),
                 None,
             )

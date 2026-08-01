@@ -111,8 +111,8 @@
             "title": "BÖLGE GÜNCELLEMELERİ",
             "victories": "ZAFERLER",
             "new_regions": "YENİ AÇILAN BÖLGELER",
-            "region_victory": "\n### {region_emoji} {planet_name} üzerindeki {region_name}, {faction_name} elinden liberate edildi",
-            "new_region": "### {region_emoji} {region_name} artık {planet_name} üzerinde mevcut",
+            "region_victory": "\n{region_emoji} {planet_name} üzerindeki {region_name}, {faction_name} elinden liberate edildi",
+            "new_region": "{region_emoji} {region_name} artık {planet_name} üzerinde mevcut",
             "resistance": "\n-# Direniş: **{regen}/saat**"
         },
         "SetupContainer": {

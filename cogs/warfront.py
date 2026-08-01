@@ -99,7 +99,7 @@ class WarfrontCog(Cog):
             if len(embed.fields) == 0:
                 embeds.remove(embed)
                 continue
-            embed.set_image("https://i.imgur.com/cThNy4f.png")
+            embed.set_image("https://fluxerusercontent.com/attachments/1476525402340249794/1530875164747640832/cThNy4f.png")
         await inter.send(embeds=embeds)
 
 ###FLUXER
@@ -124,8 +124,8 @@ class WarfrontCog(Cog):
         if not arg:
             await ctx.send(":warning: Value must be one of: Automaton, Terminids, Illuminate")
             return
-        faction = arg[1:]
-        if faction not in ["Automaton", "Terminids", "Illuminate"]:
+        faction = arg[1:].lower()
+        if faction not in ["automaton", "terminids", "illuminate"]:
             await ctx.send(":warning: Value must be one of: Automaton, Terminids, Illuminate")
             return
         guild_language = self.bot.json_dict["languages"][guild.language]
@@ -138,7 +138,7 @@ class WarfrontCog(Cog):
             defence_event_campaigns=[
                 c
                 for c in self.bot.data.formatted_data.event_campaigns
-                if c.planet.event.faction.full_name == faction
+                if c.planet.event.faction.full_name.lower() == faction
                    and c.planet.event.type == EventType.Defence
             ],
             language_json=guild_language,
@@ -150,22 +150,23 @@ class WarfrontCog(Cog):
             campaigns=[
                 campaign
                 for campaign in self.bot.data.formatted_data.campaigns
-                if campaign.faction.full_name == faction and not campaign.planet.event
+                if campaign.faction.full_name.lower() == faction and not campaign.planet.event
             ],
             language_json=guild_language,
-            faction=faction,
+            faction=faction.title(),
             total_players=self.bot.data.formatted_data.total_players,
             planets=self.bot.data.formatted_data.planets,
             gambit_planets=self.bot.data.formatted_data.gambit_planets,
         )
+        #yes this sucks i know
         all_planets_embed = WarfrontAllPlanetsEmbed(
-            planets=self.bot.data.formatted_data.planets, faction=faction
+            planets=self.bot.data.formatted_data.planets, faction=faction.title()
         )
         embeds: list[Embed] = [defence_events_embed, attack_embed, all_planets_embed]
         if urgent_campaigns := [
             c
             for c in self.bot.data.formatted_data.campaigns
-            if c.faction.full_name == faction
+            if c.faction.full_name.lower() == faction
             if c.type == CampaignType.Event
                and c.planet.event
                and c.planet.event.type == EventType.UrgentLiberation
@@ -182,7 +183,7 @@ class WarfrontCog(Cog):
             if len(embed.fields) == 0:
                 embeds.remove(embed)
                 continue
-            embed.set_image("https://i.imgur.com/cThNy4f.png")
+            embed.set_image("https://fluxerusercontent.com/attachments/1476525402340249794/1530875164747640832/cThNy4f.png")
         await ctx.send(embeds=embeds)
 
 def setup(bot: GalacticWideWebBot) -> None:

@@ -174,34 +174,31 @@ class PlanetCog(Cog):
     ) -> None:
             guild = GWWGuild.default()
             guild_language = self.bot.json_dict["languages"][guild.language]
+            all_planets = [
+                p.names.get("en-GB", p.name)
+                for p in self.bot.data.formatted_data.planets.values()
+                if not p.is_hidden
+            ]
             if not arg:
                 await ctx.channel.send(
-                    f"No planet supplied!"
+                    f"No planet supplied, use one of the following as an argument:\n-# **{' - '.join(all_planets)}**"
                 )
                 return
             planet = arg[1:]
+            planet = planet.replace("_", " ")
             planet_data = None
-            if "-" not in planet:
-                planet_data_list = [
-                    p
-                    for p in self.bot.data.formatted_data.planets.values()
-                    if not p.is_hidden
-                    and p.names.get("en-GB", p.name).lower() == planet
-                ]
-                if planet_data_list:
-                    planet_data = planet_data_list[0]
-            else:
-                try:
-                    index = int(planet.split("-")[0])
-                except ValueError:
-                    await ctx.channel.send(
-                        f"The planet you supplied (`{planet}`) is in the incorrect format. Please choose a planet from the list."
-                    )
-                    return
-                planet_data = self.bot.data.formatted_data.planets.get(index)
+            planet_data_list = [
+                p
+                for p in self.bot.data.formatted_data.planets.values()
+                if not p.is_hidden
+                   and p.names.get("en-GB", p.name).lower() == planet.lower()
+            ]
+            if planet_data_list:
+                planet_data = planet_data_list[0]
             if not planet_data:
                 await ctx.channel.send(
-                   "That planet is unavailable. Please select another planet from the list.")
+                   f"That planet is unavailable or could not be found on the galactic map. Please use one of the following as an argument:\n-# **{' - '.join(all_planets)}**"
+                )
                 return
             if ctx.guild:
                 guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
