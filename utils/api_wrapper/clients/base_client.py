@@ -12,7 +12,7 @@ class BaseAPIClient(ABC):
         logger: GWWLogger,
         timeout: int = 20,
         headers: Optional[dict] = None,
-        rate_limit_delay: int = 3,
+        rate_limit_delay: float = 0.1,
     ):
         self.base_url = base_url.rstrip("/")
         self.logger = logger

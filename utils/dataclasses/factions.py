@@ -9,6 +9,7 @@ class Faction:
     singular: str
     plural: str
     colour: tuple
+    aliases: list[str]
 
     @property
     def emoji(self):
@@ -25,6 +26,7 @@ class Factions:
         "human",
         "humans",
         (107, 183, 234),
+        []
     )
     terminids: Faction = Faction(
         2,
@@ -32,6 +34,7 @@ class Factions:
         "terminid",
         "terminids",
         (234, 167, 43),
+        ["terminid", "bugs"]
     )
     automaton: Faction = Faction(
         3,
@@ -39,6 +42,7 @@ class Factions:
         "automaton",
         "automaton",
         (252, 108, 115),
+        ["automatons", "bots", "clankers"]
     )
     illuminate: Faction = Faction(
         4,
@@ -46,6 +50,7 @@ class Factions:
         "illuminate",
         "illuminate",
         (107, 59, 187),
+        ["squids"]
     )
     all: list[Faction] = [
         humans,
@@ -59,7 +64,7 @@ class Factions:
         matching_list = []
         if name:
             matching_list = [
-                f for f in Factions.all if f.full_name.lower() == name.lower()
+                f for f in Factions.all if f.full_name.lower() == name.lower() or f.aliases.__contains__(name.lower())
             ]
         elif number:
             matching_list = [f for f in Factions.all if f.number == number]

@@ -3,6 +3,7 @@ from disnake.ext import commands
 from disnake.ext.commands import Cog, Param, slash_command, Command
 from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
+from utils.dataclasses import Factions
 from utils.dataclasses.enums import CampaignType, EventType
 from utils.dbv2 import GWWGuild, GWWGuilds
 from utils.embeds import WarfrontAllPlanetsEmbed, Dashboard
@@ -122,11 +123,11 @@ class WarfrontCog(Cog):
         else:
             guild = GWWGuild.default()
         if not arg:
-            await ctx.send(":warning: Value must be one of: Automaton, Terminids, Illuminate")
+            await ctx.send(":warning: Value must be one of: Automatons (bots), Terminids (bugs), Illuminate (squids)")
             return
-        faction = arg[1:].lower()
-        if faction not in ["automaton", "terminids", "illuminate"]:
-            await ctx.send(":warning: Value must be one of: Automaton, Terminids, Illuminate")
+        faction = Factions.get_from_identifier(arg[1:].lower())
+        if not faction:
+            await ctx.send(":warning: Value must be one of: Automatons (bots), Terminids (bugs), Illuminate (squids)")
             return
         guild_language = self.bot.json_dict["languages"][guild.language]
         eagle_storm = (
@@ -153,14 +154,13 @@ class WarfrontCog(Cog):
                 if campaign.faction.full_name.lower() == faction and not campaign.planet.event
             ],
             language_json=guild_language,
-            faction=faction.title(),
+            faction=faction.full_name,
             total_players=self.bot.data.formatted_data.total_players,
             planets=self.bot.data.formatted_data.planets,
             gambit_planets=self.bot.data.formatted_data.gambit_planets,
         )
-        #yes this sucks i know
         all_planets_embed = WarfrontAllPlanetsEmbed(
-            planets=self.bot.data.formatted_data.planets, faction=faction.title()
+            planets=self.bot.data.formatted_data.planets, faction=faction.full_name
         )
         embeds: list[Embed] = [defence_events_embed, attack_embed, all_planets_embed]
         if urgent_campaigns := [

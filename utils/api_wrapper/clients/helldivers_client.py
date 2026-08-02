@@ -11,7 +11,6 @@ class HelldiversClient(BaseAPIClient):
                 "X-Super-Client": "Galactic Wide Web Fluxer Port",
                 "X-Super-Contact": "catcatcatcaty",
             },
-            rate_limit_delay=3
         )
 
     async def get_news_feed(

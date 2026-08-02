@@ -227,7 +227,7 @@ class PlanetCog(Cog):
                 image_url=image_url
             )
             await ctx.channel.send(embed=embed)
-            if planet_data.regions is not None:
+            if planet_data.regions.items():
                 embed = RegionEmbed(
                     planet=planet_data,
                     lang_code=guild_language["code_long"],
