@@ -1,6 +1,6 @@
 from asyncio import to_thread
 from datetime import datetime, timezone
-from disnake import File
+from disnake import File, HTTPException
 from disnake.ext.commands import Cog
 from disnake.ext.tasks import loop
 from utils.bot import GalacticWideWebBot
@@ -365,14 +365,23 @@ class WarUpdatesCog(Cog):
                         planets=self.bot.data.formatted_data.planets,
                         dss=self.bot.data.formatted_data.dss,
                     )
-                    message = await self.bot.channels.waste_bin_channel.send(
-                        file=File(
-                            fp=self.bot.maps.FileLocations.localized_map_path(lang)
+                    try:
+                        message = await self.bot.channels.waste_bin_channel.send(
+                            file=File(
+                                fp=self.bot.maps.FileLocations.localized_map_path(lang)
+                            )
                         )
-                    )
-                    self.bot.maps.latest_maps[lang] = Maps.LatestMap(
-                        datetime.now(tz=timezone.utc), message.attachments[0].url
-                    )
+                        self.bot.maps.latest_maps[lang] = Maps.LatestMap(
+                            datetime.now(tz=timezone.utc), message.attachments[0].url
+                        )
+                    except HTTPException as e:
+                        await self.bot.channels.moderator_channel.send(
+                            (
+                                f"Error with DSS map update\n"
+                                f"Language: **{lang}**\n"
+                                f"Filepath: **{self.bot.maps.FileLocations.localized_map_path(lang)}**"
+                            )
+                        )
 
     @dss_check.before_loop
     async def before_dss_check(self) -> None:
