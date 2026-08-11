@@ -9,13 +9,11 @@ from utils.dataclasses import Config
 class BotChannels:
     moderator_channel: TextChannel | None = None
     waste_bin_channel: TextChannel | None = None
-    api_changes_channel: TextChannel | None = None
 
     async def get_channels(self, bot: commands.AutoShardedBot):
         channels = [
             ("moderator_channel", Config.MODERATION_CHANNEL_ID),
             ("waste_bin_channel", Config.WASTE_BIN_CHANNEL_ID),
-            ("api_changes_channel", Config.API_CHANGES_CHANNEL_ID),
         ]
         for attr_name, channel_id in channels:
             channel = getattr(self, attr_name)

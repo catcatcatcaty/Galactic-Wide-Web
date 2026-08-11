@@ -24,6 +24,12 @@ class InterfaceHandler:
         self.busy = False
         self.loaded = False
         all_guilds = GWWGuilds(fetch_all=True)
+        self.api_changes = BaseFeatureInteractionHandler(
+            features=[
+                f for g in all_guilds for f in g.features if f.name == "api_changes"
+            ],
+            bot=self.bot,
+        )
         self.dashboards = BaseFeatureInteractionHandler(
             features=[
                 f for g in all_guilds for f in g.features if f.name == "dashboards"
@@ -95,6 +101,7 @@ class InterfaceHandler:
             bot=self.bot,
         )
         self.lists = {
+            "api_changes": self.api_changes,
             "dashboards": self.dashboards,
             "war_announcements": self.war_announcements,
             "dss_announcements": self.dss_announcements,
@@ -271,7 +278,7 @@ class InterfaceHandler:
                                 self.send_component(
                                     feature_type=feature_type,
                                     channel=channel,
-                                    container=content[guild.language],
+                                    container=content[guild.language] if content[guild.language] else content["en"],
                                 )
                             )
                         else:
@@ -279,7 +286,7 @@ class InterfaceHandler:
                                 self.send_component(
                                     feature_type=feature_type,
                                     channel=channel,
-                                    container=content[guild.language],
+                                    container=content[guild.language] if content[guild.language] else content["en"],
                                 )
                             )
                         await sleep(self.wait_time)
@@ -299,7 +306,7 @@ class InterfaceHandler:
                             self.send_component(
                                 feature_type=feature_type,
                                 channel=channel,
-                                container=content[guild.language],
+                                container=content[guild.language] if content[guild.language] else content["en"],
                             )
                         )
                         await sleep(self.wait_time)

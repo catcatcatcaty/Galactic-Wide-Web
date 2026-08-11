@@ -1,4 +1,4 @@
-from datetime import time
+from datetime import time, datetime, timezone
 from difflib import SequenceMatcher
 from disnake.ext.commands import Cog
 from disnake.ext.tasks import loop
@@ -68,6 +68,7 @@ class APIChangesCog(Cog):
         time=[time(hour=j, minute=i, second=15) for j in range(24) for i in range(60)]
     )
     async def api_changes(self) -> None:
+        aic_check_start = datetime.now(tz=timezone.utc)
         if not self.bot.ready:
             self.bot.logger.warning("api_changes loop returning - the bot isn't ready")
             return
@@ -249,19 +250,21 @@ class APIChangesCog(Cog):
                 total_changes[i : i + 10] for i in range(0, len(total_changes), 10)
             ]
             for chunk in chunked_changes:
-                components = [
+                embeds = {
+                    "en":
                     api_changes_embed(
                         api_changes=chunk, planets=self.bot.data.formatted_data.planets
                     )
-                ]
-                if len(components[0].fields) != 0:
-                    await self.bot.channels.api_changes_channel.send(
-                        embeds=components
+                }
+                if len(embeds.get("en").fields) > 0:
+                    await self.bot.interface_handler.send_feature(
+                        feature_type="api_changes",
+                        content=embeds,
                     )
                 else:
                     await self.bot.channels.moderator_channel.send(chunk)
             self.bot.logger.info(
-                f"api_changes loop - sent out api changes for {len(total_changes)} total change(s)"
+                f"api_changes loop - sent out api changes for {len(total_changes)} total change(s) to {len(self.bot.interface_handler.api_changes)} channels in {(datetime.now(tz=timezone.utc) - aic_check_start).total_seconds():.2f} seconds"
             )
 
     @api_changes.before_loop

@@ -47,6 +47,17 @@ ALLOWED_DROPDOWNS = {
     "map_channel_select",
     "language_select",
 }
+FEATURE_TYPES = [
+    "api_changes"
+    "dashboards"
+    "maps"
+    "detailed_dispatches"
+    "dss_announcements"
+    "major_order_updates"
+    "patch_notes"
+    "region_announcements"
+    "war_announcements"
+]
 
 
 class SetupCog(Cog):
@@ -684,7 +695,15 @@ class SetupCog(Cog):
                 )
                 guild.update_features()
                 self.bot.interface_handler.maps.append(message)
-            case "detailed_dispatches" | "dss_announcements" | "major_order_updates" | "patch_notes" | "region_announcements" | "war_announcements":
+            case (
+                  "api_changes"
+                  | "detailed_dispatches"
+                  | "dss_announcements"
+                  | "major_order_updates"
+                  | "patch_notes"
+                  | "region_announcements"
+                  | "war_announcements"
+            ):
                 guild.features = [f for f in guild.features if f.name != setting]
                 guild.features.append(
                     Feature(
@@ -725,13 +744,21 @@ class SetupCog(Cog):
                         except:
                             pass
                         self.bot.interface_handler.maps.remove_entry(guild.guild_id)
-                    case "detailed_dispatches" | "dss_announcements" | "major_order_updates" | "patch_notes" | "region_announcements" | "war_announcements":
+                    case (
+                          "api_changes"
+                          | "detailed_dispatches"
+                          | "dss_announcements"
+                          | "major_order_updates"
+                          | "patch_notes"
+                          | "region_announcements"
+                          | "war_announcements"
+                    ):
                         guild.features = [f for f in guild.features if f.name != feature_type]
                         guild.update_features()
                         getattr(self.bot.interface_handler, feature_type).remove_entry(guild.guild_id)
                     case _:
                         await ctx.channel.send(
-                            f"Secondary argument must be one of the following: dashboards, maps, detailed_dispatches, dss_announcements, major_order_updates, patch_notes, region_announcements, war_announcements, reset, reset_all"
+                            f"Secondary argument must be one of the following: api_changes dashboards, maps, detailed_dispatches, dss_announcements, major_order_updates, patch_notes, region_announcements, war_announcements, reset, reset_all"
                         )
             case "reset_all":
                 guild.features = []
@@ -759,7 +786,7 @@ class SetupCog(Cog):
                 await ctx.channel.send("Reset all Features!")
             case _:
                 await ctx.channel.send(
-                    f"Secondary argument must be one of the following: dashboards, maps, detailed_dispatches, dss_announcements, major_order_updates, patch_notes, region_announcements, war_announcements, reset, reset_all"
+                    f"Secondary argument must be one of the following: api_changes dashboards, maps, detailed_dispatches, dss_announcements, major_order_updates, patch_notes, region_announcements, war_announcements, reset, reset_all"
                 )
 
 
