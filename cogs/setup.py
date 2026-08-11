@@ -18,8 +18,10 @@ from disnake.ui import ActionRow, Container, TextDisplay
 from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
 from utils.containers import SetupContainer
+from utils.dataclasses import Languages
 from utils.dbv2 import Feature, GWWGuild, GWWGuilds
 from utils.embeds import Dashboard
+from utils.embeds.settings_embed import settings_embed
 from utils.maps import Maps
 from utils.setup import Setup
 
@@ -48,14 +50,14 @@ ALLOWED_DROPDOWNS = {
     "language_select",
 }
 FEATURE_TYPES = [
-    "api_changes"
-    "dashboards"
-    "maps"
-    "detailed_dispatches"
-    "dss_announcements"
-    "major_order_updates"
-    "patch_notes"
-    "region_announcements"
+    "api_changes",
+    "dashboards",
+    "maps",
+    "detailed_dispatches",
+    "dss_announcements",
+    "major_order_updates",
+    "patch_notes",
+    "region_announcements",
     "war_announcements"
 ]
 
@@ -600,9 +602,8 @@ class SetupCog(Cog):
             )
             return
         if not arg:
-            await ctx.channel.send(
-                f"Argument must be one of the following: dashboards, maps, detailed_dispatches, dss_announcements, major_order_updates, patch_notes, region_announcements, war_announcements, reset, reset_all"
-            )
+            embed = settings_embed(guild, False)
+            await ctx.send(embed=embed)
             return
         arg = arg.split(" ")
         setting = arg[1]
@@ -646,6 +647,7 @@ class SetupCog(Cog):
                 )
                 guild.update_features()
                 self.bot.interface_handler.dashboards.append(message)
+                return
             case "maps":
                 firstmessage = await ctx.channel.send(
                     "Generating map, please wait..."
@@ -695,6 +697,14 @@ class SetupCog(Cog):
                 )
                 guild.update_features()
                 self.bot.interface_handler.maps.append(message)
+                return
+            case "language":
+                language = arg[2]
+                if language not in Languages.all:
+                    await ctx.channel.send(f"Secondary argument must be one of: " + ", ".join([l.short_code for l in Languages.all]))
+                else:
+                    guild.language = language
+                    guild.save_changes()
             case (
                   "api_changes"
                   | "detailed_dispatches"
@@ -758,8 +768,9 @@ class SetupCog(Cog):
                         getattr(self.bot.interface_handler, feature_type).remove_entry(guild.guild_id)
                     case _:
                         await ctx.channel.send(
-                            f"Secondary argument must be one of the following: api_changes dashboards, maps, detailed_dispatches, dss_announcements, major_order_updates, patch_notes, region_announcements, war_announcements, reset, reset_all"
+                            f"Secondary argument must be one of the following:" + ", ".join(FEATURE_TYPES)
                         )
+                        return
             case "reset_all":
                 guild.features = []
                 guild.update_features()
@@ -783,11 +794,13 @@ class SetupCog(Cog):
                 except:
                     pass
                 self.bot.interface_handler.maps.remove_entry(guild.guild_id)
-                await ctx.channel.send("Reset all Features!")
             case _:
-                await ctx.channel.send(
-                    f"Secondary argument must be one of the following: api_changes dashboards, maps, detailed_dispatches, dss_announcements, major_order_updates, patch_notes, region_announcements, war_announcements, reset, reset_all"
-                )
+                embed = settings_embed(guild, False)
+                await ctx.send(embed=embed)
+                return
+        embed = settings_embed(guild, True)
+        await ctx.send(embed=embed)
+
 
 
 def setup(bot: GalacticWideWebBot) -> None:
