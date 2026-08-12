@@ -7,7 +7,7 @@ from os import listdir
 from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
 from utils.containers import GlobalEventsContainer
-from utils.dbv2 import GWWGuild, GWWGuilds
+from utils.dbv2 import GWWGuilds
 from utils.embeds.global_events_embed import global_events_embed
 
 
@@ -56,13 +56,6 @@ class GlobalEventsCog(Cog):
             if global_event.id > self.bot.databases.war_info.global_event_id:
                 if (
                     global_event.assignment_id != 0
-                    or all(
-                        [
-                            not global_event.title,
-                            not global_event.message,
-                            not global_event.effects,
-                        ]
-                    )
                     or "BRIEFING" in global_event.title.upper()
                 ):
                     self.bot.logger.info(
@@ -72,6 +65,19 @@ class GlobalEventsCog(Cog):
                     self.bot.databases.war_info.save_changes()
                     continue
                 unique_langs = GWWGuilds.unique_languages()
+                if all(
+                    [
+                        global_event.title == "",
+                        global_event.message == "",
+                        global_event.effects == [],
+                    ]
+                ):
+                    self.bot.logger.info(
+                        f"global_event_check loop - global event {global_event.id} is fully empty and is being skipped"
+                    )
+                    self.bot.databases.war_info.global_event_id = global_event.id
+                    self.bot.databases.war_info.save_changes()
+                    continue
                 image_url = None
                 if (
                     image_id := (
@@ -143,16 +149,7 @@ class GlobalEventsCog(Cog):
         ),
     ) -> None:
         await inter.response.defer(ephemeral=public != "Yes")
-        if inter.guild:
-            guild = GWWGuilds.get_specific_guild(id=inter.guild.id)
-            if not guild:
-                self.bot.logger.error(
-                    f"Guild {inter.guild.id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
-                )
-                guild = GWWGuilds.add(inter.guild.id, "en", [])
-        else:
-            guild = GWWGuild.default()
-
+        guild = self.bot.get_guild_from_inter(inter=inter)
         containers = []
         images = []
         for global_event in sorted(
@@ -178,8 +175,8 @@ class GlobalEventsCog(Cog):
                 attachment_url=attachment_url,
             )
             containers.append(container)
-        if not containers:
-            await inter.send("No global events active")
+        if containers == []:
+            await inter.send("No global events active", ephemeral=public != "Yes")
             return
         await inter.send(
             components=containers,
@@ -196,15 +193,7 @@ class GlobalEventsCog(Cog):
             self,
             ctx: commands.Context,
     ) -> None:
-        if ctx.guild:
-            guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
-            if not guild:
-                self.bot.logger.error(
-                    f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
-                )
-                guild = GWWGuilds.add(ctx.guild.id, "en", [])
-        else:
-            guild = GWWGuild.default()
+        guild = self.bot.get_guild_from_ctx(ctx=ctx)
         containers = []
         images = []
         for global_event in sorted(

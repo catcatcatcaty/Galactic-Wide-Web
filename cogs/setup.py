@@ -19,7 +19,7 @@ from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
 from utils.containers import SetupContainer
 from utils.dataclasses import Languages
-from utils.dbv2 import Feature, GWWGuild, GWWGuilds
+from utils.dbv2 import Feature
 from utils.embeds import Dashboard
 from utils.embeds.settings_embed import settings_embed
 from utils.maps import Maps
@@ -96,12 +96,7 @@ class SetupCog(Cog):
     )
     async def setup(self, inter: AppCmdInter) -> None:
         await inter.response.defer(ephemeral=True)
-        guild = GWWGuilds.get_specific_guild(id=inter.guild.id)
-        if not guild:
-            self.bot.logger.error(
-                f"Guild {inter.guild.id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
-            )
-            guild: GWWGuild = GWWGuilds.add(inter.guild.id, "en", [])
+        guild = self.bot.get_guild_from_inter(inter=inter)
         await inter.send(
             components=SetupContainer(
                 guild=guild,
@@ -123,7 +118,7 @@ class SetupCog(Cog):
         ):
             return
         await inter.response.defer()
-        guild: GWWGuild = GWWGuilds.get_specific_guild(inter.guild.id)
+        guild = self.bot.get_guild_from_inter(inter=inter)
         guild_language = self.bot.json_dict["languages"][guild.language]
         container = Container.from_component(inter.message.components[0])
         if inter.component.custom_id == "setup_home_button":
@@ -318,7 +313,7 @@ class SetupCog(Cog):
         ):
             return
         await inter.response.defer()
-        guild: GWWGuild = GWWGuilds.get_specific_guild(inter.guild.id)
+        guild = self.bot.get_guild_from_inter(inter=inter)
         guild_language = self.bot.json_dict["languages"][guild.language]
         if inter.component.custom_id == "dashboard_channel_select":
             try:
@@ -559,6 +554,13 @@ class SetupCog(Cog):
                         active_category="features",
                     )
                 )
+                await channel.send(
+                    (
+                        f"This channel has been chosen to receive {feature_type.replace('_', ' ').title()}"
+                        f"\n-# This message will auto-destruct <t:{int((datetime.now(tz=timezone.utc) + timedelta(seconds=30)).timestamp())}:R>"
+                    ),
+                    delete_after=30,
+                )
         elif inter.component.custom_id == "language_select":
             guild.language = inter.values[0].lower()
             guild.save_changes()
@@ -586,15 +588,7 @@ class SetupCog(Cog):
             *,
             arg
     ) -> None:
-        if ctx.guild:
-            guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
-            if not guild:
-                self.bot.logger.error(
-                    f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
-                )
-                guild = GWWGuilds.add(ctx.guild.id, "en", [])
-        else:
-            guild = GWWGuild.default()
+        guild = self.bot.get_guild_from_ctx(ctx)
         guild_language = self.bot.json_dict["languages"][guild.language]
         if not ctx.author.guild_permissions.administrator:
             await ctx.channel.send(
@@ -799,7 +793,7 @@ class SetupCog(Cog):
                 await ctx.send(embed=embed)
                 return
         embed = settings_embed(guild, True)
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, delete_after=5)
 
 
 

@@ -2,14 +2,21 @@ from disnake.ext import commands
 
 from data.lists import json_dict
 from datetime import datetime, timedelta, timezone
-from disnake import Intents, Message, Status, TextChannel
-from disnake.ext.commands import AutoShardedInteractionBot
+from disnake import (
+    AppCmdInter,
+    Intents,
+    Message,
+    MessageInteraction,
+    Status,
+    TextChannel,
+)
+from disnake.ext.commands import AutoShardedInteractionBot, Context
 from disnake.ext.tasks import Loop
 from json import load
 from os import listdir
 from utils.api_wrapper.services import DataService
 from utils.dataclasses import BotChannels, Config, GWWBotModes
-from utils.dbv2 import Databases
+from utils.dbv2 import Databases, GWWGuild, GWWGuilds
 from utils.interface_handler import InterfaceHandler
 from utils.logger import GWWLogger
 from utils.maps import Maps
@@ -94,3 +101,29 @@ class GalacticWideWebBot(commands.AutoShardedBot):
             else Config.BETA_BOT_TOKEN
         )
         self.run(token_to_use)
+
+    def get_guild_from_inter(self, inter: AppCmdInter | MessageInteraction) -> GWWGuild:
+        if inter.guild:
+            guild = GWWGuilds.get_specific_guild(id=inter.guild.id)
+            if not guild:
+                self.logger.error(
+                    f"Guild {inter.guild.id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
+                )
+                guild = GWWGuilds.add(inter.guild.id, "en", [])
+        else:
+            guild = GWWGuild.default()
+
+        return guild
+
+    def get_guild_from_ctx(self, ctx: Context) -> GWWGuild:
+        if ctx.guild:
+            guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
+            if not guild:
+                self.logger.error(
+                    f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
+                )
+                guild = GWWGuilds.add(ctx.guild.id, "en", [])
+        else:
+            guild = GWWGuild.default()
+
+        return guild

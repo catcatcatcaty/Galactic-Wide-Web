@@ -2,14 +2,21 @@ from disnake.ext import commands
 
 from utils.api_wrapper.models import GlobalEvent
 from datetime import datetime, time, timezone
-from disnake import AppCmdInter, ApplicationInstallTypes, InteractionContextTypes, Embed
+from os import listdir
+from disnake import (
+    AppCmdInter,
+    ApplicationInstallTypes,
+    Embed,
+    File,
+    InteractionContextTypes,
+)
 from disnake.ext.commands import Cog, Param, slash_command
 from disnake.ext.tasks import loop
 from utils.bot import GalacticWideWebBot
 from utils.checks import wait_for_startup
 from utils.containers import MOUnavailableContainer
 from utils.dataclasses import Languages
-from utils.dbv2 import GWWGuild, GWWGuilds
+from utils.dbv2 import GWWGuilds
 from utils.embeds import Dashboard
 from utils.embeds.mo_unavailable_embed import mo_unavilable_embed
 from utils.interactables import WikiButton
@@ -21,6 +28,7 @@ class MajorOrderCog(Cog):
         self.last_mo_update: None | datetime = None
         self.mo_briefing_check_dict = {}
         self.loops = (self.major_order_check, self.major_order_updates)
+        self.usable_images = listdir("resources/news_images")
 
     def cog_load(self) -> None:
         for loop in self.loops:
@@ -74,7 +82,7 @@ class MajorOrderCog(Cog):
                     if ge.assignment_id == major_order.id
                     and "" not in (ge.title, ge.message)
                 }
-                if not mo_briefing_dict:
+                if mo_briefing_dict == {}:
                     if major_order.id in self.mo_briefing_check_dict:
                         self.mo_briefing_check_dict[major_order.id] += 1
                     else:
@@ -86,6 +94,22 @@ class MajorOrderCog(Cog):
                         return
                 self.mo_briefing_check_dict.pop(major_order.id, None)
                 unique_langs = GWWGuilds.unique_languages()
+                image_url = None
+                if (
+                    (briefing := mo_briefing_dict.get("en")) is not None
+                    and (
+                        image_id := (briefing.outro_image_id or briefing.intro_image_id)
+                    )
+                    != 0
+                    and f"{image_id}.png" in self.usable_images
+                ):
+                    try:
+                        image_message = await self.bot.channels.waste_bin_channel.send(
+                            file=File(f"resources/news_images/{image_id}.png")
+                        )
+                        image_url = image_message.attachments[0].url
+                    except:
+                        pass
                 embeds = {
                     lang:
                         Dashboard.MajorOrderEmbed(
@@ -104,6 +128,8 @@ class MajorOrderCog(Cog):
                     briefing = mo_briefing_dict.get(lang, None)
                     if briefing:
                         embed._add_briefing(briefing=briefing)
+                    if image_url is not None:
+                        embed.set_image(image_url)
                 self.bot.databases.war_info.major_order_ids.append(major_order.id)
                 self.bot.databases.war_info.save_changes()
                 await self.bot.interface_handler.send_feature(
@@ -143,7 +169,7 @@ class MajorOrderCog(Cog):
     async def major_order_updates(self):
         mo_updates_start = datetime.now(tz=timezone.utc)
         if (
-            self.last_mo_update
+            self.last_mo_update is not None
             and (mo_updates_start - self.last_mo_update).total_seconds() < 290
         ):
             self.bot.logger.warning(
@@ -223,16 +249,7 @@ class MajorOrderCog(Cog):
         ),
     ) -> None:
         await inter.response.defer(ephemeral=public != "Yes")
-        if inter.guild:
-            guild = GWWGuilds.get_specific_guild(id=inter.guild.id)
-            if not guild:
-                self.bot.logger.error(
-                    f"Guild {inter.guild.id} - {inter.guild.name} - had the bot installed but wasn't found in the DB"
-                )
-                guild = GWWGuilds.add(inter.guild.id, "en", [])
-        else:
-            guild = GWWGuild.default()
-        guild_language = self.bot.json_dict["languages"][guild.language]
+        guild = self.bot.get_guild_from_inter(inter=inter)
         if (
             assignments := self.bot.data.formatted_data.assignments.get(
                 guild.language, self.bot.data.formatted_data.assignments.get("en", [])
@@ -240,28 +257,55 @@ class MajorOrderCog(Cog):
         ) != []:
             embeds = []
             for assignment in assignments:
+                briefing = None
+                image_url = None
+                if with_announcement == "Yes":
+                    briefing = next(
+                        (
+                            ge
+                            for ge in self.bot.data.formatted_data.global_events[
+                                guild.language
+                            ]
+                            if ge.assignment_id == assignment.id
+                            and ge.title != ""
+                            and ge.message != ""
+                        ),
+                        None,
+                    )
+                    if (
+                        briefing is not None
+                        and (
+                            image_id := (
+                                briefing.outro_image_id or briefing.intro_image_id
+                            )
+                        )
+                        != 0
+                        and f"{image_id}.png" in self.usable_images
+                    ):
+                        try:
+                            image_message = (
+                                await self.bot.channels.waste_bin_channel.send(
+                                    file=File(f"resources/news_images/{image_id}.png")
+                                )
+                            )
+                            image_url = image_message.attachments[0].url
+                            image_embed = Embed()
+                            image_embed.set_image(image_url)
+                            embeds.append(image_embed)
+                        except:
+                            pass
                 embed = Dashboard.MajorOrderEmbed(
                     assignment=assignment,
                     planets=self.bot.data.formatted_data.planets,
                     gambit_planets=self.bot.data.formatted_data.gambit_planets,
-                    language_json=guild_language,
+                    language_json=self.bot.json_dict["languages"][guild.language],
                     json_dict=self.bot.json_dict,
                 )
-                if with_announcement == "Yes":
-                    briefings_list = [
-                        ge
-                        for ge in self.bot.data.formatted_data.global_events[
-                            guild.language
-                        ]
-                        if ge.assignment_id == assignment.id
-                        and ge.title != ""
-                        and ge.message != ""
-                    ]
-                    if briefings_list != []:
-                        briefing = briefings_list[0]
-                        embed._add_briefing(briefing)
+                if briefing is not None:
+                    embed._add_briefing(briefing)
+                    if image_url is not None:
+                        embed.set_image("https://i.imgur.com/cThNy4f.png")
                 embeds.append(embed)
-
             await inter.send(
                 embeds=embeds,
                 components=[
@@ -286,15 +330,7 @@ class MajorOrderCog(Cog):
             self,
             ctx: commands.Context,
     ) -> None:
-        if ctx.guild:
-            guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
-            if not guild:
-                self.bot.logger.error(
-                    f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
-                )
-                guild = GWWGuilds.add(ctx.guild.id, "en", [])
-        else:
-            guild = GWWGuild.default()
+        guild = self.bot.get_guild_from_ctx(ctx=ctx)
         guild_language = self.bot.json_dict["languages"][guild.language]
         if (
                 assignments := self.bot.data.formatted_data.assignments.get(
@@ -303,25 +339,53 @@ class MajorOrderCog(Cog):
         ) != []:
             embeds = []
             for assignment in assignments:
+                briefing = None
+                image_url = None
+                briefing = next(
+                    (
+                        ge
+                        for ge in self.bot.data.formatted_data.global_events[
+                        guild.language
+                    ]
+                        if ge.assignment_id == assignment.id
+                           and ge.title != ""
+                           and ge.message != ""
+                    ),
+                    None,
+                )
+                if (
+                        briefing is not None
+                        and (
+                        image_id := (
+                                briefing.outro_image_id or briefing.intro_image_id
+                        )
+                )
+                        != 0
+                        and f"{image_id}.png" in self.usable_images
+                ):
+                    try:
+                        image_message = (
+                            await self.bot.channels.waste_bin_channel.send(
+                                file=File(f"resources/news_images/{image_id}.png")
+                            )
+                        )
+                        image_url = image_message.attachments[0].url
+                        image_embed = Embed()
+                        image_embed.set_image(image_url)
+                        embeds.append(image_embed)
+                    except:
+                        pass
                 embed = Dashboard.MajorOrderEmbed(
                     assignment=assignment,
                     planets=self.bot.data.formatted_data.planets,
                     gambit_planets=self.bot.data.formatted_data.gambit_planets,
-                    language_json=guild_language,
+                    language_json=self.bot.json_dict["languages"][guild.language],
                     json_dict=self.bot.json_dict,
                 )
-                briefings_list = [
-                        ge
-                        for ge in self.bot.data.formatted_data.global_events[
-                            guild.language
-                        ]
-                        if ge.assignment_id == assignment.id
-                        and ge.title != ""
-                        and ge.message != ""
-                ]
-                if briefings_list != []:
-                    briefing = briefings_list[0]
+                if briefing is not None:
                     embed._add_briefing(briefing)
+                    if image_url is not None:
+                        embed.set_image("https://fluxerusercontent.com/attachments/1476525402340249794/1530875164747640832/cThNy4f.png")
                 embeds.append(embed)
             await ctx.channel.send(embeds=embeds)
         else:

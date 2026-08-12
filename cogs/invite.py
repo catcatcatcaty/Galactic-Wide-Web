@@ -20,15 +20,7 @@ class InviteCog(Cog):
             self,
             ctx: commands.Context,
     ) -> None:
-        if ctx.guild:
-            guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
-            if not guild:
-                self.bot.logger.error(
-                    f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
-                )
-                guild = GWWGuilds.add(ctx.guild.id, "en", [])
-        else:
-            guild = GWWGuild.default()
+        guild = self.bot.get_guild_from_ctx(ctx)
         embed = Embed(color=Colour.from_rgb(*CUSTOM_COLOURS["MO"]))
         embed.add_field(f"{Emojis.Icons.discord} Add the bot to your server:", "https://web.fluxer.app/oauth2/authorize?client_id=1476519709822349355&scope=bot")
         embed.add_field(f"{Emojis.Icons.discord} Join the Galactic Wide Web: Fluxer Port support server:", "https://fluxer.gg/m50i6kcZ")

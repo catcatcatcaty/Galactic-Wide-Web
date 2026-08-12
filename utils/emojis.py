@@ -27,6 +27,7 @@ class Emojis:
         primary_weapon = "<:ss:1529604291092811776>"
         sidearm_weapon = "<:ss:1529604291092811777>"
         throwable_weapon = "<:ss:1529604291092811778>"
+        player_card = "<:ss:1537041758066585600>"
 
     @dataclass
     class DefenceIcons:
@@ -84,6 +85,7 @@ class Emojis:
         playstation = "<:ss:1529604333589508107>"
         xbox = "<:ss:1529612019441872896>"
         new_icon = "<:ss:1529612019441872897>"
+        blank = "<:ss:1537042385760956418>"
 
     @dataclass
     class Factions:

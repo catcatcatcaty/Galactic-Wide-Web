@@ -73,8 +73,8 @@ class WarfrontCog(Cog):
             language_json=guild_language,
             faction=faction,
             total_players=self.bot.data.formatted_data.total_players,
-            planets=self.bot.data.formatted_data.planets,
             gambit_planets=self.bot.data.formatted_data.gambit_planets,
+            planets=self.bot.data.formatted_data.planets,
         )
         all_planets_embed = WarfrontAllPlanetsEmbed(
             planets=self.bot.data.formatted_data.planets, faction=faction
@@ -113,15 +113,7 @@ class WarfrontCog(Cog):
             ctx: commands.Context,
             *,
             arg) -> None:
-        if ctx.guild:
-            guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
-            if not guild:
-                self.bot.logger.error(
-                    f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
-                )
-                guild = GWWGuilds.add(ctx.guild.id, "en", [])
-        else:
-            guild = GWWGuild.default()
+        guild = self.bot.get_guild_from_ctx(ctx)
         if not arg:
             await ctx.send(":warning: Value must be one of: Automatons (bots), Terminids (bugs), Illuminate (squids)")
             return
@@ -156,8 +148,8 @@ class WarfrontCog(Cog):
             language_json=guild_language,
             faction=faction.full_name,
             total_players=self.bot.data.formatted_data.total_players,
-            planets=self.bot.data.formatted_data.planets,
             gambit_planets=self.bot.data.formatted_data.gambit_planets,
+            planets=self.bot.data.formatted_data.planets,
         )
         all_planets_embed = WarfrontAllPlanetsEmbed(
             planets=self.bot.data.formatted_data.planets, faction=faction.full_name
