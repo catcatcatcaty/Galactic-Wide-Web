@@ -307,6 +307,8 @@ class DataService(ReprMixin):
             ) as client:
                 self._raw_api_items = await client.get_items()
 
+            #TODO no api access
+            """
             async with AltSuperstoreAuthedClient(logger=self.logger) as client:
                 mother_data = await client.get_superstore()
                 super_store_pages: dict = next(
@@ -319,6 +321,7 @@ class DataService(ReprMixin):
                     self._raw_stuperstore.insert(
                         0, rotating_data.get("salesPage", {}).get("sections", [{}])[0]
                     )
+            """
 
         async with ArsenalClient(logger=self.logger) as client:
             arsenal_target = await client.get_community_target()
