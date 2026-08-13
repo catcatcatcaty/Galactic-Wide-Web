@@ -2198,9 +2198,7 @@ class Dashboard:
             field_name += f"\n{campaign.planet.names.get(self.language_json['code_long'], campaign.planet.name)} {campaign.planet.exclamations}"
 
             for sf in campaign.planet.subfactions:
-                field_value += (
-                    f"\n-# {sf.emoji} {self.language_json['subfactions'][sf.eng_name]}"
-                )
+                field_value += f"\n-# {sf.emoji} {self.language_json['subfactions'].get(sf.eng_name, sf.eng_name)}"
 
             for planet_feature in campaign.planet.planet_features:
                 field_value += f"\n-# {planet_feature.emoji} {planet_feature.name}"
@@ -2330,9 +2328,7 @@ class Dashboard:
             field_name += f"\n{campaign.planet.names.get(self.language_json['code_long'], campaign.planet.name)} {campaign.planet.exclamations}"
 
             for sf in campaign.planet.subfactions:
-                field_value += (
-                    f"\n-# {sf.emoji} {self.language_json['subfactions'][sf.eng_name]}"
-                )
+                field_value += f"\n-# {sf.emoji} {self.language_json['subfactions'].get(sf.eng_name, sf.eng_name)}"
 
             for planet_feature in campaign.planet.planet_features:
                 field_value += f"\n-# {planet_feature.emoji} {planet_feature.name}"
@@ -2469,9 +2465,7 @@ class Dashboard:
 
             field_name += f"{planet.names.get(self.language_json['code_long'], planet.name)} {planet.exclamations}"
             for sf in planet.subfactions:
-                field_value += (
-                    f"\n-# {sf.emoji} {self.language_json['subfactions'][sf.eng_name]}"
-                )
+                field_value += f"\n-# {sf.emoji} {self.language_json['subfactions'].get(sf.eng_name, sf.eng_name)}"
 
             for feature in planet.planet_features:
                 field_value += f"\n-# {feature.emoji} {feature.name}"
@@ -2614,9 +2608,7 @@ class Dashboard:
             field_name += f"\n{campaign.planet.names.get(self.language_json['code_long'], campaign.planet.name)} {campaign.planet.exclamations}"
 
             for sf in campaign.planet.subfactions:
-                field_value += (
-                    f"\n-# {sf.emoji} {self.language_json['subfactions'][sf.eng_name]}"
-                )
+                field_value += f"\n-# {sf.emoji} {self.language_json['subfactions'].get(sf.eng_name, sf.eng_name)}"
 
             for planet_feature in campaign.planet.planet_features:
                 field_value += f"\n-# {planet_feature.emoji} {planet_feature.name}"

@@ -30,7 +30,7 @@ class dss_changes_embed(Embed, EmbedReprMixin):
     def _add_subfactions(self, text_display: str, subfactions: set[Subfaction]):
         for sf in subfactions:
             text_display += (
-                f"\n-# {sf.emoji} **{self.json.subfactions[sf.eng_name]}**"
+                f"\n-# {sf.emoji} **{self.json.subfactions.get(sf.eng_name, sf.eng_name)}**"
             )
 
     def _add_regions(self, text_display: str, regions: list[Planet.Region]):

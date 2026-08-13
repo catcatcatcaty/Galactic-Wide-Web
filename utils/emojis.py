@@ -170,6 +170,8 @@ class Emojis:
         cyborgs = "<:ss:1529612202938474506>"
         mindless_masses = "<:ss:1529612202938474507>"
         appropriators = "<:ss:1529612202938474508>"
+        heavy_seaf_presence = "<:ss:1537390703330467840>"
+        vote_snatchers = "<:ss:1537391055370977280>"
 
     @dataclass
     class PlanetFeatures:
