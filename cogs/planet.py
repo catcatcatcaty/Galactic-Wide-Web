@@ -191,16 +191,6 @@ class PlanetCog(Cog):
                    f"That planet is unavailable or could not be found on the galactic map. Please use one of the following as an argument:\n-# **{' - '.join(all_planets)}**"
                 )
                 return
-            if ctx.guild:
-                guild = GWWGuilds.get_specific_guild(id=ctx.guild.id)
-                if not guild:
-                    self.bot.logger.error(
-                        f"Guild {ctx.guild.id} - {ctx.guild.name} - had the bot installed but wasn't found in the DB"
-                    )
-                    guild = GWWGuilds.add(ctx.guild.id, "en", [])
-            else:
-                guild = GWWGuild.default()
-                guild_language = self.bot.json_dict["languages"][guild.language]
             image_url = None
             try:
                 image_message = await self.bot.channels.waste_bin_channel.send(
