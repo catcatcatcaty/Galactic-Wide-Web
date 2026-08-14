@@ -174,7 +174,7 @@ class PlanetCog(Cog):
             all_planets = [
                 p.names.get("en-GB", p.name)
                 for p in self.bot.data.formatted_data.planets.values()
-                if 1376 in p.effect_ids
+                if 1376 not in p.effect_ids
             ]
             if not arg:
                 await ctx.channel.send(
