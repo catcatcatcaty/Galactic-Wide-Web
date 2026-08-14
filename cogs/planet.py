@@ -198,13 +198,14 @@ class PlanetCog(Cog):
                 )
                 return
             image_url = None
-            try:
-                image_message = await self.bot.channels.waste_bin_channel.send(
-                    file=File(f"resources/biomes/{planet_data.biome}.png")
-                )
-                image_url = image_message.attachments[0].url
-            except:
-                pass
+            if planet.data.biome != "":
+                try:
+                    image_message = await self.bot.channels.waste_bin_channel.send(
+                        file=File(f"resources/biomes/{planet_data.biome}.png")
+                    )
+                    image_url = image_message.attachments[0].url
+                except:
+                    pass
             embed = PlanetEmbed(
                 planet=planet_data,
                 lang_code=guild_language["code_long"],
