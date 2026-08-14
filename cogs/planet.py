@@ -27,17 +27,17 @@ class PlanetCog(Cog):
         if not inter.bot.ready:
             return []
         return [
-            f"{p.index}-{p.names.get('en-GB', p.name)}"
+            f"{p.index} - {p.names.get('en-GB', p.name)} - {p.sector}"
             for p in sorted(
                 inter.bot.data.formatted_data.planets.values(),
                 key=lambda x: x.stats.player_count,
                 reverse=True,
             )
-            if not p.is_hidden
-            and (
-                user_input.lower() in p.names.get("en-GB", p.name).lower()
+            if (
+                user_input.lower() in f"{p.name} {p.sector}".lower()
                 or user_input in str(p.index)
             )
+            and 1376 not in p.effect_ids
         ][:25]
 
     @wait_for_startup()
@@ -86,7 +86,7 @@ class PlanetCog(Cog):
                 )
                 return
             planet_data = self.bot.data.formatted_data.planets.get(index)
-        if not planet_data:
+        if planet_data is None:
             return await inter.send(
                 "That planet is unavailable. Please select another planet from the list.",
                 ephemeral=public != "Yes",
@@ -108,19 +108,19 @@ class PlanetCog(Cog):
                 latest_map and latest_map.updated_at < fifteen_minutes_ago
             ):
                 self.bot.maps.update_base_map(
-                    planets=self.bot.data.formatted_data.planets,
+                    planets=self.bot.data.formatted_data.galactic_planets,
                     assignments=self.bot.data.formatted_data.assignments.get("en", []),
                 )
                 language_json = self.bot.json_dict["languages"][guild.language]
                 self.bot.maps.localize_map(
                     language_code_short=language_json["code"],
                     language_code_long=language_json["code_long"],
-                    planets=self.bot.data.formatted_data.planets,
+                    planets=self.bot.data.formatted_data.galactic_planets,
                 )
                 self.bot.maps.add_icons(
                     lang=guild.language,
                     long_code=language_json["code_long"],
-                    planets=self.bot.data.formatted_data.planets,
+                    planets=self.bot.data.formatted_data.galactic_planets,
                     dss=self.bot.data.formatted_data.dss,
                 )
                 message = await self.bot.channels.waste_bin_channel.send(
@@ -146,11 +146,17 @@ class PlanetCog(Cog):
                     accent_colour=Colour.dark_embed(),
                 ),
             )
-        await inter.send(
-            components=components,
-            file=File(f"resources/biomes/{planet_data.biome}.png"),
-            ephemeral=public != "Yes",
-        )
+        if planet_data.biome != "":
+            await inter.send(
+                components=components,
+                file=File(f"resources/biomes/{planet_data.biome}.png"),
+                ephemeral=public != "Yes",
+            )
+        else:
+            await inter.send(
+                components=components,
+                ephemeral=public != "Yes",
+            )
 
 ###FLUXER
 
