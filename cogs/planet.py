@@ -174,7 +174,7 @@ class PlanetCog(Cog):
             all_planets = [
                 p.names.get("en-GB", p.name)
                 for p in self.bot.data.formatted_data.planets.values()
-                if not p.is_hidden
+                if 1376 in p.effect_ids
             ]
             if not arg:
                 await ctx.channel.send(
@@ -187,12 +187,11 @@ class PlanetCog(Cog):
             planet_data_list = [
                 p
                 for p in self.bot.data.formatted_data.planets.values()
-                if not p.is_hidden
-                   and p.names.get("en-GB", p.name).lower() == planet.lower()
+                if p.names.get("en-GB", p.name).lower() == planet.lower() and 1376 not in p.effect_ids
             ]
             if planet_data_list:
                 planet_data = planet_data_list[0]
-            if not planet_data:
+            if planet_data is None:
                 await ctx.channel.send(
                    f"That planet is unavailable or could not be found on the galactic map. Please use one of the following as an argument:\n-# **{' - '.join(all_planets)}**"
                 )

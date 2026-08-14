@@ -187,19 +187,19 @@ class MapCog(Cog):
             latest_map is not None and latest_map.updated_at < fifteen_minutes_ago
         ):
             self.bot.maps.update_base_map(
-                planets=self.bot.data.formatted_data.planets,
+                planets=self.bot.data.formatted_data.galactic_planets,
                 assignments=self.bot.data.formatted_data.assignments.get("en", []),
             )
             language_json = self.bot.json_dict["languages"][guild.language]
             self.bot.maps.localize_map(
                 language_code_short=language_json["code"],
                 language_code_long=language_json["code_long"],
-                planets=self.bot.data.formatted_data.planets,
+                planets=self.bot.data.formatted_data.galactic_planets,
             )
             self.bot.maps.add_icons(
                 lang=language_json["code"],
                 long_code=language_json["code_long"],
-                planets=self.bot.data.formatted_data.planets,
+                planets=self.bot.data.formatted_data.galactic_planets,
                 dss=self.bot.data.formatted_data.dss,
             )
             try:
