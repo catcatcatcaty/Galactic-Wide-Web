@@ -197,7 +197,7 @@ class PlanetCog(Cog):
                 )
                 return
             image_url = None
-            if planet.data.biome != "":
+            if planet_data.biome != "":
                 try:
                     image_message = await self.bot.channels.waste_bin_channel.send(
                         file=File(f"resources/biomes/{planet_data.biome}.png")
