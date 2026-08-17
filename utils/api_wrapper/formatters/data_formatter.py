@@ -77,7 +77,7 @@ CORRECT_SECTORS = {
     "SEVERIN": [152, 195, 196, 238, 241],
     "HAWKING": [255, 191, 208, 254],
     "STEN": [50, 213, 215, 216, 100, 267],
-    "THE VOID": [278, 281, 280, 279, 274, 277, 276, 275],
+    "THE VOID": [278, 281, 280, 279, 277, 276, 275],
 }
 
 
@@ -581,13 +581,13 @@ class FormattedData:
                 for wplanet in (self.planets.get(wp) for wp in p.waypoints):
                     wplanet.nearby.append(p.index)
 
-                if 1411 in p.effect_ids and p.in_void:
-                    for lang in p.names:
-                        p.names[lang] = "UNIDENTIFIED LOCATION"
-                        p.biome == ""
-                elif 1412 in p.effect_ids and p.in_void:
+                if 1412 in p.effect_ids and p.in_void:
                     for lang in p.names:
                         p.names[lang] = "ANOMALY LOCATION"
+                        p.biome == ""
+                elif p.in_void and not p.active_campaign:
+                    for lang in p.names:
+                        p.names[lang] = "UNIDENTIFIED LOCATION"
                         p.biome == ""
 
             for ge in self.global_events.get("en", []):

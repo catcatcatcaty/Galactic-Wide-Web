@@ -43,13 +43,8 @@ from numpy import (
 from numpy.random import randint, random_sample
 from PIL import Image, ImageDraw, ImageFont
 from utils.api_wrapper.models import Assignment, DSS, Planet
-from utils.dataclasses import Factions, Faction
+from utils.dataclasses import Factions, Faction, Sectors
 from utils.mixins import ReprMixin
-
-DIM_FACTION_COLOURS: dict[str, tuple[int, int, int]] = {
-    faction.full_name: tuple(int(colour / 2.5) for colour in faction.colour)
-    for faction in Factions.all
-}
 
 VONOROI_COLOURS: dict[Faction, dict[str, tuple]] = {
     Factions.automaton: {"tint": (0, 0, 100), "lines": (0, 0, 175)},
@@ -92,21 +87,15 @@ class Maps:
         self.update_planets(planets=planets)
 
     def update_sectors(self, planets: dict[int, Planet]) -> None:
-        sectors: dict[str, list[Faction]] = {}
+        sectors = Sectors()
         for planet in planets.values():
-            faction = planet.faction if not planet.event else planet.event.faction
-            if planet.sector not in sectors:
-                sectors[planet.sector] = [faction]
+            if planet.sector == "UNKNOWN":
+                continue
+            if (planet_sector := sectors.get_sector(planet.sector)) is None:
+                sectors.add_sector(planet)
             else:
-                sectors[planet.sector].append(faction)
-        enemy_sectors = {
-            s: set(l) for s, l in sectors.items() if set(l) != set(["Humans"])
-        }
-        sector_coords: dict[str, tuple[int, int]] = {}
-        for sector in enemy_sectors:
-            sector_coords[sector] = [p for p in planets.values() if p.sector == sector][
-                0
-            ].map_waypoints
+                planet_sector.planets.append(planet)
+
         background = imread(Maps.FileLocations.empty_map, IMREAD_UNCHANGED)
         if background.shape[2] == 4:
             alpha_channel = background[:, :, 3].copy()
@@ -115,32 +104,17 @@ class Maps:
             background_rgb = background.copy()
             alpha_channel = None
 
-        for sector, coords in sector_coords.items():
-            sector_faction = list(enemy_sectors[sector])
-            if len(sector_faction) == 1:
-                if sector_faction[0] == Factions.humans:
-                    continue
-                elif [
-                    p
-                    for p in planets.values()
-                    if p.sector == sector and p.active_campaign
-                ]:
-                    bgr_color = DIM_FACTION_COLOURS[sector_faction[0].full_name]
-                else:
-                    bgr_color = tuple(
-                        int(i / 2)
-                        for i in DIM_FACTION_COLOURS[sector_faction[0].full_name]
-                    )
-            else:
-                bgr_color = DIM_FACTION_COLOURS[sector_faction[1].full_name]
-            bgr_color = tuple(int(i) for i in bgr_color[::-1])
+        for sector in sectors.all_sectors:
+            if sector.map_colour is None:
+                continue
+            bgr_colour = tuple(int(i) for i in sector.map_colour[::-1])
             h, w = background.shape[:2]
             mask = zeros((h + 2, w + 2), uint8)
             floodFill(
                 image=background_rgb,
                 mask=mask,
-                seedPoint=coords,
-                newVal=bgr_color,
+                seedPoint=sector.coordinates,
+                newVal=bgr_colour,
                 loDiff=(50, 50, 50),
                 upDiff=(50, 50, 50),
                 flags=FLOODFILL_FIXED_RANGE | FLOODFILL_MASK_ONLY,
@@ -155,8 +129,8 @@ class Maps:
             stripes = ((xx + yy if 45 == 45 else xx - yy) % (5 * 2)) < 5
             sub_region = region_mask[y : y + bh, x : x + bw]
             sub_bg = background_rgb[y : y + bh, x : x + bw]
-            sub_bg[stripes & sub_region] = bgr_color
-            sub_bg[~stripes & sub_region] = tuple(int(c * 0.5) for c in bgr_color)
+            sub_bg[stripes & sub_region] = bgr_colour
+            sub_bg[~stripes & sub_region] = tuple(int(c * 0.5) for c in bgr_colour)
             background_rgb[y : y + bh, x : x + bw] = sub_bg
 
         if alpha_channel is not None:
@@ -461,52 +435,81 @@ class Maps:
         planets: dict[int, Planet],
         dss: DSS,
     ):
-        frac_planet_icon = imread(
-            "resources/map_icons/fractured_planet.png", IMREAD_UNCHANGED
-        )
         path = Maps.FileLocations.localized_map_path(language_code=lang)
         background = imread(path, IMREAD_UNCHANGED)
         for planet in planets.values():
             if 1376 in planet.effect_ids:
+                # in void
                 continue
-            if planet.index == 0:
+
+            if planet.name == "SUPER EARTH":
+                # super earth
                 se_icon = imread(
                     "resources/map_icons/super_earth.png", IMREAD_UNCHANGED
                 )
-                self.paste_image(background, se_icon, planet.map_waypoints)
-            elif any([aeid in (1241, 1252) for aeid in planet.effect_ids]):
                 self.paste_image(
-                    background,
-                    frac_planet_icon,
-                    planet.map_waypoints,
+                    background=background,
+                    overlay=se_icon,
+                    coords=planet.map_waypoints,
+                )
+            elif any([aeid in (1241, 1252) for aeid in planet.effect_ids]):
+                # fractured planets
+                frac_planet_icon = imread(
+                    "resources/map_icons/fractured_planet.png", IMREAD_UNCHANGED
+                )
+                self.paste_image(
+                    background=background,
+                    overlay=frac_planet_icon,
+                    coords=planet.map_waypoints,
                     x_offset=-20,
                     y_offset=10,
                 )
+
             loc_name = planet.names.get(long_code, planet.name)
-            if (
-                planet.faction != Factions.humans or planet.active_campaign
-            ) and not planet.is_hidden:
-                x_offset = 0
+            if not planet.is_hidden:
+                allied_horiz_offset = -26
+                enemy_horiz_offset = 26
                 for sf in planet.subfactions:
+                    if sf.faction not in [
+                        (
+                            planet.event.faction
+                            if planet.event is not None
+                            else planet.faction
+                        ),
+                        Factions.humans,
+                    ]:
+                        continue
                     sf_icon = imread(
                         f"resources/map_icons/{sf.eng_name.lower().replace(' ', '_')}_bordered.png",
                         IMREAD_UNCHANGED,
                     )
                     if sf_icon is not None:
                         self.paste_image(
-                            background,
-                            sf_icon,
-                            planet.map_waypoints,
-                            x_offset=(35 if planet.active_campaign else 10) + x_offset,
+                            background=background,
+                            overlay=sf_icon,
+                            coords=planet.map_waypoints,
+                            x_offset=(
+                                allied_horiz_offset
+                                if sf.faction == Factions.humans
+                                else enemy_horiz_offset
+                            ),
                             y_offset=-(
                                 20
                                 + (
                                     (loc_name.count(" ") + 1)
-                                    * (self.TEXT_SIZE if planet.active_campaign else 0)
+                                    * (
+                                        self.TEXT_SIZE
+                                        if planet.active_campaign or planet.dss_in_orbit
+                                        else 0
+                                    )
                                 )
                             ),
                         )
-                        x_offset += sf_icon.shape[0]
+                        if sf.faction == Factions.humans:
+                            allied_horiz_offset -= sf_icon.shape[0] + 1
+                        else:
+                            enemy_horiz_offset += sf_icon.shape[0] + 1
+
             if dss and planet.dss_in_orbit:
                 dss_icon = (
                     imread("resources/map_icons/dss_glow.png", IMREAD_UNCHANGED)

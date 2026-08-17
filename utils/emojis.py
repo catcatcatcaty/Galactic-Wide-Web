@@ -172,6 +172,7 @@ class Emojis:
         appropriators = "<:ss:1529612202938474508>"
         heavy_seaf_presence = "<:ss:1537390703330467840>"
         vote_snatchers = "<:ss:1537391055370977280>"
+        invasion_fleet = "<:ss:1538843546428121088>"
 
     @dataclass
     class PlanetFeatures:
