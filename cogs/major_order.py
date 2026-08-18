@@ -348,9 +348,12 @@ class MajorOrderCog(Cog):
                 briefing = next(
                     (
                         ge
-                        for ge in self.bot.data.formatted_data.global_events[
-                        guild.language
-                    ]
+                        for ge in self.bot.data.formatted_data.global_events.get(
+                            guild.language,
+                            self.bot.data.formatted_data.global_events.get(
+                                "en", []
+                            ),
+                        )
                         if ge.assignment_id == assignment.id
                            and ge.title != ""
                            and ge.message != ""

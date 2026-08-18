@@ -207,7 +207,9 @@ class GlobalEventsCog(Cog):
         containers = []
         images = []
         for global_event in sorted(
-                self.bot.data.formatted_data.global_events[guild.language],
+            self.bot.data.formatted_data.global_events.get(
+                guild.language, self.bot.data.formatted_data.global_events.get("en", [])
+            ),
                 key=lambda x: x.expire_time,
         ):
             attachment_url = None

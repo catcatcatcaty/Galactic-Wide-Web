@@ -248,7 +248,7 @@ class DispatchesCog(Cog):
         guild = self.bot.get_guild_from_ctx(ctx=ctx)
         dispatch1 = [
             d
-            for d in self.bot.data.formatted_data.dispatches[guild.language]
+            for d in self.bot.data.formatted_data.dispatches.get("en", [])
             if d.id == self.bot.databases.war_info.dispatch_id
         ][0]
 
