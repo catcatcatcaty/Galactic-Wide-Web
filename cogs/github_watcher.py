@@ -68,6 +68,7 @@ class GithubWatcherCog(Cog):
                             title=f"{Emojis.Icons.github} New bot updates!",
                             colour=Colour.brand_green(),
                         )
+                        embed.set_footer(text="(upstream change - bother catcatcatcaty to update the fork)")
                         if len(new_commits) > 16:
                             embed.title += f" #{j}"
                         for i, commit in enumerate(
@@ -75,14 +76,14 @@ class GithubWatcherCog(Cog):
                             start=1,
                         ):
                             embed.add_field(
-                                "",
+                                "-",
                                 (
                                     f"\n-# {commit['commit']['message']}"
                                     f"\n-# <t:{int(datetime.fromisoformat(commit['commit']['committer']['date']).timestamp())}:R>"
                                 ),
                             )
                             if i % 2:
-                                embed.add_field("", "")
+                                embed.add_field("-", "-")
 
                         if len(embed.fields) > 0:
                             embeds.append(embed)
@@ -92,7 +93,6 @@ class GithubWatcherCog(Cog):
                             message = await self.bot.channels.dev_progress_channel.send(
                                 embeds=embeds
                             )
-                            await message.publish()
                         except:
                             return
                         self.latest_sha = commits[-1]["sha"]
