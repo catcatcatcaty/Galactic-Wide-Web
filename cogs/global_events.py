@@ -39,7 +39,7 @@ class GlobalEventsCog(Cog):
                 "global_event_check loop returning - the interface_handler is busy"
             )
             return
-        if not self.bot.data.formatted_data.global_events.get("en"):
+        if self.bot.data.formatted_data.global_events.get("en") is None:
             self.bot.logger.warning(
                 "global_event_check loop returning - english global events are missing"
             )
@@ -51,7 +51,7 @@ class GlobalEventsCog(Cog):
             return
 
         for index, global_event in enumerate(
-            self.bot.data.formatted_data.global_events["en"]
+            self.bot.data.formatted_data.global_events.get("en", [])
         ):
             if global_event.id > self.bot.databases.war_info.global_event_id:
                 if (
@@ -105,9 +105,12 @@ class GlobalEventsCog(Cog):
                             container_json=self.bot.json_dict["languages"][lang][
                                 "containers"
                             ]["GlobalEventsContainer"],
-                            global_event=self.bot.data.formatted_data.global_events[
-                                lang
-                            ][index],
+                            global_event=self.bot.data.formatted_data.global_events.get(
+                                lang,
+                                self.bot.data.formatted_data.global_events.get(
+                                    "en", []
+                                ),
+                            )[index],
                             planets=self.bot.data.formatted_data.planets,
                             image_url=image_url,
                         )
@@ -158,7 +161,9 @@ class GlobalEventsCog(Cog):
         containers = []
         images = []
         for global_event in sorted(
-            self.bot.data.formatted_data.global_events[guild.language],
+            self.bot.data.formatted_data.global_events.get(
+                guild.language, self.bot.data.formatted_data.global_events.get("en", [])
+            ),
             key=lambda x: x.expire_time,
         ):
             attachment_url = None

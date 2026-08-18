@@ -78,7 +78,7 @@ class DataService(ReprMixin):
 
             unique_languages = GWWGuilds.unique_languages()
             in_use_languages = [
-                l for l in Languages.all if l.short_code in unique_languages
+                l for l in Languages.api_languages if l.short_code in unique_languages
             ]
             for lang in in_use_languages:
                 raw_war_status = await client.get_war_status(
@@ -381,7 +381,7 @@ class DataService(ReprMixin):
                     )
 
         if self.formatted_data.assignments.get("en"):
-            for assignment in self.formatted_data.assignments["en"]:
+            for assignment in self.formatted_data.assignments.get("en", []):
                 for task_index, task in enumerate(assignment.tasks, start=1):
                     if task.type in [
                         AssignmentTaskType.LiberateLocationsSpecific,
