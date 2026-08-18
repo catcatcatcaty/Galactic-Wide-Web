@@ -23,10 +23,7 @@ class subfactions_embed(Embed, EmbedReprMixin):
                 text_display += f"\n- {planet.faction.emoji} {planet.name}"
                 text_display += f"\n-# {planet.stats.player_count:,} Heroes"
                 text_display += f"\nhttps://helldiverscompanion.com/#hellpad/planets/{planet.index}"
-            colour = max(
-                [p.faction for p in planets_with_sf],
-                key=[p.faction for p in planets_with_sf].count,
-            ).colour
+                colour = subfaction.faction.colour
         else:
             text_display += f"- None"
             colour = Factions.humans.colour
