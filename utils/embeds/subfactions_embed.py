@@ -22,8 +22,9 @@ class subfactions_embed(Embed, EmbedReprMixin):
             for planet in planets_with_sf:
                 text_display += f"\n- {planet.faction.emoji} {planet.name}"
                 text_display += f"\n-# {planet.stats.player_count:,} Heroes"
-                text_display += f"\nhttps://helldiverscompanion.com/#hellpad/planets/{planet.index}"
-                colour = subfaction.faction.colour
+                if len(planets_with_sf) < 10:
+                    text_display += f"\nhttps://helldiverscompanion.com/#hellpad/planets/{planet.index}"
+            colour = subfaction.faction.colour
         else:
             text_display += f"- None"
             colour = Factions.humans.colour
