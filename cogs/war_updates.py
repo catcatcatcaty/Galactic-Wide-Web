@@ -1,6 +1,6 @@
 from asyncio import to_thread
 from datetime import datetime, timezone
-from disnake import DiscordServerError, File
+from disnake import DiscordServerError, File, HTTPException
 from disnake.ext.commands import Cog
 from disnake.ext.tasks import loop
 from utils.bot import GalacticWideWebBot

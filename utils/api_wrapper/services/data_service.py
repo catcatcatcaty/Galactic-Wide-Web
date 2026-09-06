@@ -325,7 +325,6 @@ class DataService(ReprMixin):
                     self._raw_stuperstore.insert(
                         0, rotating_data.get("salesPage", {}).get("sections", [{}])[0]
                     )
-            """
 
             async with AltWarbondsAuthedClient(logger=self.logger) as client:
                 self._raw_warbonds.clear()
@@ -335,7 +334,7 @@ class DataService(ReprMixin):
                         warbond_id=warbond.get("id32")
                     )
                     self._raw_warbonds[warbond.get("id32")] = specific_data
-
+            """
         async with ArsenalClient(logger=self.logger) as client:
             arsenal_target = await client.get_community_target()
             if arsenal_target and arsenal_target["count"] != 0:
