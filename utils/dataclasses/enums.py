@@ -99,11 +99,14 @@ class ControlCentreStatus(Enum):
 
 
 class ItemCategory(Enum):
+    THROWABLE_WEAPON = -4
+    SIDEARM_WEAPON = -3
+    PRIMARY_WEAPON = -2
     UNKNOWN = -1
     UNOBTAINABLE = 0
     WEAPON = 1
     WEAPON_ATTACHMENT = 2
-    ARMOUR = 3
+    ARMOR = 3
     VEHICLE_SKIN = 4
     BOOSTER = 5
     VICTORY_POSE = 7
@@ -111,7 +114,7 @@ class ItemCategory(Enum):
     PLAYER_CARD = 9
     STRATAGEM_EFFECTID_MIX_ID = 10
     STRATAGEM = 11
-    DIFFICULTY_UNLOCK_PERMIT = 16
+    DIFFICULTY_UNLOCK_PERMIT = 14
     MEDAL = 18
     SUPER_CREDIT_PACK = 21
     TITLE = 23

@@ -16,6 +16,11 @@ json_dict = {
     "items": {
         "items": {"path": "data/json/items/items.json", "value": None},
         "boosters": {"path": "data/json/items/boosters.json", "value": None},
+        "vehicle_skins": {
+            "path": "data/json/items/vehicle_skins.json",
+            "value": None,
+        },
+        "player_cards": {"path": "data/json/items/player_cards.json", "value": None},
         "rewards": {
             "path": "data/json/assignments/rewards.json",
             "value": None,
@@ -23,7 +28,7 @@ json_dict = {
     },
     "enemy_ids": {"path": "data/json/enemies/enemy_ids.json", "value": None},
     "galactic_war_effects": {
-        "path": "data/json/effects/galactic_war_effects/effect_types.json",
+        "path": "data/json/effects/effect_types.json",
         "value": None,
     },
     "strings": {"path": "data/json/strings.json", "value": None},
@@ -128,6 +133,7 @@ STRATAGEM_ID_DICT = {
     1427614189: "Eagle Napalm Airstrike",
     1220665708: "Eagle Cluster Bomb",
     1062482104: "Eagle Smoke Strike",
+    2961949068: "Eagle Gas Airstrike",
     1736727415: "E/GL-21 Grenadier Battlement",
     70017975: "FX-12 Shield Generator Relay",
     3827587060: "E/MG-101 HMG Emplacement",
@@ -193,7 +199,7 @@ STRATAGEM_ID_DICT = {
     2616066963: "A/AC-8 Autocannon Sentry",
     669794144: "A/FLAM-40 Flame Sentry",
     914471076: "A/LAS-98 Laser Sentry",
-    2074801524: "M-102 Fast Recon Vehicle",
+    2074801524: "M-102 Gunner FRV",
     2996892424: "M-103 Supply FRV",
     3657826519: "M-104 Incinerator FRV",
     754365924: "EXO-49 Emancipator Exosuit",
