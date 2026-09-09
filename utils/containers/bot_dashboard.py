@@ -17,7 +17,7 @@ class BotDashboardContainer(Container):
         public_commands = [
             c
             for c in bot.global_slash_commands
-            if c.name not in ["gwe", "global_event", "pmajor_order"]
+            if c.name not in ["gwe", "global_event", "pmajor_order", "items"]
         ]
         commands_text = f"## The GWW has {len(public_commands)} commands available\n"
         for global_command in sorted(public_commands, key=lambda sc: sc.name):

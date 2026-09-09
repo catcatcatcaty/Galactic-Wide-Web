@@ -19,7 +19,7 @@ class bot_dashboardEmbed(Embed, EmbedReprMixin):
         public_commands = [
             c
             for c in bot.commands
-            if c.name not in ["gwe", "global_event", "pmajor_order"]
+            if c.name not in ["gwe", "global_event", "pmajor_order", "items"]
         ]
         commands_text = ""
         for global_command in sorted(public_commands, key=lambda sc: sc.name):
