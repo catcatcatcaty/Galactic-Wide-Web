@@ -33,13 +33,18 @@ class Planet(ReprMixin):
         raw_planet_info: dict,
         planet_json: dict[str,],
         sectors_json: dict[int, str],
+        strings_json: dict[str, str],
     ) -> None:
         """Organise data for a specific planet"""
         self.index: int = raw_planet_info["index"]
         self.settings_hash: int = raw_planet_info["settingsHash"]
         self.names: dict[str, str] = planet_json.get("names", {}).copy()
+        self.name_id32: int = raw_planet_info.get("planetNameId32", 0)
+        self.alt_name = strings_json.get(str(self.name_id32))
         self.description: str = planet_json.get("description", "")
         self.biome: str = str(planet_json.get("biome", ""))
+        self.biome_id32: int = raw_planet_info.get("planetBiomeId32", 0)
+        self.alt_biome = strings_json.get(str(self.biome_id32), {}).get("biome")
         self.position: dict = raw_planet_info["position"]
         self.waypoints: list[int] = sorted(raw_planet_info["waypoints"])
         self.nearby: list[int] = self.waypoints.copy()
@@ -117,6 +122,10 @@ class Planet(ReprMixin):
         )
 
     @property
+    def region_indices(self) -> set[int]:
+        return list(sorted(self.regions.keys()))
+
+    @property
     def exclamations(self) -> str:
         result = ""
         if self.event and self.event.type != EventType.UrgentLiberation:
@@ -150,8 +159,8 @@ class Planet(ReprMixin):
         )
 
     @property
-    def effect_ids(self) -> list[int]:
-        return [ae.id for ae in self.active_effects]
+    def effect_ids(self) -> set[int]:
+        return set([ae.id for ae in self.active_effects])
 
     @property
     def in_void(self) -> bool:
@@ -317,6 +326,14 @@ class Planet(ReprMixin):
             )
             self.is_available: bool = raw_region_status_data["isAvailable"]
             self.players: int = raw_region_status_data["players"]
+
+        def __hash__(self):
+            return hash(f"{self.planet_index}-{self.index}")
+
+        def __eq__(self, value):
+            if not isinstance(value, type(self)):
+                return False
+            return (self.planet_index, self.index) == (value.planet_index, value.index)
 
     class Stats:
         def __init__(self) -> None:

@@ -58,7 +58,7 @@ class EndpointItem:
         self.tags: list = self._json.get("tags", [])
         self.required_items: list = self._json.get("requiredItems", [])
         self.buy_price: list = self._json.get("buyPrice", [])
-        self.currency_items: list[tuple[EndpointItem, int]] = []
+        self.buy_items: list[tuple[EndpointItem, int]] = []
         self.sell_price: list = self._json.get("sellPrice", [])
 
     @property
@@ -83,7 +83,10 @@ class EndpointItem:
 
     @property
     def name(self):
-        if self.child_item is not None and self.category == ItemCategory.STRATAGEM:
+        if (
+            self.child_item is not None
+            and self.category == ItemCategory.STRATAGEM_UNLOCK
+        ):
             return self.child_name
         return self.mix_name or self.item_name or self.parent_name
 
@@ -103,7 +106,7 @@ class EndpointItem:
         return f"EndpointItem({fmt_text}\n)"
 
     def __repr__(self):
-        return f"EndpointItem('name': {self.name}, {self._json})"
+        return f"EndpointItem('name': {self.name})"
 
     def __eq__(self, value):
         if not isinstance(value, type(self)):
