@@ -23,7 +23,8 @@ class subfactions_embed(Embed, EmbedReprMixin):
                 text_display += f"\n- {planet.faction.emoji} {planet.name}"
                 text_display += f"\n-# {planet.stats.player_count:,} Heroes"
                 if len(planets_with_sf) < 10:
-                    text_display += f"\nhttps://helldiverscompanion.com/#hellpad/planets/{planet.index}"
+                    text_display += f"\n- {planet.faction.emoji} [**{planet.name}**](<https://helldivers.wiki.gg/wiki/Special:Search?search={planet.name.replace(' ', '_')}>)"
+                    f"\n-# {planet.stats.player_count:,} Heroes\n"
             colour = subfaction.faction.colour
         else:
             text_display += f"- None"

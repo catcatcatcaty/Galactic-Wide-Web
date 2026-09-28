@@ -65,7 +65,7 @@ class PlanetEmbed(Embed, EmbedReprMixin):
                 ]
                 name_parts.append("-".join(formatted_parts))
             url_name = "_".join(name_parts)
-            self.add_field(f"{planet.faction.emoji} {planet.names.get(lang_code, planet.name)}, {planet.exclamations}",
+            self.add_field(f"# {planet.faction.emoji} [**{planet.names.get(self.lang_code, planet.name)}**](<https://helldivers.wiki.gg/wiki/Special:Search?search={planet.name.replace(' ', '_')}>) {planet.exclamations}",
               f"\n{component_json['sector']}: **{planet.sector}**"
             + f"\n{component_json['owner']}: **{factions_json[planet.faction.full_name]}**{planet.faction.emoji}"
             + f"\n{description}"
