@@ -103,7 +103,7 @@ class APIChangesCog(Cog):
                 "api_changes loop returning - previous data is missing"
             )
             return
-        total_changes = list[FieldWrapper] = []
+        total_changes = []
         change_components: list[str] = []
 
         current_data = self.bot.data.formatted_data

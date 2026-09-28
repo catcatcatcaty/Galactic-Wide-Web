@@ -346,12 +346,12 @@ class DataService(ReprMixin):
 
                 
             """
-            async with ArsenalClient(logger=self.logger) as client:
-                arsenal_target = await client.get_community_target()
-                if arsenal_target and arsenal_target["count"] != 0:
-                    self._arsenal_targets: list[int] = arsenal_target["data"]
+        async with ArsenalClient(logger=self.logger) as client:
+            arsenal_target = await client.get_community_target()
+            if arsenal_target and arsenal_target["count"] != 0:
+                self._arsenal_targets: list[int] = arsenal_target["data"]
 
-            self.fetching = False
+        self.fetching = False
 
     def format_data(self) -> None:
         if self.formatted_data is not None:
