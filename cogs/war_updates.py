@@ -361,8 +361,12 @@ class WarUpdatesCog(Cog):
         ) is not None:
             previous_planet = self.bot.data.formatted_data.planets.get(
                 self.bot.databases.dss_info.planet_index,
-                self.bot.data.formatted_data.planets[0],
+                planet_with_1217,
             )
+            #account for dss moving whilst offline
+            self.bot.databases.dss_info.planet_index = planet_with_1217.index
+            self.bot.databases.dss_info.save_changes()
+            #TODO idk wait for stonemercy to fix whatever the intended feature was here
             if previous_planet != planet_with_1217:
                 containers = {
                     lang: dss_changes_embed(
