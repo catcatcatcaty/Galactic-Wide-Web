@@ -50,50 +50,97 @@ class WarfrontCog(Cog):
             if self.bot.data.formatted_data.dss
             else None
         )
-        defence_events_embed = Dashboard.DefenceEventsEmbed(
-            defence_event_campaigns=[
+        embeds: list[Embed] = []
+        if (
+            invasion_events := [
                 c
                 for c in self.bot.data.formatted_data.event_campaigns
-                if c.planet.event.faction.full_name == faction
-                and c.planet.event.type == EventType.Defence
-            ],
-            language_json=guild_language,
-            total_players=self.bot.data.formatted_data.total_players,
-            eagle_storm=eagle_storm,
-            gambit_planets=self.bot.data.formatted_data.gambit_planets,
-        )
-        attack_embed = Dashboard.AttackEmbed(
-            campaigns=[
-                campaign
-                for campaign in self.bot.data.formatted_data.campaigns
-                if campaign.faction.full_name == faction and not campaign.planet.event
-            ],
-            language_json=guild_language,
-            faction=faction,
-            total_players=self.bot.data.formatted_data.total_players,
-            gambit_planets=self.bot.data.formatted_data.gambit_planets,
-            planets=self.bot.data.formatted_data.planets,
-        )
-        all_planets_embed = WarfrontAllPlanetsEmbed(
-            planets=self.bot.data.formatted_data.planets, faction=faction
-        )
-        embeds: list[Embed] = [defence_events_embed, attack_embed, all_planets_embed]
-        if urgent_campaigns := [
-            c
-            for c in self.bot.data.formatted_data.campaigns
-            if c.faction.full_name == faction
-            if c.type == CampaignType.Event
-            and c.planet.event
-            and c.planet.event.type == EventType.UrgentLiberation
-        ]:
-            embeds.insert(
-                0,
-                Dashboard.UrgentLiberationsEmbed(
-                    urgent_lib_campaigns=urgent_campaigns,
+                if c.planet.event.type == EventType.Invasion
+                and c.planet.event.faction.full_name == faction
+            ]
+        ) != []:
+            embeds.append(
+                Dashboard.InvasionEventsEmbed(
+                    invasion_event_campaigns=invasion_events,
                     language_json=guild_language,
                     total_players=self.bot.data.formatted_data.total_players,
-                ),
+                )
             )
+
+        if (
+            urgent_liberations := [
+                c
+                for c in self.bot.data.formatted_data.event_campaigns
+                if c.planet.event.type == EventType.UrgentLiberation
+                and c.planet.event.faction.full_name == faction
+            ]
+        ) != []:
+            embeds.append(
+                Dashboard.UrgentLiberationsEmbed(
+                    urgent_lib_campaigns=urgent_liberations,
+                    language_json=guild_language,
+                    total_players=self.bot.data.formatted_data.total_players,
+                )
+            )
+        if (
+            defence_campaigns := [
+                c
+                for c in self.bot.data.formatted_data.event_campaigns
+                if c.planet.event.type == EventType.Defence
+                and c.planet.event.faction.full_name == faction
+            ]
+        ) != []:
+            embeds.append(
+                Dashboard.DefenceEventsEmbed(
+                    defence_event_campaigns=defence_campaigns,
+                    language_json=guild_language,
+                    total_players=self.bot.data.formatted_data.total_players,
+                    eagle_storm=eagle_storm,
+                    gambit_planets=self.bot.data.formatted_data.gambit_planets,
+                )
+            )
+        if (
+            recon_campaigns := [
+                c
+                for c in self.bot.data.formatted_data.campaigns
+                if c.type == CampaignType.Recon and c.faction.full_name == faction
+            ]
+        ) != []:
+            embeds.append(
+                Dashboard.ReconCampaignEmbed(
+                    recon_campaigns=recon_campaigns,
+                    language_json=guild_language,
+                    total_players=self.bot.data.formatted_data.total_players,
+                )
+            )
+        if other_campaigns := [
+            c
+            for c in self.bot.data.formatted_data.campaigns
+            if c.type
+            not in (
+                CampaignType.Recon,
+                CampaignType.Event,
+                CampaignType.HighPriority,
+            )
+            and not c.planet.event
+            and not c.planet.homeworld
+            and c.faction.full_name == faction
+        ]:
+            embeds.append(
+                Dashboard.AttackEmbed(
+                    campaigns=other_campaigns,
+                    language_json=guild_language,
+                    faction=faction,
+                    total_players=self.bot.data.formatted_data.total_players,
+                    gambit_planets=self.bot.data.formatted_data.gambit_planets,
+                    planets=self.bot.data.formatted_data.planets,
+                )
+            )
+        embeds.append(
+            WarfrontAllPlanetsEmbed(
+                planets=self.bot.data.formatted_data.planets, faction=faction
+            )
+        )
         for embed in embeds.copy():
             if len(embed.fields) == 0:
                 embeds.remove(embed)
