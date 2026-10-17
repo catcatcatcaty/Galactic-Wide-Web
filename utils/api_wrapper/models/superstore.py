@@ -38,13 +38,15 @@ class Superstore:
         items_json: dict,
         endpoint_items: dict[int, EndpointItem],
     ) -> None:
-        self.pages: list[Superstore.Page] = []
-        self.pages = [
+        self.pages: list[Superstore.Page] = [
             Superstore.Page(
                 raw_page_dict=page, endpoint_items=endpoint_items, items_json=items_json
             )
             for page in raw_superstore_data
         ]
+
+    def __repr__(self) -> str:
+        return f"Superstore(pages={len(self.pages)})"
 
     def get_page(self, page_id: int):
         return next((p for p in self.pages if p.id == page_id), None)
