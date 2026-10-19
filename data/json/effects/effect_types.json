@@ -40,8 +40,8 @@
         "simplified_name": "Stratagem cooldown adjustment"
     },
     "40": {
-        "name": "game_EnemyDivision",
-        "simplified_name": "Adds an enemy Subfaction"
+        "name": "game_SpecialDivision",
+        "simplified_name": "Adds a combatant force"
     },
     "45": {
         "name": "unk_AdditionalPayout",
