@@ -194,6 +194,8 @@ STRATAGEM_ID_DICT = {
     3659583399: "M-1000 Maxigun",
     2427670661: "B/FLAM-80 Cremator",
     4080785205: "40-K Meltagun",
+    1160644752: "AMW-20 Apex",
+    2938888268: "LAS-44 Nova",
     1228689284: "A/MG-43 Machine Gun Sentry",
     2446402932: "A/G-16 Gatling Sentry",
     461790327: "A/M-12 Mortar Sentry",
