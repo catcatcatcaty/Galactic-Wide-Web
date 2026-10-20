@@ -199,6 +199,10 @@
         "name": "HELMET DURABILITY CHECK",
         "type": "Emote"
     },
+    "3813715175": {
+        "name": "MANUAL BALLISTIC PROJECTION PROTOCOL",
+        "type": "Emote"
+    },
     "4102069932": {
         "name": "[REDACTED]",
         "type": "Title"
@@ -281,6 +285,10 @@
     },
     "3400212265": {
         "name": "TREADHEAD",
+        "type": "Title"
+    },
+    "335594599": {
+        "name": "LONGSHOT",
         "type": "Title"
     },
     "2671489717": {
