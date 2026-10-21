@@ -334,6 +334,9 @@ class WarUpdatesCog(Cog):
                 self.bot.databases.dss_info.save_changes()
                 dss_updates = True
                 dss_has_moved = True
+                self.bot.logger.info(
+                    f"dss_check | DSS has moved from {before_planet.name} to {self.bot.data.formatted_data.dss.planet.name}"
+                )
             for ta in self.bot.data.formatted_data.dss.tactical_actions:
                 old_status = self.bot.databases.dss_info.tactical_action_statuses.get(
                     ta.id
@@ -346,6 +349,9 @@ class WarUpdatesCog(Cog):
                     )
                     self.bot.databases.dss_info.save_changes()
                     dss_updates = True
+                    self.bot.logger.info(
+                        f"dss_check | TA {ta.name} status is now {ta.status}"
+                    )
         elif (
             planet_with_1217 := next(
                 (
@@ -390,6 +396,9 @@ class WarUpdatesCog(Cog):
                 self.bot.databases.dss_info.save_changes()
                 dss_updates = True
                 dss_has_moved = True
+                self.bot.logger.info(
+                    f"dss_check | DSS has moved from {previous_planet.name} to {planet_with_1217.name} using effect 1217"
+                )
 
         if dss_updates:
             await self.bot.interface_handler.send_feature(
