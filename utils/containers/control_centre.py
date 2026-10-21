@@ -160,7 +160,7 @@ class ControlCentreContainer(Container):
                         != ControlCentreStatus.In_Progress
                     )
                     reward_emoji = (
-                        f"[{reward.emoji}](http://{reward.item_name.replace(' ', '-')}.com)"
+                        f"[{reward.emoji}](http://{reward.item_name.replace(' ', '-')}.fakeurl)"
                         if active_phase.status == ControlCentreStatus.In_Progress
                         else reward.emoji
                     )
@@ -198,11 +198,17 @@ class ControlCentreContainer(Container):
                 is_available=active_campaign.status != ControlCentreStatus.In_Progress
             )
             reward_emoji = (
-                f"[{reward.emoji}](http://{reward.item_name.replace(' ', '-')}.com)"
+                f"[{reward.emoji}](http://{reward.item_name.replace(' ', '-')}.fakeurl)"
                 if active_phase.status == ControlCentreStatus.In_Progress
                 else reward.emoji
             )
             campaign_rewards_text += f"{Emojis.Icons.blank}**{reward.amount}** x **{reward_name}** {reward_emoji} {reward_result_emoji}"
+            if reward.item_name == "Item" and (
+                reward.endpoint_item is not None
+                and "stratagem" in reward.endpoint_item.category.name.lower()
+            ):
+                campaign_rewards_text += f"\n-# {Emojis.Icons.blank}This stratagem does not match anything in our database."
+
         if campaign_rewards_text != "":
             section2.append(TextDisplay(campaign_rewards_text))
         self.components.extend(section2 + [Separator()])
@@ -306,7 +312,7 @@ class ControlCentreContainer(Container):
                     is_available=campaign.status != ControlCentreStatus.In_Progress
                 )
                 reward_emoji = (
-                    f"[{reward.emoji}](http://{reward.item_name.replace(' ', '-')}.com)"
+                    f"[{reward.emoji}](http://{reward.item_name.replace(' ', '-')}.fakeurl)"
                     if phase.status == ControlCentreStatus.In_Progress
                     else reward.emoji
                 )
@@ -343,11 +349,16 @@ class ControlCentreContainer(Container):
                 is_available=campaign.status != ControlCentreStatus.In_Progress
             )
             reward_emoji = (
-                f"[{reward.emoji}](http://{reward.item_name.replace(' ', '-')}.com)"
+                f"[{reward.emoji}](http://{reward.item_name.replace(' ', '-')}.fakeurl)"
                 if campaign.status == ControlCentreStatus.In_Progress
                 else reward.emoji
             )
             campaign_rewards_text += f"{Emojis.Icons.blank}**{reward.amount}** x **{reward_name}** {reward_emoji} {reward_result_emoji}"
+            if reward.item_name == "Item" and (
+                reward.endpoint_item is not None
+                and "stratagem" in reward.endpoint_item.category.name.lower()
+            ):
+                campaign_rewards_text += f"\n-# {Emojis.Icons.blank}This stratagem does not match anything in our database."
         if campaign_rewards_text != "":
             section2.append(TextDisplay(campaign_rewards_text))
         self.components.extend(section2 + [Separator()])
