@@ -26,6 +26,14 @@ def gwe_api_change_format(gwe: GalacticWarEffect) -> str:
     if (feature := PlanetFeatures.all.get(gwe.id)) is not None:
         content += f"\n-# **{feature.name}** {feature.emoji}"
 
+    if gwe.effect_type == 71:
+        if (
+            subfaction := next(
+                (sf for sf in Subfactions._all if sf.token_effect_id == gwe.id), None
+            )
+        ) is not None:
+            content += f"\n-# Enemy: **{subfaction.eng_name}** {subfaction.emoji}"
+
     if gwe.found_enemy is not None:
         if (
             subfaction := next(
@@ -87,12 +95,10 @@ class APIChangesCog(Cog):
     )
     async def api_changes(self) -> None:
         if not self.bot.ready:
-            self.bot.logger.warning("api_changes loop returning - the bot isn't ready")
+            self.bot.logger.warning("api_changes loop | the bot isn't ready")
             return
         if self.bot.data.previous_data is None:
-            self.bot.logger.warning(
-                "api_changes loop returning - previous data is missing"
-            )
+            self.bot.logger.warning("api_changes loop | previous data is missing")
             return
         change_components: list[TextDisplay] = []
         current_data = self.bot.data.formatted_data
@@ -111,6 +117,7 @@ class APIChangesCog(Cog):
                 f"## NEW GLOBAL RESOURCE(S) {Emojis.Decoration.alert_icon}"
             )
             for gr in new_global_resources:
+                self.bot.logger.info(f"api_changes | New Global Resource: {gr}")
                 text_display.content += f"\n```json\n{gr}\n```"
             change_components.append(text_display)
 
@@ -126,6 +133,7 @@ class APIChangesCog(Cog):
                 f"### GLOBAL RESOURCE(S) REMOVED {Emojis.Decoration.alert_icon}"
             )
             for gr in removed_global_resources:
+                self.bot.logger.info(f"api_changes | Removed Global Resource: {gr}")
                 text_display.content += f"\n```json\n{gr}\n```"
             change_components.append(text_display)
 
@@ -141,16 +149,18 @@ class APIChangesCog(Cog):
 
             # Galactic resource max value changes
             if gr.max_value != previous_resource.max_value:
+                self.bot.logger.info(
+                    f"api_changes | Global Resource max value changed: {gr.name} - {previous_resource.max_value} -> {gr.max_value}"
+                )
                 change_components.append(
                     TextDisplay(
                         (
-                            f"### {gr.name} MAX AMOUNT CHANGED {Emojis.Decoration.alert_icon}"
+                            f"### RESOURCE '{gr.name}' MAX AMOUNT CHANGED {Emojis.Decoration.alert_icon}"
                             f"\n-# **{previous_resource.max_value:,}** {Emojis.Stratagems.right} **{gr.max_value:,}**"
                             f"\n-# **{gr.max_value - previous_resource.max_value:+,}**"
                         )
                     )
                 )
-                change_components.append(text_display)
 
         # Global Resources END
 
@@ -169,9 +179,9 @@ class APIChangesCog(Cog):
                 f"### NEW GALACTIC EFFECTS ✅ {Emojis.Decoration.alert_icon}"
             )
             for gwe_id in new_effects:
+                self.bot.logger.info(f"api_changes | New Galactic Effect: {gwe_id}")
                 gwe = current_data.war_effects[gwe_id]
                 text_display.content += f"\n\n{gwe_api_change_format(gwe)}"
-
             change_components.append(text_display)
 
         # Removed effects
@@ -180,6 +190,7 @@ class APIChangesCog(Cog):
                 f"### REMOVED GALACTIC EFFECTS ❌ {Emojis.Decoration.alert_icon}"
             )
             for gwe_id in removed_effects:
+                self.bot.logger.info(f"api_changes | Removed Galactic Effect: {gwe_id}")
                 gwe = current_data.war_effects[gwe_id]
                 text_display.content += f"\n\n{gwe_api_change_format(gwe)}"
             change_components.append(text_display)
@@ -191,6 +202,9 @@ class APIChangesCog(Cog):
             previous_text = gwe_api_change_format(previous_effect)
             current_text = gwe_api_change_format(effect)
             if previous_text != current_text:
+                self.bot.logger.info(
+                    f"api_changes | Changed Galactic Effect: {effect_id} - {previous_effect.values_list} -> {effect.values_list}"
+                )
                 change_components.append(
                     TextDisplay(
                         (
@@ -218,6 +232,7 @@ class APIChangesCog(Cog):
         # New items
         for item_id in new_items:
             item = current_data.organised_items[item_id]
+            self.bot.logger.info(f"api_changes | New Endpoint Item: {item_id}")
             change_components.append(
                 TextDisplay(
                     f"### NEW ITEM ✅ {Emojis.Decoration.alert_icon}"
@@ -230,6 +245,7 @@ class APIChangesCog(Cog):
         # Removed items
         for item_id in removed_items:
             item = previous_data.organised_items[item_id]
+            self.bot.logger.info(f"api_changes | Removed Endpoint Item: {item_id}")
             change_components.append(
                 TextDisplay(
                     f"### REMOVED ITEM ❌ {Emojis.Decoration.alert_icon}"
@@ -246,6 +262,9 @@ class APIChangesCog(Cog):
 
             # Item price changes
             if item.buy_price != previous_item.buy_price:
+                self.bot.logger.info(
+                    f"api_changes | Changed Endpoint Item Buy Price: {item.mix_id} - {previous_item.buy_price} -> {item.buy_price}"
+                )
                 previous_currencies = (
                     "\n".join(
                         [
@@ -277,6 +296,9 @@ class APIChangesCog(Cog):
 
             # Item required level changes
             if item.required_level != previous_item.required_level:
+                self.bot.logger.info(
+                    f"api_changes | Changed Endpoint Item Required Level: {item.mix_id} - {previous_item.required_level} -> {item.required_level}"
+                )
                 change_components.append(
                     TextDisplay(
                         (
@@ -305,6 +327,9 @@ class APIChangesCog(Cog):
 
             # Assignment rewards changes
             if assignment.rewards != previous_assignment.rewards:
+                self.bot.logger.info(
+                    f"api_changes | Changed Assignment Rewards: {assignment.id} - {previous_assignment.rewards} -> {assignment.rewards}"
+                )
                 prev_rewards = "\n".join([f"{i}" for i in previous_assignment.rewards])
                 curr_rewards = "\n".join([f"{i}" for i in assignment.rewards])
                 change_components.append(
@@ -324,6 +349,9 @@ class APIChangesCog(Cog):
             ):
                 # Task target amount changes
                 if prev_task.target != curr_task.target:
+                    self.bot.logger.info(
+                        f"api_changes | Changed Task Target: {assignment.id} - {prev_task.target} -> {curr_task.target}"
+                    )
                     change_components.append(
                         TextDisplay(
                             (
@@ -346,6 +374,9 @@ class APIChangesCog(Cog):
                 self.bot.data.previous_data.personal_order.id
                 != self.bot.data.formatted_data.personal_order.id
             ):
+                self.bot.logger.info(
+                    f"api_changes | Changed Personal Order: {self.bot.data.previous_data.personal_order.id} -> {self.bot.data.formatted_data.personal_order.id}"
+                )
                 old_po_text = (
                     PersonalOrderCommandEmbed(
                         self.bot.data.previous_data.personal_order,
@@ -383,6 +414,9 @@ class APIChangesCog(Cog):
         # New planets
         for planet_index in new_planets:
             planet = current_data.planets[planet_index]
+            self.bot.logger.info(
+                f"api_changes | New Planet: #{planet.index} {planet.name}"
+            )
             change_components.append(
                 TextDisplay(
                     (
@@ -394,6 +428,9 @@ class APIChangesCog(Cog):
         # Removed planets
         for planet_index in removed_planets:
             planet = previous_data.planets[planet_index]
+            self.bot.logger.info(
+                f"api_changes | Removed Planet: #{planet.index} {planet.name}"
+            )
             change_components.append(
                 TextDisplay(
                     (
@@ -411,6 +448,9 @@ class APIChangesCog(Cog):
 
             # Planet movement
             if planet.position != previous_planet.position:
+                self.bot.logger.info(
+                    f"api_changes | Changed Planet Position: {planet.index} {planet.name} - {previous_planet.position} -> {planet.position}"
+                )
                 planet_change_text += (
                     "\n### Planet has __**moved**__"
                     f"\n-# **{previous_planet.position['x']}, {previous_planet.position['y']}**"
@@ -433,6 +473,9 @@ class APIChangesCog(Cog):
                     if waypoint in planet.waypoints:
                         planet_change_text += f"\n{way_planet_name}"
                     else:
+                        self.bot.logger.info(
+                            f"api_changes | Removed Planet Waypoint: {planet.index} {planet.name} - {waypoint}"
+                        )
                         planet_change_text += f"\n-# ~~{way_planet_name}~~"
 
                 for waypoint in planet.waypoints:
@@ -443,11 +486,17 @@ class APIChangesCog(Cog):
                         else f"Unknown Planet #{waypoint}"
                     )
                     if waypoint not in previous_planet.waypoints:
+                        self.bot.logger.info(
+                            f"api_changes | New Planet Waypoint: {planet.index} {planet.name} - {waypoint}"
+                        )
                         planet_change_text += f"\n-# **++{way_planet_name}**"
                 planet_changes_present = True
 
             # Planet max health changes
             if planet.max_health != previous_planet.max_health:
+                self.bot.logger.info(
+                    f"api_changes | Changed Planet Max Health: {planet.index} {planet.name} - {previous_planet.max_health} -> {planet.max_health}"
+                )
                 planet_change_text += (
                     "\n### **Max health** has changed:"
                     f"\n-# **{previous_planet.max_health:,}** {Emojis.Stratagems.right} **{planet.max_health:,}**"
@@ -457,6 +506,9 @@ class APIChangesCog(Cog):
 
             # Planet faction changes
             if planet.faction != previous_planet.faction:
+                self.bot.logger.info(
+                    f"api_changes | Changed Planet Faction: {planet.index} {planet.name} - {previous_planet.faction.full_name} -> {planet.faction.full_name}"
+                )
                 planet_change_text += (
                     "\n### **Owner** has changed:"
                     f"\n{previous_planet.faction.emoji} {Emojis.Stratagems.right} {planet.faction.emoji}"
@@ -465,6 +517,9 @@ class APIChangesCog(Cog):
 
             # Planet regen changes
             if planet.regen_perc_per_hour != previous_planet.regen_perc_per_hour:
+                self.bot.logger.info(
+                    f"api_changes | Changed Planet Regen: {planet.index} {planet.name} - {previous_planet.regen_perc_per_hour:.2%} -> {planet.regen_perc_per_hour:.2%}"
+                )
                 planet_change_text += (
                     "\n### **Regen** has changed:"
                     f"\n-# **{previous_planet.regen_perc_per_hour:+.2%}**/hr {Emojis.Stratagems.right} **{planet.regen_perc_per_hour:+.2%}**/hr"
@@ -474,9 +529,15 @@ class APIChangesCog(Cog):
 
             # Planet DSS presence changes
             if planet.dss_in_orbit and not previous_planet.dss_in_orbit:
+                self.bot.logger.info(
+                    f"api_changes | Changed Planet DSS Presence: {planet.index} {planet.name} - {previous_planet.dss_in_orbit} -> {planet.dss_in_orbit}"
+                )
                 planet_change_text += "\n### DSS is **now in orbit** ✅"
                 planet_changes_present = True
             elif previous_planet.dss_in_orbit and not planet.dss_in_orbit:
+                self.bot.logger.info(
+                    f"api_changes | Changed Planet DSS Presence: {planet.index} {planet.name} - {previous_planet.dss_in_orbit} -> {planet.dss_in_orbit}"
+                )
                 planet_change_text += "\n### DSS is **no longer in orbit** ❌"
                 planet_changes_present = True
 
@@ -488,6 +549,9 @@ class APIChangesCog(Cog):
             if new_effects != set():
                 planet_change_text += "\n### Effect(s) __added__ ✅"
                 for effect_id in new_effects:
+                    self.bot.logger.info(
+                        f"api_changes | New Planet Effect: {planet.index} {planet.name} - {effect_id}"
+                    )
                     new_effect = current_data.war_effects[effect_id]
                     planet_change_text += f"\n{gwe_api_change_format(new_effect)}\n"
                 planet_changes_present = True
@@ -496,6 +560,9 @@ class APIChangesCog(Cog):
             if removed_effects != set():
                 planet_change_text += "\n### Effect(s) __removed__ ❌"
                 for effect_id in removed_effects:
+                    self.bot.logger.info(
+                        f"api_changes | Removed Planet Effect: {planet.index} {planet.name} - {effect_id}"
+                    )
                     previous_effect = previous_data.war_effects[effect_id]
                     planet_change_text += (
                         f"\n{gwe_api_change_format(previous_effect)}\n"
@@ -504,6 +571,9 @@ class APIChangesCog(Cog):
 
             # Planet sector changes
             if planet.sector != previous_planet.sector:
+                self.bot.logger.info(
+                    f"api_changes | Changed Planet Sector: {planet.index} {planet.name} - {previous_planet.sector} -> {planet.sector}"
+                )
                 planet_change_text += (
                     f"\n### __**Sector has changed**__:"
                     f"\n-# **{previous_planet.sector}** {Emojis.Stratagems.right} **{planet.sector}**"
@@ -523,6 +593,9 @@ class APIChangesCog(Cog):
                     if index in planet.regions:
                         planet_change_text += f"\n{curr_region_name}"
                     else:
+                        self.bot.logger.info(
+                            f"api_changes | Removed Planet Region: {planet.index} {planet.name} - {index} {region.name}"
+                        )
                         planet_change_text += f"\n-# ~~{curr_region_name}~~"
 
                 for index, region in planet.regions.items():
@@ -533,11 +606,17 @@ class APIChangesCog(Cog):
                         else f"Unknown Region #{index}"
                     )
                     if index not in previous_planet.regions:
+                        self.bot.logger.info(
+                            f"api_changes | New Planet Region: {planet.index} {planet.name} - {index} {region.name}"
+                        )
                         planet_change_text += f"\n**++{curr_region_name}**"
                 planet_changes_present = True
 
             # Planet name changes
             if planet.name != previous_planet.name:
+                self.bot.logger.info(
+                    f"api_changes | Changed Planet Name: {planet.index} {planet.name} - {previous_planet.name} -> {planet.name}"
+                )
                 planet_change_text += (
                     f"\n### __**Name has changed**__:"
                     f"\n-# **{previous_planet.name}** {Emojis.Stratagems.right} **{planet.name}**"
@@ -546,6 +625,9 @@ class APIChangesCog(Cog):
 
             # Planet alt name changes
             if planet.alt_name != previous_planet.alt_name:
+                self.bot.logger.info(
+                    f"api_changes | Changed Planet Alt Name: {planet.index} {planet.name} - {previous_planet.alt_name} -> {planet.alt_name}"
+                )
                 planet_change_text += (
                     f"\n### __**Alternative name has changed**__:"
                     f"\n-# **{previous_planet.alt_name}** {Emojis.Stratagems.right} **{planet.alt_name}**"
@@ -554,6 +636,9 @@ class APIChangesCog(Cog):
 
             # Planet alt biome changes
             if planet.alt_biome != previous_planet.alt_biome:
+                self.bot.logger.info(
+                    f"api_changes | Changed Planet Alt Biome: {planet.index} {planet.name} - {previous_planet.alt_biome} -> {planet.alt_biome}"
+                )
                 planet_change_text += (
                     f"\n### __**Alternative biome has changed**__:"
                     f"\n-# **{previous_planet.alt_biome}** {Emojis.Stratagems.right} **{planet.alt_biome}**"
@@ -572,6 +657,9 @@ class APIChangesCog(Cog):
 
                 # Region owner changes
                 if region.owner != previous_region.owner:
+                    self.bot.logger.info(
+                        f"api_changes | Changed Region Owner: {planet.name} Region #{region.index} {region.name} - {previous_region.owner.full_name} -> {region.owner.full_name}"
+                    )
                     region_changes_text += (
                         f"\n### **Owner has changed**:"
                         f"\n{previous_region.owner.emoji} {Emojis.Stratagems.right} {region.owner.emoji}"
@@ -590,6 +678,9 @@ class APIChangesCog(Cog):
                         if region.is_factory
                         else region.type.name.replace("_", " ")
                     )
+                    self.bot.logger.info(
+                        f"api_changes | Changed Region Type: {planet.name} Region #{region.index} {region.name} - {prev_type} -> {curr_type}"
+                    )
                     region_changes_text += (
                         f"\n### __**Type has changed**__:"
                         f"\n{previous_region.emoji} **{prev_type}**"
@@ -600,6 +691,9 @@ class APIChangesCog(Cog):
 
                 # Region regen changes
                 if region.regen_perc_per_hour != previous_region.regen_perc_per_hour:
+                    self.bot.logger.info(
+                        f"api_changes | Changed Region Regen: {planet.name} Region #{region.index} {region.name} - {previous_region.regen_perc_per_hour:.2%} -> {region.regen_perc_per_hour:.2%}"
+                    )
                     region_changes_text += (
                         f"\n### **Regen has changed**:"
                         f"\n**{previous_region.regen_perc_per_hour:.2%}** {Emojis.Stratagems.right} **{region.regen_perc_per_hour:.2%}**"
@@ -609,6 +703,9 @@ class APIChangesCog(Cog):
 
                 # Region availability changes
                 if region.is_available != previous_region.is_available:
+                    self.bot.logger.info(
+                        f"api_changes | Changed Region Availability: {planet.name} Region #{region.index} {region.name} - {previous_region.is_available} -> {region.is_available}"
+                    )
                     region_changes_text += "\n### Availability change"
                     if region.is_available:
                         region_changes_text += "\nIs **now available** ✅"
@@ -618,6 +715,9 @@ class APIChangesCog(Cog):
 
                 # Region damage multiplier changes
                 if region.damage_multiplier != previous_region.damage_multiplier:
+                    self.bot.logger.info(
+                        f"api_changes | Changed Region Damage Mult: {planet.name} Region #{region.index} {region.name} - {previous_region.damage_multiplier} -> {region.damage_multiplier}"
+                    )
                     region_changes_text += (
                         f"\n### Damage multiplier has changed:"
                         f"\n**{previous_region.damage_multiplier:.2}x** {Emojis.Stratagems.right} **{region.damage_multiplier}x**"
@@ -643,11 +743,13 @@ class APIChangesCog(Cog):
 
                 # New campaigns
                 if previous_episode is None:
+                    self.bot.logger.info(f"api_changes | New Campaign: {episode}")
                     change_components.append(
                         TextDisplay(
                             (
                                 f"### NEW CAMPAIGN '{episode.title}' {episode.faction.emoji}{Emojis.Decoration.alert_icon}"
                                 f"\n-# {episode.description}"
+                                f"\n-# Rewards: {episode.rewards}"
                             )
                         )
                     )
@@ -655,6 +757,9 @@ class APIChangesCog(Cog):
 
                 # Campaign faction changes
                 if episode.faction != previous_episode.faction:
+                    self.bot.logger.info(
+                        f"api_changes | Changed Campaign Faction: {episode.title} - {episode.faction.full_name} -> {previous_episode.faction.full_name}"
+                    )
                     change_components.append(
                         TextDisplay(
                             (
@@ -666,6 +771,9 @@ class APIChangesCog(Cog):
 
                 # Campaign status changes
                 if episode.status != previous_episode.status:
+                    self.bot.logger.info(
+                        f"api_changes | Changed Campaign Status: {episode.title} - {episode.status} -> {previous_episode.status}"
+                    )
                     change_components.append(
                         TextDisplay(
                             (
@@ -681,6 +789,9 @@ class APIChangesCog(Cog):
                         p for p in previous_episode.phases if p not in episode.phases
                     ]
                 ) != []:
+                    self.bot.logger.info(
+                        f"api_changes | Removed Campaign Phase(s): {episode.title} - {[p.outro_title or p.intro_title for p in removed_phases]}"
+                    )
                     removed_phases_text = "\n".join(
                         [
                             (
@@ -706,6 +817,9 @@ class APIChangesCog(Cog):
                         p for p in episode.phases if p not in previous_episode.phases
                     ]
                 ) != []:
+                    self.bot.logger.info(
+                        f"api_changes | New Campaign Phase(s): {episode.title} - {[p.outro_title or p.intro_title for p in new_phases]}"
+                    )
                     new_phases_text = "\n".join(
                         [
                             (f"**{p.intro_title}**" f"\n-# Reward(s): `{p.rewards}`")
@@ -721,6 +835,22 @@ class APIChangesCog(Cog):
                         )
                     )
 
+                # Campaign Reward changes
+                if episode.rewards != previous_episode.rewards:
+                    self.bot.logger.info(
+                        f"api_changes | Changed Campaign Rewards: {episode.title} - {previous_episode.rewards} -> {episode.rewards}"
+                    )
+                    change_components.append(
+                        TextDisplay(
+                            (
+                                f"### CAMPAIGN '{episode.title}' REWARDS CHANGE {Emojis.Decoration.alert_icon}"
+                                f"\n**{previous_episode.rewards}**"
+                                f"\n{Emojis.Stratagems.down}"
+                                f"\n**{episode.rewards}**"
+                            )
+                        )
+                    )
+
                 # Phase changes
                 for phase in [
                     p for p in episode.phases if p in previous_episode.phases
@@ -732,6 +862,9 @@ class APIChangesCog(Cog):
 
                     # Phase status changes
                     if phase.status != previous_phase.status:
+                        self.bot.logger.info(
+                            f"api_changes | Changed Phase Status: {episode.title} {phase.outro_title or phase.intro_title} - {previous_phase.status} -> {phase.status}"
+                        )
                         change_components.append(
                             TextDisplay(
                                 (
@@ -743,6 +876,9 @@ class APIChangesCog(Cog):
 
                     # Phase entries changes
                     if phase.entries != previous_phase.entries:
+                        self.bot.logger.info(
+                            f"api_changes | Changed Phase Entries: {episode.title} {phase.outro_title or phase.intro_title} - {previous_phase.entries} -> {phase.entries}"
+                        )
                         change_components.append(
                             TextDisplay(
                                 (
@@ -756,6 +892,9 @@ class APIChangesCog(Cog):
 
                     # Phase rewards changes
                     if phase.rewards != previous_phase.rewards:
+                        self.bot.logger.info(
+                            f"api_changes | Changed Phase Rewards: {episode.title} {phase.outro_title or phase.intro_title} - {previous_phase.rewards} -> {phase.rewards}"
+                        )
                         change_components.append(
                             TextDisplay(
                                 (
@@ -767,22 +906,10 @@ class APIChangesCog(Cog):
                             )
                         )
 
-                # Campaign Reward changes
-                if episode.rewards != previous_episode.rewards:
-                    change_components.append(
-                        TextDisplay(
-                            (
-                                f"### CAMPAIGN '{phase.intro_title}' REWARDS CHANGE {Emojis.Decoration.alert_icon}"
-                                f"\n**{previous_episode.rewards}**"
-                                f"\n{Emojis.Stratagems.down}"
-                                f"\n**{episode.rewards}**"
-                            )
-                        )
-                    )
-
         # warbonds
         for id, warbond in current_data.warbonds.items():
             if id not in previous_data.warbonds:
+                self.bot.logger.info(f"api_changes | New Warbond: {warbond.name}")
                 change_components.append(
                     TextDisplay(
                         f"### NEW WARBOND {Emojis.Decoration.alert_icon}"
@@ -805,7 +932,7 @@ class APIChangesCog(Cog):
                 )
                 await msg.publish()
             self.bot.logger.info(
-                f"api_changes loop - sent out api changes for {len(change_components)} total change(s)"
+                f"api_changes | sent out api changes for {len(change_components)} total change(s)"
             )
 
     @api_changes.before_loop
