@@ -35,7 +35,7 @@ SUPERSTORE_PAGE_NAMES = {
 class Superstore:
     def __init__(
         self,
-        raw_superstore_data: dict,
+        raw_superstore_data: list[dict],
         items_json: dict,
         endpoint_items: dict[int, EndpointItem],
     ) -> None:
@@ -65,6 +65,8 @@ class Superstore:
                 self.id, f"UNKNOWN SUPERSTORE PAGE #{self.id}"
             )
             self.banner_image_id: int = raw_page_dict.get("bannerId32", 0)
+            if self.id == 688318704:
+                self.banner_image_id = 2512818458
             self.items: list[Superstore.Item] = []
 
             for i in raw_page_dict.get("items", []):
@@ -94,7 +96,7 @@ class Superstore:
             self.name: str = (
                 self.json_entry.get("name")
                 or (endpoint_item.name if endpoint_item else None)
-                or "Unknown Item"
+                or f"Unknown Item {self.id}"
             )
             self.description: str = self.json_entry.get("description", "")
             self.type: str = self.json_entry.get("type", "Unknown")

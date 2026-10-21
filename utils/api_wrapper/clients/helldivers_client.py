@@ -14,41 +14,40 @@ class HelldiversClient(BaseAPIClient):
         )
 
     async def get_news_feed(
-        self, war_id: int, time_for_dispatches: int, lang: str = "en-GB"
-    ) -> list[dict]:
+        self, war_id: int, time_for_dispatches: int, lang: str, max_entries: int = 1024
+    ) -> list[dict] | None:
+        max_entries = min(1024, max_entries)
         return await self.get(
-            endpoint=f"NewsFeed/{war_id}?maxEntries=1024&fromTimestamp={time_for_dispatches}",
+            endpoint=f"NewsFeed/{war_id}?maxEntries={max_entries}&fromTimestamp={time_for_dispatches}",
             headers={"Accept-Language": lang},
         )
 
-    async def get_war_status(self, war_id: int, lang: str = "en-GB") -> dict:
+    async def get_war_status(self, war_id: int, lang: str) -> dict | None:
         return await self.get(
-            endpoint=f"WarSeason/{war_id}/Status",
-            headers={"Accept-Language": lang},
+            endpoint=f"WarSeason/{war_id}/Status", headers={"Accept-Language": lang}
         )
 
-    async def get_assignments(self, war_id: int, lang: str = "en-GB") -> list[dict]:
+    async def get_assignments(self, war_id: int, lang: str) -> list[dict] | None:
         return await self.get(
-            endpoint=f"v2/Assignment/War/{war_id}",
-            headers={"Accept-Language": lang},
+            endpoint=f"v2/Assignment/War/{war_id}", headers={"Accept-Language": lang}
         )
 
-    async def get_space_station_info(self, war_id: int, station_id: int) -> dict:
+    async def get_space_station_info(self, war_id: int, station_id: int) -> dict | None:
         return await self.get(endpoint=f"SpaceStation/{war_id}/{station_id}")
 
-    async def get_war_id(self) -> dict[str, int]:
+    async def get_war_id(self) -> dict[str, int] | None:
         return await self.get(endpoint="WarSeason/current/WarID")
 
-    async def get_war_info(self, war_id: int) -> dict:
+    async def get_war_info(self, war_id: int) -> dict | None:
         return await self.get(endpoint=f"WarSeason/{war_id}/WarInfo")
 
-    async def get_war_effects(self) -> list:
+    async def get_war_effects(self) -> list | None:
         return await self.get(endpoint=f"WarSeason/GalacticWarEffects")
 
-    async def get_war_stats(self, war_id: int) -> dict:
+    async def get_war_stats(self, war_id: int) -> dict | None:
         return await self.get(endpoint=f"Stats/War/{war_id}/Summary")
 
-    async def get_control_centre(self, war_id: int, lang: str = "en-GB") -> list:
+    async def get_control_centre(self, war_id: int, lang: str = "en-GB") -> dict | None:
         return await self.get(
             endpoint=f"Episode/{war_id}", headers={"Accept-Language": lang}
         )

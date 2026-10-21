@@ -4,14 +4,10 @@ from inspect import currentframe
 
 
 class GWWLogger:
-    def __init__(
-        self,
-        name=None,
-        level=INFO,
-        colored_output=True,
-    ):
+    def __init__(self, name=None, level=INFO, colored_output=True):
         self.logger = getLogger(name)
         self.logger.setLevel(level)
+        self.splitter = "\\"
 
         if not self.logger.handlers:
             console_handler = StreamHandler(stdout)
@@ -39,21 +35,35 @@ class GWWLogger:
         self.logger.debug(f"{self._get_caller_info()} {message}", **kwargs)
 
     def info(self, message, **kwargs):
-        self.logger.info(f"{self._get_caller_info()} {message}", **kwargs)
+        self.logger.info(
+            f"{self._get_caller_info().split(self.splitter)[-1][:-1]} - {message}",
+            **kwargs,
+        )
 
     def warning(self, message, **kwargs):
-        self.logger.warning(f"{self._get_caller_info()} {message}", **kwargs)
+        self.logger.warning(
+            f"{self._get_caller_info().split(self.splitter)[-1][:-1]} - {message}",
+            **kwargs,
+        )
 
     def error(self, message, exc_info=False, **kwargs):
         self.logger.error(
-            f"{self._get_caller_info()} {message}", exc_info=exc_info, **kwargs
+            f"{self._get_caller_info().split(self.splitter)[-1][:-1]} - {message}",
+            exc_info=exc_info,
+            **kwargs,
         )
 
     def critical(self, message, **kwargs):
-        self.logger.critical(f"{self._get_caller_info()} {message}", **kwargs)
+        self.logger.critical(
+            f"{self._get_caller_info().split(self.splitter)[-1][:-1]} - {message}",
+            **kwargs,
+        )
 
     def exception(self, message, **kwargs):
-        self.logger.exception(f"{self._get_caller_info()} {message}", **kwargs)
+        self.logger.exception(
+            f"{self._get_caller_info().split(self.splitter)[-1][:-1]} - {message}",
+            **kwargs,
+        )
 
 
 class ColoredFormatter(Formatter):

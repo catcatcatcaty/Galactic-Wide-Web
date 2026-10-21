@@ -149,10 +149,10 @@ class Assignment:
         def __init__(
             self, raw_reward_data: dict, endpoint_items: dict[int, EndpointItem]
         ):
-            self.type = raw_reward_data.get("type")
-            self.id = raw_reward_data.get("id32")
-            self.amount = raw_reward_data.get("amount")
-            self.endpoint_item = endpoint_items.get(self.id, None)
+            self.type: int = raw_reward_data.get("type")
+            self.id: int = raw_reward_data.get("id32")
+            self.amount: int = raw_reward_data.get("amount")
+            self.endpoint_item: EndpointItem | None = endpoint_items.get(self.id, None)
 
         def __repr__(self):
             return f"Reward({self.amount}x{self.endpoint_item.name if self.endpoint_item is not None else f'Item #{self.id}'})"

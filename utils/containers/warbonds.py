@@ -66,6 +66,10 @@ class WarbondsContainer(Container, ReprMixin):
                         )
                     )
                 )
+        string_select_rows = [
+            ActionRow(WarbondsStringSelect(index, list(warbonds.values())[i : i + 25]))
+            for index, i in enumerate(range(0, len(warbonds), 25))
+        ]
         self.components.extend(
             [
                 ActionRow(
@@ -82,9 +86,7 @@ class WarbondsContainer(Container, ReprMixin):
                         disabled=page_index + 2 > len(warbond.pages),
                     ),
                 ),
-                ActionRow(
-                    WarbondsStringSelect(list(warbonds.values())),
-                ),
             ]
+            + string_select_rows
         )
         super().__init__(*self.components, accent_colour=Colour.blue())

@@ -43,7 +43,7 @@ class WarbondsCog(Cog):
                 ephemeral=True,
             )
             return
-        if self.bot.data.formatted_data.warbonds is None:
+        if self.bot.data.formatted_data.warbonds == {}:
             await inter.send(
                 content="Warbonds unavailable.\nApologies for the inconvenience.",
                 ephemeral=True,

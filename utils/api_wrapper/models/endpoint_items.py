@@ -85,7 +85,7 @@ class EndpointItem:
     def name(self):
         if (
             self.child_item is not None
-            and self.category == ItemCategory.STRATAGEM_UNLOCK
+            and self.category == ItemCategory.STRATAGEM_PERMIT
         ):
             return self.child_name
         return self.mix_name or self.item_name or self.parent_name

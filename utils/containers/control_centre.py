@@ -155,10 +155,9 @@ class ControlCentreContainer(Container):
                     reward_name = "WARBOND MEDAL"
                     reward_emoji = Emojis.Items.medal
                 else:
-                    reward_name = (
-                        reward.item_type.replace("_", " ").replace("UNLOCK", "PERMIT")
-                        if active_phase.status == ControlCentreStatus.In_Progress
-                        else reward.item_name
+                    reward_name = reward.public_name(
+                        is_available=active_campaign.status
+                        != ControlCentreStatus.In_Progress
                     )
                     reward_emoji = (
                         f"[{reward.emoji}](http://{reward.item_name.replace(' ', '-')}.com)"
@@ -195,10 +194,8 @@ class ControlCentreContainer(Container):
                 section2.append(TextDisplay("-# Unknown Status."))
         campaign_rewards_text = ""
         for reward in active_campaign.rewards:
-            reward_name = (
-                reward.item_type.replace("_", " ").replace("UNLOCK", "PERMIT")
-                if active_campaign.status == ControlCentreStatus.In_Progress
-                else reward.item_name
+            reward_name = reward.public_name(
+                is_available=active_campaign.status != ControlCentreStatus.In_Progress
             )
             reward_emoji = (
                 f"[{reward.emoji}](http://{reward.item_name.replace(' ', '-')}.com)"
@@ -210,21 +207,22 @@ class ControlCentreContainer(Container):
             section2.append(TextDisplay(campaign_rewards_text))
         self.components.extend(section2 + [Separator()])
 
-        section3 = []
-        section3.append(TextDisplay(f"## {Emojis.Factions.humans} Dispatches"))
-        time_cutoff = datetime.now(tz=timezone.utc) - timedelta(days=3)
-        for dispatch in [
-            d for d in self.dispatches[::-1][:2] if d.published_at > time_cutoff
-        ]:
-            form_desc = dispatch.description.replace("\n\n", "\n\n-# ")
-            section3.append(
-                TextDisplay(
-                    f"### {dispatch.title}"
-                    f"\n-# {form_desc}"
-                    f"\n-# <t:{int(dispatch.published_at.timestamp())}:R>"
+        if self.dispatches != []:
+            section3 = []
+            section3.append(TextDisplay(f"## {Emojis.Factions.humans} Dispatches"))
+            time_cutoff = datetime.now(tz=timezone.utc) - timedelta(days=3)
+            for dispatch in [
+                d for d in self.dispatches[::-1][:2] if d.published_at > time_cutoff
+            ]:
+                form_desc = dispatch.description.replace("\n\n", "\n\n-# ")
+                section3.append(
+                    TextDisplay(
+                        f"### {dispatch.title}"
+                        f"\n-# {form_desc}"
+                        f"\n-# <t:{int(dispatch.published_at.timestamp())}:R>"
+                    )
                 )
-            )
-        self.components.extend(section3 + [Separator()])
+            self.components.extend(section3 + [Separator()])
 
     def add_active_campaign_page(self):
         campaign = (
@@ -304,10 +302,8 @@ class ControlCentreContainer(Container):
                 reward_name = "WARBOND MEDAL"
                 reward_emoji = Emojis.Items.medal
             else:
-                reward_name = (
-                    reward.item_type.replace("_", " ").replace("UNLOCK", "PERMIT")
-                    if phase.status == ControlCentreStatus.In_Progress
-                    else reward.item_name
+                reward_name = reward.public_name(
+                    is_available=campaign.status != ControlCentreStatus.In_Progress
                 )
                 reward_emoji = (
                     f"[{reward.emoji}](http://{reward.item_name.replace(' ', '-')}.com)"
@@ -343,10 +339,8 @@ class ControlCentreContainer(Container):
                 section2.append(TextDisplay("-# Unknown status."))
         campaign_rewards_text = ""
         for reward in campaign.rewards:
-            reward_name = (
-                reward.item_type.replace("_", " ").replace("UNLOCK", "PERMIT")
-                if campaign.status == ControlCentreStatus.In_Progress
-                else reward.item_name
+            reward_name = reward.public_name(
+                is_available=campaign.status != ControlCentreStatus.In_Progress
             )
             reward_emoji = (
                 f"[{reward.emoji}](http://{reward.item_name.replace(' ', '-')}.com)"

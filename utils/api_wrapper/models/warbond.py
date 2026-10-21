@@ -68,7 +68,7 @@ class Warbond:
                 self.mix_id, None
             )
             if self.endpoint_item is not None:
-                if self.endpoint_item.category == ItemCategory.STRATAGEM_UNLOCK:
+                if self.endpoint_item.category == ItemCategory.STRATAGEM_PERMIT:
                     self.endpoint_item = (
                         self.endpoint_item.parent_item or self.endpoint_item
                     )

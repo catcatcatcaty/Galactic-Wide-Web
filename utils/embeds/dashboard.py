@@ -2636,11 +2636,12 @@ class Dashboard:
             self.set_thumbnail(
                 ATTACK_EMBED_ICONS.get(faction.lower(), ATTACK_EMBED_ICONS["default"])
             )
-            total_players_doing_faction = (
-                sum(campaign.planet.stats.player_count for campaign in campaigns)
-                / total_players
-            )
-            self.title += f" ({total_players_doing_faction:.2%})"
+            if total_players != 0:
+                total_players_doing_faction = (
+                    sum(campaign.planet.stats.player_count for campaign in campaigns)
+                    / total_players
+                )
+                self.title += f" ({total_players_doing_faction:.2%})"
             skipped_campaigns: list[Campaign] = []
             for campaign in campaigns:
                 field_name = ""

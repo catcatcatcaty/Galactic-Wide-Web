@@ -101,7 +101,7 @@ class FormattedDataContext:
     space_stations: list[dict]
     steam_news: list
     control_centre: dict[str, list[dict]]
-    superstore: list[dict]
+    superstore: dict
     warbonds: dict[int, dict]
     items_data: list[dict]
 
@@ -217,7 +217,7 @@ class FormattedData:
             ]
             for planet_status in context.war_status["en"]["planetStatus"]:
                 planet = self.planets.get(planet_status["index"])
-                if planet:
+                if planet is not None:
                     planet.add_data_from_status(raw_planet_status=planet_status)
                 else:
                     print(
@@ -305,7 +305,7 @@ class FormattedData:
                         )
 
             self.event_campaigns: list[Campaign] = sorted(
-                [c for c in self.campaigns if c.planet.event],
+                [c for c in self.campaigns if c.planet.event is not None],
                 key=lambda c: c.planet.stats.player_count,
                 reverse=True,
             )
@@ -358,7 +358,7 @@ class FormattedData:
                 for steam_news in context.steam_news
             ]
 
-        if context.assignments.get("en") != None:
+        if context.assignments.get("en") is not None:
             for lang, assignments in context.assignments.items():
                 self.assignments[lang] = sorted(
                     [
@@ -627,7 +627,7 @@ class FormattedData:
                 ),
                 None,
             )
-            if correct_po:
+            if correct_po is not None:
                 self.personal_order: PersonalOrder = PersonalOrder(
                     personal_order=correct_po, json_dict=context.json_dict
                 )
@@ -673,7 +673,7 @@ class FormattedData:
                 for lang, cc in context.control_centre.items()
             }
 
-        if context.superstore != []:
+        if context.superstore != {}:
             self.superstore = Superstore(
                 context.superstore,
                 context.json_dict["items"]["items"],
