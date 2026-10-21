@@ -142,11 +142,11 @@ class Emojis:
         @dataclass
         class DSS:
             icon = "<:s:1417971465311223808>"
-            orbital_blockade = "<:s:1318875016909029388>"
-            heavy_ordnance_distribution = "<:s:1318874283350687816>"
-            eagle_storm = "<:s:1318874257773690881>"
+            orbital_blockade = "<:s:1562590297144430782>"
+            heavy_ordnance_distribution = "<:s:1562590515218620526>"
+            eagle_storm = "<:s:1562590204194332822>"
             operational_support = "<:s:1340990960120631376>"
-            eagle_blockade = "<:s:1377971389570744361>"
+            eagle_blockade = "<:s:1562590142211039242>"
 
     @dataclass
     class Weather:
@@ -166,7 +166,7 @@ class Emojis:
     @dataclass
     class Subfactions:
         predator_strain = "<:s:1355905145992646877>"
-        jet_brigade = "<:s:1355912552143393039>"
+        jet_brigade = "<:s:1562589861754437742>"
         incineration_corps = "<:s:1355913678704349336>"
         the_great_host = "<:s:1372871467255070751>"
         spore_burst_strain = "<:s:1500875470088966195>"

@@ -212,6 +212,7 @@ STRATAGEM_ID_DICT = {
     841332828: "EXO-55 Breakthrough Exosuit",
     2437239365: "TD-220 Bastion MK XVI",
     2237630340: "TD-110 Maelstrom",
+    3796132384: "Orbital Walking Barrage Smoke",
 }
 
 CURRENCIES = {
