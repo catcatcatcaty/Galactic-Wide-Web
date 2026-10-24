@@ -35,7 +35,11 @@ class GlobalEventsContainer(Container):
                     planets.get(index) for index in global_event.planet_indices
                 ]
                 specific_planets = "\n-# - " + "\n-# - ".join(
-                    [p.names.get(lang_code, p.name) for p in spec_planets_list if p]
+                    [
+                        f"{p.names.get(lang_code, p.name)} {p.faction.emoji}"
+                        for p in spec_planets_list
+                        if p
+                    ]
                 )
             effects_text = ""
             for effect in global_event.effects:
