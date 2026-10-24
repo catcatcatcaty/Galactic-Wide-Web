@@ -265,11 +265,11 @@ class GalacticWarEffect(GWEReprMixin):
                 short_desc = arrowhead_format(short_desc)
                 if "#V_ONE" in short_desc:
                     short_desc = short_desc.replace(
-                        "#V_ONE", str(next(value, "NOT FOUND"))
+                        "#V_ONE", str(next(value, "UNKNOWN"))
                     )
                 if "#V_TWO" in short_desc:
                     short_desc = short_desc.replace(
-                        "#V_TWO", str(next(value, "NOT FOUND"))
+                        "#V_TWO", str(next(value, "UNKNOWN"))
                     )
                 short_desc = short_desc.replace("\n", " ")
                 self.short_description = short_desc

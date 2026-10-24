@@ -6,6 +6,7 @@ CATEGORY_REPLACEMENTS = {
     "Throwable Weapon": ItemCategory.THROWABLE_WEAPON,
     "Sidearm Weapon": ItemCategory.SIDEARM_WEAPON,
     "Helmet": ItemCategory.HELMET,
+    "Armor": ItemCategory.ARMOR,
 }
 
 PROPERTIES_TO_SKIP = [
@@ -50,7 +51,7 @@ class EndpointItem:
         self.required_level: int | None = self._json.get("requiredLevel")
         self._category: int = self._json.get("progressionCategory", -1)
         self.category: ItemCategory = ItemCategory(self._category)
-        if self.category in (ItemCategory.WEAPON, ItemCategory.ARMOR):
+        if self.category in (ItemCategory.LOADOUT_ITEM, ItemCategory.CUSTOMISATION_KIT):
             self.category = CATEGORY_REPLACEMENTS.get(
                 json_dict["items"]["items"].get(str(self.mix_id), {}).get("type"),
                 self.category,

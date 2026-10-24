@@ -99,6 +99,7 @@ class ControlCentreStatus(Enum):
 
 
 class ItemCategory(Enum):
+    ARMOR = -7
     HELMET = -6
     CAPE = -5
     THROWABLE_WEAPON = -4
@@ -106,10 +107,10 @@ class ItemCategory(Enum):
     PRIMARY_WEAPON = -2
     UNKNOWN = -1
     UNOBTAINABLE = 0
-    WEAPON = 1
-    WEAPON_ATTACHMENT = 2
-    ARMOR = 3
-    SET_ITEM = 4
+    LOADOUT_ITEM = 1
+    WEAPON_CUSTOMISATION = 2
+    CUSTOMISATION_KIT = 3
+    CUSTOMISATION_SET = 4
     BOOSTER = 5
     BOOSTER_PACK = 6
     VICTORY_POSE = 7
@@ -126,7 +127,7 @@ class ItemCategory(Enum):
     CURRENCY = 18
     SHIP_MODULE_EFFECT = 19
     PROGRESSION_PACKAGE_LEVEL = 20
-    SUPER_CREDIT_PACK = 21
+    ITEM_PACKAGE = 21
     COUNT = 22
     TITLE = 23
 

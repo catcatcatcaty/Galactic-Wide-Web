@@ -156,7 +156,7 @@ class FormattedData:
                             self.organised_items[i.mix_id]
                         )
 
-                if i.category == ItemCategory.ARMOR and i.parent_id is None:
+                if i.category == ItemCategory.CUSTOMISATION_KIT and i.parent_id is None:
                     self.organised_items[i.mix_id].category = ItemCategory.CAPE
 
                 if i.buy_price != []:

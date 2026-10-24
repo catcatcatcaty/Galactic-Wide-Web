@@ -40,7 +40,7 @@ class WarbondsContainer(Container, ReprMixin):
                 .replace("UNLOCK", "PERMIT")
                 .replace("SET ITEM", "VEHICLE SKIN")
             )
-            if item_type != "SUPER CREDIT PACK":
+            if item_type != "ITEM PACKAGE":
                 emoji_str = ""
                 if (
                     available_emoji := getattr(
@@ -60,10 +60,7 @@ class WarbondsContainer(Container, ReprMixin):
             else:
                 self.components.append(
                     TextDisplay(
-                        (
-                            f"\n-# **{item_name}** - **{i.cost}**{Emojis.Items.medal}"
-                            f"\n-# {Emojis.Items.super_credit} {item_type}"
-                        )
+                        f"\n-# {Emojis.Items.super_credit} **{item_name}** - **{i.cost}**{Emojis.Items.medal}"
                     )
                 )
         string_select_rows = [
