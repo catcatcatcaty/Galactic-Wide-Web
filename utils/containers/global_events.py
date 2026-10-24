@@ -17,10 +17,8 @@ class GlobalEventsContainer(Container):
         attachment_url: str = None,
     ):
         components = []
-        if image_url:
-            components.append(MediaGallery(MediaGalleryItem(image_url)))
-        elif attachment_url:
-            components.append(MediaGallery(MediaGalleryItem(attachment_url)))
+        if (url := (image_url or attachment_url)) is not None:
+            components.append(MediaGallery(MediaGalleryItem(url)))
         title = TextDisplay(
             f"# {global_event.title if global_event.title else container_json['new_event']}"
         )
