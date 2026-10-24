@@ -383,7 +383,7 @@ class APIChangesCog(Cog):
                         self.bot.json_dict,
                     )
                     .fields[0]
-                    .name
+                    .value
                 )
                 new_po_text = (
                     PersonalOrderCommandEmbed(
@@ -391,7 +391,7 @@ class APIChangesCog(Cog):
                         self.bot.json_dict,
                     )
                     .fields[0]
-                    .name
+                    .value
                 )
                 change_components.append(
                     TextDisplay(
