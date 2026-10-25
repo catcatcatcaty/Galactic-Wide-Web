@@ -1,7 +1,8 @@
-from data.lists import STRATAGEM_ID_DICT, STRATAGEM_CAT_DICT
+from data.lists import STRATAGEM_CAT_DICT
 from datetime import datetime, timezone
 from disnake import Colour
 from utils.api_wrapper.services.tracking_service import TrackerEntry
+from utils.api_wrapper.models.endpoint_items import EndpointItem
 from utils.dataclasses import Faction, Factions
 from utils.functions import arrowhead_format
 from utils.functions.health_bar import health_bar
@@ -121,13 +122,13 @@ class GalacticWarEffect(GWEReprMixin):
         "percent",
         "faction",
         "mix_id",
-        "value5",
-        "DEPRECATED_enemy_group",
-        "DEPRECATED_item_package",
-        "value8",
-        "value9",
-        "reward_multiplier_id",
-        "value11",
+        "assault_type",
+        "subfaction",
+        "booster_mix_id",
+        "store_wide_discount_id",
+        "badge_id",
+        "multiplier_id",
+        "badge_group_id",
         "item_tag",
         "hash_id",
         "planet_body_type",
@@ -137,19 +138,21 @@ class GalacticWarEffect(GWEReprMixin):
         "stratagem_category",
     )
 
-    def __init__(self, gwa: dict, json_dict: dict) -> None:
+    def __init__(
+        self, gwa: dict, json_dict: dict, endpoint_items: dict[int, EndpointItem]
+    ) -> None:
         """Organised data for a galactic war effect"""
-        self.count = self.percent = self.faction = self.mix_id = self.value5 = (
-            self.DEPRECATED_enemy_group
-        ) = self.DEPRECATED_item_package = self.value8 = self.value9 = (
-            self.reward_multiplier_id
-        ) = self.value11 = self.item_tag = self.hash_id = self.planet_body_type = (
-            self.value15
-        ) = self.resource_hash = self.found_enemy = self.found_stratagem = (
-            self.found_booster
-        ) = self.fluff_description = self.name = self.long_description = (
-            self.short_description
-        ) = self.resource = self.stratagem_category = None
+        self.count = self.percent = self.faction = self.mix_id = self.assault_type = (
+            self.subfaction
+        ) = self.booster_mix_id = self.store_wide_discount_id = self.badge_id = (
+            self.multiplier_id
+        ) = self.badge_group_id = self.item_tag = self.hash_id = (
+            self.planet_body_type
+        ) = self.value15 = self.resource_hash = self.found_enemy = (
+            self.found_stratagem
+        ) = self.found_booster = self.fluff_description = self.name = (
+            self.long_description
+        ) = self.short_description = self.resource = self.stratagem_category = None
         self.id: int = gwa["id"]
         self.gameplay_effect_id32: int = gwa["gameplayEffectId32"]
         self.effect_type: int = gwa["effectType"]
@@ -186,40 +189,38 @@ class GalacticWarEffect(GWEReprMixin):
                     )
                 case 4:
                     self.mix_id: int = value
-                    if stratagem := STRATAGEM_ID_DICT.get(self.mix_id):
-                        self.found_stratagem: str = stratagem
-                    elif booster := json_dict["items"]["boosters"].get(
-                        str(self.mix_id), {}
-                    ):
-                        self.found_booster: str = booster["name"]
+                    endpoint_item = endpoint_items.get(self.mix_id)
+                    if endpoint_item is not None:
+                        if "stratagem" in endpoint_item.category.name.lower():
+                            self.found_stratagem: str = endpoint_item.name
+                        elif "booster" in endpoint_item.category.name.lower():
+                            self.found_booster: str = endpoint_item.name
                 case 5:
-                    self.value5 = value
-                    print(f"VALUE5 (AssaultType) USED: {self.id} {self.value5 = }")
+                    self.assault_type = value
+                    print(f"ASSAULT_TYPE USED: {self.id} {self.assault_type = }")
                 case 6:
-                    self.DEPRECATED_enemy_group = value
-                    print(
-                        f"DEPRECATED_enemy_group USED: {self.id} {self.DEPRECATED_enemy_group = }"
-                    )
+                    self.subfaction = value
+                    print(f"SUBFACTION USED: {self.id} {self.subfaction = }")
                 case 7:
-                    self.DEPRECATED_item_package = value
+                    self.booster_mix_id = value
                 case 8:
-                    self.value8 = value
+                    self.store_wide_discount_id = value
                     print(
-                        f"VALUE8 (StoreWideDiscountId) USED: {self.id} {self.value8 = }"
+                        f"STORE_WIDE_DISCOUNT_ID USED: {self.id} {self.store_wide_discount_id = }"
                     )
                 case 9:
-                    self.value9 = value
-                    print(f"VALUE9 (BadgeId) USED: {self.id} {self.value9 = }")
+                    self.badge_id = value
+                    print(f"BADGE_ID USED: {self.id} {self.badge_id = }")
                 case 10:
                     # refer to: /api/Mission/RewardEntries
-                    self.reward_multiplier_id = value
+                    self.multiplier_id = value
                 case 11:
-                    self.value11 = value
-                    print(f"VALUE11 (BadgeGroupId) USED: {self.id} {self.value11 = }")
+                    self.badge_group_id = value
+                    print(f"BADGE_GROUP_ID USED: {self.id} {self.badge_group_id = }")
                 case 12:
                     # or item group; gets used in /Progression/Items
                     self.item_tag = value
-                    print(f"item_tag USED: {self.id} {self.item_tag = }")
+                    print(f"ITEM_TAG USED: {self.id} {self.item_tag = }")
                 case 13:
                     self.hash_id = value
                     if enemy := json_dict["enemy_ids"].get(str(self.hash_id), None):

@@ -205,7 +205,9 @@ class FormattedData:
         if context.war_effects:
             for war_effect in context.war_effects:
                 self.war_effects[war_effect["id"]] = GalacticWarEffect(
-                    gwa=war_effect, json_dict=context.json_dict
+                    gwa=war_effect,
+                    json_dict=context.json_dict,
+                    endpoint_items=self.organised_items,
                 )
             self.war_effects = dict(
                 sorted(self.war_effects.items(), key=lambda x: x[0])
