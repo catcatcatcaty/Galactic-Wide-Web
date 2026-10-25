@@ -359,6 +359,14 @@ class ControlCentreContainer(Container):
                 and "stratagem" in reward.endpoint_item.category.name.lower()
             ):
                 campaign_rewards_text += f"\n-# {Emojis.Icons.blank}This stratagem does not match anything in our database."
+
+        # Manual Campaign rewards changes
+        if campaign.id == 2797853381:
+            campaign_rewards_text = (
+                f"{Emojis.Icons.blank}**1** x **TACTICAL ACTION** {Emojis.SpaceStations.DSS.icon}{Emojis.SpaceStations.DSS.eagle_storm}"
+                f"\n-# {Emojis.Icons.blank}Eagle Gas Storm Tactical Action"
+            )
+
         if campaign_rewards_text != "":
             section2.append(TextDisplay(campaign_rewards_text))
         self.components.extend(section2 + [Separator()])
