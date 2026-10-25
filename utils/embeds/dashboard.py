@@ -632,7 +632,7 @@ class Dashboard:
             )
             return enemy
 
-        def _add_location_info(self, text: str, task: Assignment.Task) -> None:
+        def _add_location_info(self, text: str, task: Assignment.Task) -> str:
             tasks_json = self.language_json["embeds"]["Dashboard"]["MajorOrderEmbed"][
                 "tasks"
             ]
@@ -665,7 +665,7 @@ class Dashboard:
 
         def _add_location_info_enemies(self, text: str, task: Assignment.Task) -> str:
             if task.planet_index is None and task.sector_index is None:
-                return text.replace("{ext_pre}{ext}{ext_post}", "Unknown Location")
+                return text
             tasks_json = self.language_json["embeds"]["Dashboard"]["MajorOrderEmbed"][
                 "tasks"
             ]
