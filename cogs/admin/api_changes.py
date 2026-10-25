@@ -348,16 +348,16 @@ class APIChangesCog(Cog):
                 zip(previous_assignment.tasks, assignment.tasks), start=1
             ):
                 # Task target amount changes
-                if prev_task.target != curr_task.target:
+                if prev_task.goal != curr_task.goal:
                     self.bot.logger.info(
-                        f"api_changes | Changed Task Target: {assignment.id} - {prev_task.target} -> {curr_task.target}"
+                        f"api_changes | Changed Task Target: {assignment.id} - {prev_task.goal} -> {curr_task.goal}"
                     )
                     change_components.append(
                         TextDisplay(
                             (
                                 f"### CHANGE TO TARGET OF TASK #{index} FOR '{assignment.title}' {Emojis.Decoration.alert_icon}"
-                                f"\n-# **{prev_task.target:,}** {Emojis.Stratagems.right} **{curr_task.target:,}**"
-                                f"\n-# {(curr_task.target - prev_task.target):+,}"
+                                f"\n-# **{prev_task.goal:,}** {Emojis.Stratagems.right} **{curr_task.goal:,}**"
+                                f"\n-# {(curr_task.goal - prev_task.goal):+,}"
                             )
                         )
                     )

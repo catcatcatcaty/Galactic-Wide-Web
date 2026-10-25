@@ -394,13 +394,13 @@ class FormattedData:
                 for task in assignment.tasks:
                     match task.type:
                         case (
-                            AssignmentTaskType.ExtractFromLocations
-                            | AssignmentTaskType.ExtractWithItem
-                            | AssignmentTaskType.CompleteObjectives
-                            | AssignmentTaskType.PlayObjectives
-                            | AssignmentTaskType.UseItems
-                            | AssignmentTaskType.ExtractFromMission
-                            | AssignmentTaskType.CompleteOperations
+                            AssignmentTaskType.Extract
+                            | AssignmentTaskType.ExtractWith
+                            | AssignmentTaskType.Objective
+                            | AssignmentTaskType.PlayMission
+                            | AssignmentTaskType.UseEquipment
+                            | AssignmentTaskType.MissionComplete
+                            | AssignmentTaskType.OperationComplete
                             | AssignmentTaskType.LiberateLocationsSpecific
                         ):
                             if task.progress_perc >= 1:
@@ -426,7 +426,7 @@ class FormattedData:
                                     and p.event.faction == task.faction
                                 ):
                                     planet.in_assignment = True
-                        case AssignmentTaskType.KillEnemies:
+                        case AssignmentTaskType.Kill:
                             if task.progress_perc >= 1:
                                 continue
                             if task.faction is None:
@@ -435,7 +435,7 @@ class FormattedData:
                                         planet.in_assignment = True
                             if (
                                 subfaction := Subfactions.get_from_enemy_id(
-                                    task.enemy_id
+                                    task.target_id
                                 )
                             ) is not None:
                                 for planet in self.planets.values():
@@ -452,7 +452,7 @@ class FormattedData:
                                     )
                                     if faction == task.faction:
                                         planet.in_assignment = True
-                        case AssignmentTaskType.DonateItems:
+                        case AssignmentTaskType.Donation:
                             if task.progress_perc >= 1:
                                 continue
                             pass

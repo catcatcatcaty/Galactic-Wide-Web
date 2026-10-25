@@ -57,46 +57,41 @@ class Assignment:
             self._type: int = task["type"]
             self.type: AssignmentTaskType = AssignmentTaskType(self._type)
             self.progress: int | float = current_progress
-            self.values_dict = dict(zip(task["valueTypes"], task["values"]))
-            self.faction = self.target = self.enemy_id = self.item_id = (
-                self.item_type
-            ) = self.objective = self.min_players = self.difficulty = (
-                self.mission_type
-            ) = self.planet_index = self.sector_index = None
+            self.values_dict: dict[int, int] = dict(
+                zip(task["valueTypes"], task["values"])
+            )
             self.tracker: BaseTrackerEntry | None = None
 
-            if faction := self.values_dict.get(1):
-                self.faction: Faction | None = Factions.get_from_identifier(
-                    number=faction
-                )
-            if personal := self.values_dict.get(2):
-                self.personal: int = personal
-            if target := self.values_dict.get(3):
-                self.target: int | float = target
-            if enemy_id := self.values_dict.get(4):
-                self.enemy_id: int = enemy_id
-            if item_id := self.values_dict.get(5):
-                self.item_id: int = item_id
-            if item_type := self.values_dict.get(6):
-                self.item_type: int = item_type
-            if objective := self.values_dict.get(7):
-                self.objective = objective
-            if min_players := self.values_dict.get(8):
-                self.min_players: int = min_players
-            if difficulty := self.values_dict.get(9):
-                self.difficulty: int = difficulty
-            if mission_type := self.values_dict.get(10):
-                self.mission_type: int = mission_type
-            if location_type := self.values_dict.get(11):
-                if location_type == 1:
-                    self.planet_index: int = self.values_dict.get(12)
-                elif location_type == 2:
-                    self.sector_index: int = self.values_dict.get(12)
+            self.faction: Faction | None = Factions.get_from_identifier(
+                number=self.values_dict.get(1)
+            )
+            self.personal: bool = self.values_dict.get(2, 0) == 1
+            self.goal: int | None = self.values_dict.get(3)
+            self.target_id: int | None = self.values_dict.get(4)
+            self.equipment_id: int | None = self.values_dict.get(5)
+            self.equipment_type: int | None = self.values_dict.get(6)
+            self.objective_type: int | None = self.values_dict.get(7)
+            self.minimum_squad_size: int | None = self.values_dict.get(8)
+            self.minimum_difficulty: int | None = self.values_dict.get(9)
+            self.mission_type: int | None = self.values_dict.get(10)
+            self.galaxy_location_type: int | None = self.values_dict.get(11)
+            self.sector_index: int | None = None
+            self.planet_index: int | None = None
+            match self.galaxy_location_type:
+                case 1:
+                    self.planet_index: int | None = self.values_dict.get(12)
+                case 2:
+                    self.sector_index: int | None = self.values_dict.get(12)
+                case 0:
+                    pass
+                case _:
+                    if self.galaxy_location_type is not None:
+                        print(f"New Galaxy Location Type: {self}")
 
         @property
         def progress_perc(self) -> float:
             """Returns the progress of the task as a float (0-1)"""
-            return self.progress / self.target
+            return self.progress / self.goal
 
         @property
         def health_bar(self) -> str:
@@ -109,11 +104,11 @@ class Assignment:
 
             match self.type:
                 case (
-                    AssignmentTaskType.ExtractFromLocations
-                    | AssignmentTaskType.ExtractWithItem
-                    | AssignmentTaskType.CompleteObjectives
-                    | AssignmentTaskType.PlayObjectives
-                    | AssignmentTaskType.DonateItems
+                    AssignmentTaskType.Extract
+                    | AssignmentTaskType.ExtractWith
+                    | AssignmentTaskType.Objective
+                    | AssignmentTaskType.PlayMission
+                    | AssignmentTaskType.Donation
                     | AssignmentTaskType.HoldLocationsUntilEnd
                     | AssignmentTaskType.LiberateLocationsCount
                 ):
@@ -124,10 +119,10 @@ class Assignment:
                         increasing=increasing,
                     )
                 case (
-                    AssignmentTaskType.KillEnemies
-                    | AssignmentTaskType.UseItems
-                    | AssignmentTaskType.ExtractFromMission
-                    | AssignmentTaskType.CompleteOperations
+                    AssignmentTaskType.Kill
+                    | AssignmentTaskType.UseEquipment
+                    | AssignmentTaskType.MissionComplete
+                    | AssignmentTaskType.OperationComplete
                     | AssignmentTaskType.DefendFromAttacks
                 ):
                     return health_bar(

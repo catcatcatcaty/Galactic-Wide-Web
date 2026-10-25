@@ -41,16 +41,16 @@ class SpaceStationType(Enum):
 class AssignmentTaskType(Enum):
     """The names I have given for Assignment Task Types\n
     UNKNOWN = -1\n
-    ExtractFromLocations = 1\n
-    ExtractWithItem = 2\n
-    KillEnemies = 3\n
-    CompleteObjectives = 4\n
-    PlayObjectives = 5\n
-    UseItems = 6\n
-    ExtractFromMission = 7\n
+    Extract = 1\n
+    ExtractWith = 2\n
+    Kill = 3\n
+    Objective = 4\n
+    PlayMission = 5\n
+    UseEquipment = 6\n
+    MissionComplete = 7\n
     PersonalOrder = 8\n
-    CompleteOperations = 9\n
-    DonateItems = 10\n
+    OperationComplete = 9\n
+    Donation = 10\n
     LiberateLocationsSpecific = 11\n
     DefendFromAttacks = 12\n
     HoldLocationsUntilEnd = 13\n
@@ -60,16 +60,16 @@ class AssignmentTaskType(Enum):
 
     UNKNOWN = -1
 
-    ExtractFromLocations = 1
-    ExtractWithItem = 2
-    KillEnemies = 3
-    CompleteObjectives = 4
-    PlayObjectives = 5
-    UseItems = 6
-    ExtractFromMission = 7
+    Extract = 1
+    ExtractWith = 2
+    Kill = 3
+    Objective = 4
+    PlayMission = 5
+    UseEquipment = 6
+    MissionComplete = 7
     PersonalOrder = 8
-    CompleteOperations = 9
-    DonateItems = 10
+    OperationComplete = 9
+    Donation = 10
     LiberateLocationsSpecific = 11
     DefendFromAttacks = 12
     HoldLocationsUntilEnd = 13
