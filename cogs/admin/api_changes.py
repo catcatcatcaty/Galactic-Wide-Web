@@ -1,7 +1,7 @@
 from datetime import time
 from disnake.ext.commands import Cog
 from disnake.ext.tasks import loop
-from disnake.ui import Container, Separator, TextDisplay
+from disnake.ui import Container, TextDisplay
 from utils.api_wrapper.models import GalacticWarEffect
 from utils.bot import GalacticWideWebBot
 from utils.dataclasses import PlanetFeatures, Subfactions
@@ -730,7 +730,7 @@ class APIChangesCog(Cog):
                     planet_change_text += region_changes_text
 
             if planet_changes_present:
-                change_components.extend([TextDisplay(planet_change_text), Separator()])
+                change_components.append(TextDisplay(planet_change_text))
 
         # Control Center
         eng_curr_cc = current_data.control_centre.get("en")

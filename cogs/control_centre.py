@@ -66,7 +66,9 @@ class ControlCentreCog(Cog):
         container = ControlCentreContainer(
             control_centre=cc,
             required_images=images_required,
-            dispatches=self.bot.data.formatted_data.dispatches.get(guild.language, []),
+            dispatches=self.bot.data.formatted_data.dispatches.get(
+                guild.language, self.bot.data.formatted_data.dispatches.get("en", [])
+            ),
             page=ControlCentrePage.Overview,
         )
         await inter.send(

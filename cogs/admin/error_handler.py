@@ -101,9 +101,7 @@ class ErrorHandlerCog(Cog):
             )
         if hasattr(inter, "channel"):
             channel_name = (
-                "DMs"
-                if inter.channel.type == ChannelType.private
-                else inter.channel.name
+                "" if inter.channel.type == ChannelType.private else inter.channel.name
             )
             embed.add_field(
                 name="Channel",

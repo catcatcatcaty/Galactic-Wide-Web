@@ -56,7 +56,7 @@ class EndpointItem:
                 json_dict["items"]["items"].get(str(self.mix_id), {}).get("type"),
                 self.category,
             )
-        self.tags: list = self._json.get("tags", [])
+        self.tags: list[int] = self._json.get("tags", [])
         self.required_items: list = self._json.get("requiredItems", [])
         self.buy_price: list = self._json.get("buyPrice", [])
         self.buy_items: list[tuple[EndpointItem, int]] = []
@@ -80,7 +80,7 @@ class EndpointItem:
 
     @property
     def child_id(self):
-        return (self.child_item.mix_id) if self.child_item is not None else None
+        return self.child_item.mix_id if self.child_item is not None else None
 
     @property
     def name(self):
@@ -107,7 +107,7 @@ class EndpointItem:
         return f"EndpointItem({fmt_text}\n)"
 
     def __repr__(self):
-        return f"EndpointItem('name': {self.name})"
+        return f"EndpointItem(item_id={self.item_id}, name={self.name})"
 
     def __eq__(self, value):
         if not isinstance(value, type(self)):
