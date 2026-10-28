@@ -72,8 +72,6 @@ class GalacticWideWebBot(commands.AutoShardedBot):
                             file=second_values["path"], encoding="UTF-8"
                         ) as json_file:
                             self.json_dict[key][second_key] = load(fp=json_file)
-                            continue
-                continue
             else:
                 with open(file=values["path"], encoding="UTF-8") as json_file:
                     self.json_dict[key] = load(json_file)

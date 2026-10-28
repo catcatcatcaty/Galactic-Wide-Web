@@ -12,10 +12,8 @@ class RegionType(Enum):
 
 class EndpointBase(Enum):
     HELLDIVERS = "https://api.live.prod.thehelldiversgame.com/api/"
-    STEAM_PLAYER_COUNT = (
-        "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/"
-    )
-    STEAM_NEWS = "https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=553850&count=20&maxlength=0&format=json"
+    STEAM_PLAYER_COUNT = "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1?appid=553850"
+    STEAM_NEWS = "https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=553850&count=40&format=json"
     ITEMS = "https://api.live.prod.thehelldiversgame.com/api/progression/items"
 
 

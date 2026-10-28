@@ -10,10 +10,10 @@ class AuthedClient(BaseAPIClient):
             headers=Config.AUTHED_API_HEADERS,
         )
 
-    async def get_dss_votes(self) -> dict:
+    async def get_dss_votes(self) -> dict | None:
         return await self.get("/raw/election")
 
-    async def get_personal_order(self) -> dict:
+    async def get_personal_order(self) -> dict | None:
         return await self.get("/raw/assignment")
 
 
@@ -25,8 +25,10 @@ class AltDSSVotesAuthedClient(BaseAPIClient):
             headers=Config.ALT_AUTHED_API_HEADERS,
         )
 
-    async def get_space_stations_votes(self, period_id: str) -> dict:
-        return await self.get(f"/{period_id}")
+    async def get_space_stations_votes(
+        self, war_id: int, period_id: str
+    ) -> dict | None:
+        return await self.get(f"/{war_id}/{period_id}")
 
 
 class AltPOAuthedClient(BaseAPIClient):
@@ -37,7 +39,7 @@ class AltPOAuthedClient(BaseAPIClient):
             headers=Config.ALT_AUTHED_API_HEADERS,
         )
 
-    async def get_personal_order(self) -> dict:
+    async def get_personal_order(self) -> dict | None:
         return await self.get()
 
 
@@ -49,10 +51,10 @@ class AltSuperstoreAuthedClient(BaseAPIClient):
             headers=Config.ALT_AUTHED_API_HEADERS,
         )
 
-    async def get_superstore(self) -> dict:
+    async def get_superstore(self) -> dict | None:
         return await self.get()
 
-    async def get_rotating(self) -> dict:
+    async def get_rotating(self) -> dict | None:
         return await self.get("/rotation")
 
 
@@ -64,8 +66,8 @@ class AltWarbondsAuthedClient(BaseAPIClient):
             headers=Config.ALT_AUTHED_API_HEADERS,
         )
 
-    async def get_warbonds_index(self) -> list[dict]:
+    async def get_warbonds_index(self) -> list[dict] | None:
         return await self.get()
 
-    async def get_with_id(self, warbond_id: int):
+    async def get_with_id(self, warbond_id: int) -> dict | None:
         return await self.get(f"/{warbond_id}")

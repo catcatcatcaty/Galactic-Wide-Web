@@ -141,12 +141,12 @@ class Emojis:
     class SpaceStations:
         @dataclass
         class DSS:
-            icon = "<:ss:1529612065889583104>"
-            orbital_blockade = "<:ss:1529612065889583105>"
-            heavy_ordnance_distribution = "<:ss:1529612065889583106>"
-            eagle_storm = "<:ss:1529612065889583107>"
-            operational_support = "<:ss:1529612065889583108>"
-            eagle_blockade = "<:ss:1529612065889583109>"
+            icon = "<:s:1417971465311223808>"
+            orbital_blockade = "<:s:1562590297144430782>"
+            heavy_ordnance_distribution = "<:s:1562590515218620526>"
+            eagle_storm = "<:s:1562590204194332822>"
+            operational_support = "<:s:1340990960120631376>"
+            eagle_blockade = "<:s:1562590142211039242>"
 
     @dataclass
     class Weather:
@@ -165,20 +165,20 @@ class Emojis:
 
     @dataclass
     class Subfactions:
-        predator_strain = "<:ss:1529612202938474498>"
-        jet_brigade = "<:ss:1529612202938474499>"
-        incineration_corps = "<:ss:1529612202938474500>"
-        the_great_host = "<:ss:1529612202938474501>"
-        spore_burst_strain = "<:ss:1529612202938474502>"
-        rupture_strain = "<:ss:1529612202938474503>"
-        dragonroaches = "<:ss:1529612202938474504>"
-        hive_lords = "<:ss:1529612202938474505>"
-        cyborgs = "<:ss:1529612202938474506>"
-        mindless_masses = "<:ss:1529612202938474507>"
-        appropriators = "<:ss:1529612202938474508>"
-        heavy_seaf_presence = "<:ss:1537390703330467840>"
-        vote_snatchers = "<:ss:1537391055370977280>"
-        invasion_fleet = "<:ss:1538843546428121088>"
+        predator_strain = "<:s:1355905145992646877>"
+        jet_brigade = "<:s:1562589861754437742>"
+        incineration_corps = "<:s:1355913678704349336>"
+        the_great_host = "<:s:1372871467255070751>"
+        spore_burst_strain = "<:s:1500875470088966195>"
+        rupture_strain = "<:s:1412402213938270258>"
+        dragonroaches = "<:s:1412402344502759425>"
+        hive_lords = "<:s:1412402306334457916>"
+        cyborgs = "<:s:1467949410573877545>"
+        mindless_masses = "<:s:1483440352701452379>"
+        appropriators = "<:s:1483440351380504586>"
+        invasion_fleet = "<:s:1524785461908738098>"
+        heavy_seaf_presence = "<:s:1537193617360425093>"
+        vote_snatchers = "<:s:1537193618522243153>"
 
     @dataclass
     class PlanetFeatures:

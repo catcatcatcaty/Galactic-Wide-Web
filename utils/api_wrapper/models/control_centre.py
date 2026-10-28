@@ -81,7 +81,7 @@ class ControlCentre:
             """default: 0"""
 
         def __repr__(self):
-            return f"Episode(id={self.id}, title={self.title}, phases={self.phases})"
+            return f"Episode(id={self.id}, title={self.title}, rewards={self.rewards}, phases={self.phases})"
 
         def __eq__(self, value):
             return self.id == value.id
@@ -113,11 +113,11 @@ class ControlCentre:
                 self.outro_image_id: int = raw_phase_data.get("outroMediaId32", 0)
 
             def __repr__(self):
-                return (
-                    f"Phase(id={self.id}, title={self.outro_title or self.intro_title})"
-                )
+                return f"Phase(id={self.id}, title={self.outro_title or self.intro_title}, rewards={self.rewards})"
 
             def __eq__(self, value):
+                if not isinstance(value, type(self)):
+                    return False
                 return self.id == value.id
 
         class Reward:
@@ -131,6 +131,14 @@ class ControlCentre:
                 self.endpoint_item: EndpointItem | None = endpoint_items.get(
                     self.id, None
                 )
+
+            def __repr__(self):
+                return f"Reward({self.public_name(False)})x{self.amount}"
+
+            def __eq__(self, value):
+                if not isinstance(value, type(self)):
+                    return False
+                return self.id == value.id
 
             @property
             def item_name(self):
@@ -146,8 +154,8 @@ class ControlCentre:
             @property
             def item_type(self):
                 if self.endpoint_item is None:
-                    return
-                return self.endpoint_item.category.name
+                    return "ITEM"
+                return self.endpoint_item.category.name.replace("_", " ")
 
             @property
             def emoji(self):
@@ -159,8 +167,14 @@ class ControlCentre:
                     Emojis.Icons.victory,
                 )
 
-            def __eq__(self, value):
-                return self.id == value.id
-
-            def __repr__(self):
-                return f"Reward({self.endpoint_item.name if self.endpoint_item is not None else f'ITEM {self.id}'})x{self.amount}"
+            def public_name(self, is_available: bool) -> str:
+                if is_available:
+                    if self.endpoint_item is not None:
+                        return self.endpoint_item.name
+                    else:
+                        return "ITEM"
+                else:
+                    text = self.item_type.replace("_", " ")
+                    if "STRATAGEM" in text:
+                        text = "STRATAGEM"
+                    return text

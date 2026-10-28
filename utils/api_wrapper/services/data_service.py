@@ -23,16 +23,16 @@ from utils.mixins import ReprMixin
 
 class DataService(ReprMixin):
     def __init__(self, json_dict: dict, logger: GWWLogger) -> None:
-        self.json_dict = json_dict
-        self.logger = logger
-        self.loaded = False
-        self.fetching = False
-        self.previous_data = None
-        self.formatted_data: FormattedData = None
-        self.tracking_service = TrackingService()
+        self.json_dict: dict = json_dict
+        self.logger: GWWLogger = logger
+        self.loaded: bool = False
+        self.fetching: bool = False
+        self.previous_data: FormattedData | None = None
+        self.formatted_data: FormattedData | None = None
+        self.tracking_service: TrackingService = TrackingService()
 
-        self.war_id = 801
-        self.steam_player_count = 0
+        self.war_id: int = 801
+        self.steam_player_count: int = 0
         self._raw_war_status: dict[str, dict] = {}
         self._raw_news_feed: dict[str, list[dict]] = {}
         self._raw_assignments: dict[str, list[dict]] = {}
@@ -75,8 +75,12 @@ class DataService(ReprMixin):
             base_url=EndpointBase.HELLDIVERS.value,
         ) as client:
             war_id = await client.get_war_id()
-            if war_id:
-                self.war_id = war_id["id"]
+            if war_id is not None:
+                self.war_id = war_id.get("id", self.war_id)
+            else:
+                self.logger.error(
+                    "pull_from_api | War ID is missing | default War ID (801) is being used"
+                )
 
             unique_languages = GWWGuilds.unique_languages()
             in_use_languages = [
@@ -84,11 +88,17 @@ class DataService(ReprMixin):
             ]
             for lang in in_use_languages:
                 raw_war_status = await client.get_war_status(
-                    war_id=self.war_id,
-                    lang=lang.long_code,
+                    war_id=self.war_id, lang=lang.long_code
                 )
-                if raw_war_status:
+                if raw_war_status is not None:
                     self._raw_war_status[lang.short_code] = raw_war_status
+                else:
+                    self._raw_war_status[lang.short_code] = self._raw_war_status.get(
+                        "en", {}
+                    )
+                    self.logger.error(
+                        f"pull_from_api | raw war status for {lang.long_code} is empty"
+                    )
 
                 time_for_dispatches = int(
                     (
@@ -100,142 +110,53 @@ class DataService(ReprMixin):
                                     year=2024,
                                     month=2,
                                     day=14,
-                                    hour=15,
-                                    minute=11,
+                                    hour=19,
+                                    minute=5,
                                     tzinfo=timezone.utc,
                                 )
                             ).total_seconds(),
                         )
                     )
-                    - timedelta(weeks=1).total_seconds()
+                    - timedelta(weeks=2).total_seconds()
                 )
                 news_feed = await client.get_news_feed(
                     war_id=self.war_id,
                     time_for_dispatches=time_for_dispatches,
                     lang=lang.long_code,
+                    max_entries=25,
                 )
-                if news_feed:
-                    self._raw_news_feed[lang.short_code] = news_feed[-25:]
+                if news_feed is not None:
+                    self._raw_news_feed[lang.short_code] = news_feed
+                else:
+                    self._raw_news_feed[lang.short_code] = self._raw_news_feed.get(
+                        "en", []
+                    )
+                    self.logger.error(
+                        f"pull_from_api | news feed for {lang.long_code} is empty"
+                    )
 
                 assignments = await client.get_assignments(
                     war_id=self.war_id, lang=lang.long_code
                 )
-                if assignments != None:
+                if assignments is not None:
                     self._raw_assignments[lang.short_code] = assignments
+                else:
+                    self._raw_assignments[lang.short_code] = self._raw_assignments.get(
+                        "en", []
+                    )
 
                 control_centre = await client.get_control_centre(
                     war_id=self.war_id, lang=lang.long_code
                 )
-                if control_centre:
+                if control_centre is not None:
                     self._raw_control_centre[lang.short_code] = control_centre
-
-            if english_cc := self._raw_control_centre.get("en"):
-                for language, cc in self._raw_control_centre.items():
-                    if language == "en":
-                        continue
-                    for ep in cc.get("episodes", []):
-                        if english_ep := next(
-                            (eng_ep for eng_ep in english_cc.get("episodes", [])),
-                            None,
-                        ):
-                            if ep["title"] != english_ep["title"]:
-                                if (
-                                    ep["id32"]
-                                    not in self._episode_phase_translations[language][
-                                        "episodes"
-                                    ]
-                                ):
-                                    self._episode_phase_translations[language][
-                                        "episodes"
-                                    ][ep["id32"]] = {
-                                        "title": ep["title"],
-                                        "description": ep["description"],
-                                    }
-
-                            else:
-                                if (
-                                    ep["id32"]
-                                    in self._episode_phase_translations[language][
-                                        "episodes"
-                                    ]
-                                ):
-                                    ep["title"] = self._episode_phase_translations[
-                                        language
-                                    ]["episodes"][ep["id32"]]["title"]
-                                    ep["description"] = (
-                                        self._episode_phase_translations[language][
-                                            "episodes"
-                                        ][ep["id32"]]["description"]
-                                    )
-
-                            for phase in ep["phases"]:
-                                if english_ph := next(
-                                    (
-                                        eng_ph
-                                        for eng_ph in english_ep.get("phases", [])
-                                        if eng_ph["id32"] == phase["id32"]
-                                    ),
-                                    None,
-                                ):
-                                    if phase["introTitle"] != english_ph["introTitle"]:
-                                        if (
-                                            phase["id32"]
-                                            not in self._episode_phase_translations[
-                                                language
-                                            ]["phases"]
-                                        ):
-                                            self._episode_phase_translations[language][
-                                                "phases"
-                                            ][phase["id32"]] = {
-                                                "introTitle": phase["introTitle"],
-                                                "introMessage": phase["introMessage"],
-                                                "outroTitle": phase["outroTitle"],
-                                                "outroMessage": phase["outroMessage"],
-                                            }
-                                        else:
-                                            for (
-                                                key,
-                                                value,
-                                            ) in self._episode_phase_translations[
-                                                language
-                                            ][
-                                                "phases"
-                                            ][
-                                                phase["id32"]
-                                            ].items():
-                                                if phase[key] != value:
-                                                    value = phase[key]
-                                    else:
-                                        if (
-                                            phase["id32"]
-                                            in self._episode_phase_translations[
-                                                language
-                                            ]["phases"]
-                                        ):
-                                            phase["introTitle"] = (
-                                                self._episode_phase_translations[
-                                                    language
-                                                ]["phases"][phase["id32"]]["introTitle"]
-                                            )
-                                            phase["introMessage"] = (
-                                                self._episode_phase_translations[
-                                                    language
-                                                ]["phases"][phase["id32"]][
-                                                    "introMessage"
-                                                ]
-                                            )
-                                            phase["outroTitle"] = (
-                                                self._episode_phase_translations[
-                                                    language
-                                                ]["phases"][phase["id32"]]["outroTitle"]
-                                            )
-                                            phase["outroMessage"] = (
-                                                self._episode_phase_translations[
-                                                    language
-                                                ]["phases"][phase["id32"]][
-                                                    "outroMessage"
-                                                ]
-                                            )
+                else:
+                    self._raw_control_centre[lang.short_code] = (
+                        self._raw_control_centre.get("en", {})
+                    )
+                    self.logger.error(
+                        f"pull_from_api | control centre for {lang.long_code} is empty"
+                    )
 
             for space_station in self._raw_war_status.get("en", {}).get(
                 "spaceStations", []
@@ -243,34 +164,43 @@ class DataService(ReprMixin):
                 space_station_info = await client.get_space_station_info(
                     war_id=self.war_id, station_id=space_station["id32"]
                 )
-                if space_station_info is None:
-                    continue
-                self._raw_space_stations.append(space_station_info)
+                if space_station_info is not None:
+                    self._raw_space_stations.append(space_station_info)
 
             war_stats = await client.get_war_stats(war_id=self.war_id)
-            if war_stats:
+            if war_stats is not None:
                 self._raw_war_stats = war_stats
+            else:
+                self.logger.error(f"pull_from_api | war stats are empty")
 
             war_info = await client.get_war_info(war_id=self.war_id)
-            if war_info:
+            if war_info is not None:
                 self._raw_war_info = war_info
+            else:
+                self.logger.error(f"pull_from_api | war info is empty")
 
             war_effects = await client.get_war_effects()
-            if war_effects:
+            if war_effects is not None:
                 self._raw_war_effects = war_effects
+            else:
+                self.logger.error(f"pull_from_api | war effects are empty")
 
         async with SteamPlayerCountClient(
             logger=self.logger, base_url=EndpointBase.STEAM_PLAYER_COUNT.value
         ) as client:
             steam_count = await client.get_steam_count()
-            if steam_count:
-                self.steam_player_count = steam_count["response"]["player_count"]
+            if steam_count is not None:
+                self.steam_player_count = steam_count.get("response", {}).get(
+                    "player_count"
+                )
+            else:
+                self.logger.error(f"pull_from_api | steam player count is empty")
 
         async with SteamNewsClient(
             logger=self.logger, base_url=EndpointBase.STEAM_NEWS.value
         ) as client:
             steam_news = await client.get_steam_news()
-            if steam_news:
+            if steam_news is not None:
                 self._raw_steam_news: list[dict] = [
                     pn
                     for pn in steam_news["appnews"]["newsitems"]
@@ -296,7 +226,8 @@ class DataService(ReprMixin):
             ) is not None:
                 async with AltDSSVotesAuthedClient(logger=self.logger) as client:
                     space_station_votes = await client.get_space_stations_votes(
-                        current_vote_id
+                        war_id=self.war_id,
+                        period_id=current_vote_id,
                     )
                     if space_station_votes is not None:
                         space_station["votes"] = space_station_votes
@@ -304,15 +235,21 @@ class DataService(ReprMixin):
         if not self._raw_personal_order:
             async with AltPOAuthedClient(logger=self.logger) as client:
                 personal_order = await client.get_personal_order()
-                if personal_order:
+                if personal_order is not None:
                     self._raw_personal_order = personal_order
+                else:
+                    self.logger.error(f"pull_from_api | raw personal order is empty")
 
         if self.pull_start_time.minute == 0 or not self.loaded:
             async with ItemsClient(
                 logger=self.logger, base_url=EndpointBase.ITEMS.value
             ) as client:
                 self._raw_api_items.clear()
-                self._raw_api_items = await client.get_items()
+                api_items = await client.get_items()
+                if api_items is not None:
+                    self._raw_api_items = api_items
+                else:
+                    self.logger.error(f"pull_from_api | raw api items is empty")
 
             #TODO no api access
             """
@@ -327,12 +264,23 @@ class DataService(ReprMixin):
                         self._raw_stuperstore: list = super_store_pages.get(
                             "sections", []
                         )
+                    else:
+                        self.logger.error(f"pull_from_api | superstore data is empty")
+
                     rotating_data = await client.get_rotating()
                     if rotating_data is not None:
                         self._raw_stuperstore.insert(
                             0,
                             rotating_data.get("salesPage", {}).get("sections", [{}])[0],
                         )
+                    else:
+                        self.logger.error(
+                            f"pull_from_api | superstore rotating page data is empty"
+                        )
+                else:
+                    self.logger.error(
+                        f"pull_from_api | superstore mother data is empty"
+                    )
 
             async with AltWarbondsAuthedClient(logger=self.logger) as client:
                 self._raw_warbonds.clear()
@@ -342,7 +290,14 @@ class DataService(ReprMixin):
                         specific_data = await client.get_with_id(
                             warbond_id=warbond.get("id32")
                         )
-                        self._raw_warbonds[warbond.get("id32")] = specific_data
+                        if specific_data is not None:
+                            self._raw_warbonds[warbond.get("id32")] = specific_data
+                        else:
+                            self.logger.error(
+                                f"pull_from_api | warbond {warbond.get('id32')} data is empty"
+                            )
+                else:
+                    self.logger.error(f"pull_from_api | warbonds index data is empty")
 
                 
             """

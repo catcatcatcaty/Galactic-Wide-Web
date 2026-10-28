@@ -42,7 +42,7 @@ class PersonalOrder(ReprMixin):
             "type",
             "values_dict",
             "faction",
-            "target",
+            "goal",
             "enemy_id",
             "item_id",
             "objective",
@@ -59,7 +59,7 @@ class PersonalOrder(ReprMixin):
             self.values: dict = task["values"]
             self.value_types: dict = task["valueTypes"]
             self.values_dict = dict(zip(task["valueTypes"], task["values"]))
-            self.faction = self.target = self.enemy_id = self.item_id = (
+            self.faction = self.goal = self.target_id = self.item_id = (
                 self.objective
             ) = self.value8 = self.difficulty = self.value10 = self.planet_index = (
                 self.sector_index
@@ -71,12 +71,14 @@ class PersonalOrder(ReprMixin):
             if personal := self.values_dict.get(2):
                 self.personal = personal
             if target := self.values_dict.get(3):
-                self.target: int | float = target
-            if enemy_id := self.values_dict.get(4):
-                self.enemy_id: int = enemy_id
+                self.goal: int | float = target
+            if target_id := self.values_dict.get(4):
+                self.target_id: int = target_id
                 self.found_enemy = (
-                    json_dict["enemy_ids"].get(str(self.enemy_id), {}).get("name", None)
-                    or json_dict["strings"].get(str(self.enemy_id))
+                    json_dict["enemy_ids"]
+                    .get(str(self.target_id), {})
+                    .get("name", None)
+                    or json_dict["strings"].get(str(self.target_id))
                     or "Unknown Enemy"
                 )
 

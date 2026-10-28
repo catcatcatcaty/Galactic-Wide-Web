@@ -19,49 +19,59 @@ class GWEContainer(Container, ReprMixin):
             TextDisplay(f"{gwe.id} - {gwe.effect_description['simplified_name']}")
         )
         content = ""
-        if gwe.name:
+        if gwe.name is not None:
             content += f"\n**{gwe.name}**"
-        if gwe.short_description:
+        if gwe.short_description is not None:
             content += f"\n{gwe.short_description}"
-        if gwe.long_description:
+        if gwe.long_description is not None:
             content += f"\n-# {gwe.long_description}"
-        if gwe.fluff_description:
+        if gwe.fluff_description is not None:
             content += f"\n-# {gwe.fluff_description}"
-        if gwe.resource:
+        if gwe.resource is not None:
             content += f"\n{gwe.resource}"
 
-        if feature := PlanetFeatures.all.get(gwe.id):
+        if (feature := PlanetFeatures.all.get(gwe.id)) is not None:
             content += f"\n**{feature.name}** {feature.emoji}"
 
-        if subfaction_poi := next(
-            (sf for sf in Subfactions._all if sf.token_effect_id == gwe.id), None
-        ):
+        if (
+            subfaction_poi := next(
+                (sf for sf in Subfactions._all if sf.token_effect_id == gwe.id), None
+            )
+        ) is not None:
             content += f"\n**{subfaction_poi.eng_name}** {subfaction_poi.emoji}"
 
-        if gwe.found_enemy and gwe.found_enemy.upper() not in content:
-            subfaction = [
-                sf for sf in Subfactions._all if sf.resource_hash == gwe.resource_hash
-            ]
-            if subfaction:
-                sf = subfaction[0]
-                enemy_text = f"**{sf.eng_name}** {sf.emoji}"
+        if gwe.found_enemy is not None and gwe.found_enemy.upper() not in content:
+            if (
+                subfaction := next(
+                    (
+                        sf
+                        for sf in Subfactions._all
+                        if sf.resource_hash == gwe.resource_hash
+                    ),
+                    None,
+                )
+            ) is not None:
+                enemy_text = f"**{subfaction.eng_name}** {subfaction.emoji}"
             else:
                 enemy_text = f"**{gwe.found_enemy}**"
             content += f"\nEnemy: {enemy_text}"
 
-        if gwe.found_stratagem and gwe.found_stratagem not in content:
+        if gwe.found_stratagem is not None and gwe.found_stratagem not in content:
             content += f"\nStratagem: **{gwe.found_stratagem}**"
 
-        if gwe.stratagem_category:
+        if gwe.stratagem_category is not None:
             content += f"\nStratagem Category: **{gwe.stratagem_category}**"
 
-        if gwe.found_booster and gwe.found_booster not in content:
+        if gwe.found_booster is not None and gwe.found_booster not in content:
             content += f"\nBooster: **{gwe.found_booster}**"
 
-        if gwe.count:
+        if gwe.count is not None:
             count = "Count" if gwe.effect_type != 32 else "Uses per mission"
-            content += f"\n{count}: **{gwe.count:+,}**"
-        if gwe.percent:
+            amount = f"{gwe.count:+,}"
+            if gwe.count == 0:
+                amount = "Infinite"
+            content += f"\n{count}: **{amount}**"
+        if gwe.percent is not None:
             percent = gwe.percent
             match gwe.effect_type:
                 case 1 | 72:

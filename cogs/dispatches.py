@@ -155,6 +155,16 @@ class DispatchesCog(Cog):
     ) -> None:
         await inter.response.defer(ephemeral=public != "Yes")
         guild = self.bot.get_guild_from_inter(inter=inter)
+        if (
+            self.bot.data.formatted_data.dispatches.get(
+                guild.language, self.bot.data.formatted_data.dispatches.get("en", [])
+            )
+            == []
+        ):
+            await inter.send(
+                content="Dispatches unavailable.\nApologies for the inconvenience."
+            )
+            return
         dispatch = None
         if specific is not None:
             try:
@@ -248,6 +258,16 @@ class DispatchesCog(Cog):
             ctx: commands.Context,
     ) -> None:
         guild = self.bot.get_guild_from_ctx(ctx=ctx)
+        if (
+            self.bot.data.formatted_data.dispatches.get(
+                guild.language, self.bot.data.formatted_data.dispatches.get("en", [])
+            )
+            == []
+        ):
+            await ctx.send(
+                content="Dispatches unavailable.\nApologies for the inconvenience."
+            )
+            return
         dispatch1 = [
             d
             for d in self.bot.data.formatted_data.dispatches.get("en", [])

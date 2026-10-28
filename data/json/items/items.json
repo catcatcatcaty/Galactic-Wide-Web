@@ -199,6 +199,10 @@
         "name": "HELMET DURABILITY CHECK",
         "type": "Emote"
     },
+    "3813715175": {
+        "name": "MANUAL BALLISTIC PROJECTION PROTOCOL",
+        "type": "Emote"
+    },
     "4102069932": {
         "name": "[REDACTED]",
         "type": "Title"
@@ -281,6 +285,10 @@
     },
     "3400212265": {
         "name": "TREADHEAD",
+        "type": "Title"
+    },
+    "335594599": {
+        "name": "LONGSHOT",
         "type": "Title"
     },
     "2671489717": {
@@ -1303,6 +1311,18 @@
         "type": "Helmet",
         "cost": 125
     },
+    "209171707": {
+        "name": "SS-500 PALE PROSECUTOR",
+        "description": "Tailored from insulated canvas, with a design honoring the ghost-like marksmen of ancient sub-zero campaigns. Featuring adaptive camouflage capabilities, it is engineered for long-duration vigils delivering swift, legally binding verdicts from extreme range.",
+        "type": "Armor",
+        "cost": 250
+    },
+    "351568294": {
+        "name": "SS-500 PALE PROSECUTOR",
+        "description": "Tailored from insulated canvas, with a design honoring the ghost-like marksmen of ancient sub-zero campaigns. Featuring adaptive camouflage capabilities, it is engineered for long-duration vigils delivering swift, legally binding verdicts from extreme range.",
+        "type": "Helmet",
+        "cost": 125
+    },
     "2015848647": {
         "name": "RS-100 SANCTIONER",
         "description": "Armor inspired by the legend of the Sanctioner, a figure known only through a bizarrely unanimous patchwork of stifled whispers. As told, this fearsome, covert arbiter of primeval Justice delivered final, state-approved verdicts in the chaotic years before the Federation's founding.",
@@ -1735,6 +1755,30 @@
         "type": "Helmet",
         "cost": 0
     },
+    "620783172": {
+        "name": "SS-33 MIMETIC MARSHAL",
+        "description": "This light armor features state-of-the-art synthetic adaptive fibers and light-diffusing scrim netting, enabling its wearer to blend seamlessly into any wilderness, and carry out unannounced compliance audits with as much surprise as they deem appropriate.",
+        "type": "Armor",
+        "cost": 0
+    },
+    "493744254": {
+        "name": "SS-33 MIMETIC MARSHAL",
+        "description": "This light armor features state-of-the-art synthetic adaptive fibers and light-diffusing scrim netting, enabling its wearer to blend seamlessly into any wilderness, and carry out unannounced compliance audits with as much surprise as they deem appropriate.",
+        "type": "Helmet",
+        "cost": 0
+    },
+    "1029144668": {
+        "name": "SS-15 FOCAL POINT",
+        "description": "Designed for forward observers coordinating long-range decrees. This medium suit features, integrated adaptive camouflage capabilities and an asymmetrical optic visor, ensuring hostile movements are cataloged meticulously\u2014and discreetly\u2014before being permanently stricken from state records.",
+        "type": "Armor",
+        "cost": 0
+    },
+    "3620158227": {
+        "name": "SS-15 FOCAL POINT",
+        "description": "Designed for forward observers coordinating long-range decrees. This medium suit features, integrated adaptive camouflage capabilities and an asymmetrical optic visor, ensuring hostile movements are cataloged meticulously\u2014and discreetly\u2014before being permanently stricken from state records.",
+        "type": "Helmet",
+        "cost": 0
+    },
     "521433875": {
         "name": "RS-89 SHADOW PARAGON",
         "description": "Armor befitting infiltrators of all caliber. Inspired by mythical Democracy-dispensers, whose meticulously undocumented operations remain an inspiration to all students of stealth.",
@@ -2089,6 +2133,12 @@
         "type": "Cape",
         "cost": 100
     },
+    "1808786641": {
+        "name": "ARCTIC DECREE",
+        "description": "Sewn from premium canvas and equipped with integrated adaptive camouflage capabilities, this cape features a prominent, high-contrast target reticle printed directly on the back.",
+        "type": "Cape",
+        "cost": 100
+    },
     "3555231182": {
         "name": "GILDED QUILL",
         "description": "The golden, piercing quills symbolize the deadly and poetic Justice delivered to seditious oppositionists. Silent sanctions, delivered with unerring precision and incontestable deniability.",
@@ -2326,6 +2376,18 @@
     "585941262": {
         "name": "WEDGEFUL TRICORN",
         "description": "Designed in homage to the triangle\u2014the most immovable of shapes\u2014this cape digs its heels into the eye of the observer, leaving a lasting impression.",
+        "type": "Cape",
+        "cost": 0
+    },
+    "2272511873": {
+        "name": "MIMETIC MESH",
+        "description": "Woven from breathable adaptive camouflage mesh designed to mimic surrounding biomes, allowing them to carry out discreet compliance checks completely unbothered by less observant hostiles.",
+        "type": "Cape",
+        "cost": 0
+    },
+    "533071556": {
+        "name": "BOUNDARY BANNER",
+        "description": "This cape features integrated adaptive camouflage capabilities and a vertical ladder-grid alignment pattern, defining the absolute border of Super Earth's jurisdiction. Hostile entities crossing this line are considered to have authorized their own compulsory asset liquidation.",
         "type": "Cape",
         "cost": 0
     },
@@ -2761,6 +2823,12 @@
         "type": "Throwable Weapon",
         "cost": 0
     },
+    "3806884545": {
+        "name": "G-11 CALTROPS",
+        "description": "Upon initial impact, the deployer scatters a wide field of proximity-detonated submunitions. These charges deal minimal damage, but will heavily stun and decelerate encroaching hostiles.",
+        "type": "Throwable Weapon",
+        "cost": 0
+    },
     "1639574879": {
         "name": "G-7 PINEAPPLE",
         "description": "A cluster fragmentation grenade. The shrapnel submunition allows it to inflict damage over a large area.",
@@ -2953,6 +3021,12 @@
         "type": "Primary Weapon",
         "cost": 0
     },
+    "1639485025": {
+        "name": "AR-23L LIBERATOR LEGACY",
+        "description": "A modified version of the AR-23 Liberator, inspired by the original Liberator used by Helldivers during the First Galactic War.",
+        "type": "Primary Weapon",
+        "cost": 0
+    },
     "2564789309": {
         "name": "MA5C ASSAULT RIFLE",
         "description": "Often showcased in the \"Obedient Democracy Support Troopers\" cartoon, this assault rifle comes with a convenient ammo counter and compass.\nProduced by Martian Armory.",
@@ -3018,6 +3092,12 @@
         "description": "This ceremonial rifle is modeled after antique relics from pre-Democratic times. It is traditionally gifted to every citizen upon turning 16 to encourage service.",
         "type": "Primary Weapon",
         "cost": 0
+    },
+    "3800614722": {
+        "name": "R-40 SIGHTLINER",
+        "description": "A heavy bolt-action sniper rifle. Fires high-damage armor piercing rounds with exceptional long-range precision, ensuring Democracy can be delivered no matter the distance.",
+        "type": "Primary Weapon",
+        "cost": 1
     },
     "1942567317": {
         "name": "CB-9 EXPLODING CROSSBOW",
@@ -3187,6 +3267,12 @@
         "type": "Sidearm Weapon",
         "cost": 0
     },
+    "3286567865": {
+        "name": "P-44 MIST",
+        "description": "A compact, one-handed machine pistol utilizing a tempered rate of fire for superior control. Its automatic folding stock minimizes drift, serving as a highly stable tactical insurance policy in the event of a compromised perimeter.",
+        "type": "Sidearm Weapon",
+        "cost": 0
+    },
     "1938200223": {
         "name": "P-113 VERDICT",
         "description": "The gas-operated, semiautomatic P-113 chambers the 14mm \"Rapid Deliberation,\" the largest centerfire cartridge of any magazine-fed pistol.",
@@ -3349,6 +3435,12 @@
         "type": "Support Weapon",
         "cost": 0
     },
+    "2938888268": {
+        "name": "LAS-44 NOVA",
+        "description": "A sleek energy rifle requiring a brief charge cycle to fire a high-precision, non-explosive thermal projectile. Features infinite ammunition and an optimised cooldown cycle enabled by venting steam after each discharge.",
+        "type": "Support Weapon",
+        "cost": 0
+    },
     "1207425221": {
         "name": "EAT-17 EXPENDABLE ANTI-TANK",
         "description": "A single-use weapon specialized for damaging vehicle armor. Discarded after every use.",
@@ -3394,6 +3486,12 @@
     "376960160": {
         "name": "APW-1 ANTI-MATERIEL RIFLE",
         "description": "A high-caliber sniper rifle effective over long distances against light vehicle armor. This rifle must be aimed downscope.",
+        "type": "Support Weapon",
+        "cost": 0
+    },
+    "1160644752": {
+        "name": "AMW-20 APEX",
+        "description": "A colossal anti-materiel sniper rifle. While its immense kinetic recoil mandates its user crouch or lie prone, its backpack-fed 20mm rounds deliver final, un-appealable verdicts to armored threats.",
         "type": "Support Weapon",
         "cost": 0
     },

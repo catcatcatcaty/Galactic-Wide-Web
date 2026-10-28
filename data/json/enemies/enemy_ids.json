@@ -55,10 +55,6 @@
         "name": "Berserker",
         "plural": "Berserkers"
     },
-    "717622970": {
-        "name": "Bile Spewer",
-        "plural": "Bile Spewers"
-    },
     "1379865898": {
         "name": "Bile Spewer",
         "plural": "Bile Spewers"
@@ -66,10 +62,6 @@
     "2255668545": {
         "name": "Bile Spewer",
         "plural": "Bile Spewers"
-    },
-    "444529084": {
-        "name": "Bile Spitter",
-        "plural": "Bile Spitters"
     },
     "843164597": {
         "name": "Bile Spitter",
@@ -82,10 +74,6 @@
     "839087686": {
         "name": "Bile Titan",
         "plural": "Bile Titans"
-    },
-    "3365898186": {
-        "name": "Bile Warrior",
-        "plural": "Bile Warriors"
     },
     "1453367020": {
         "name": "Bile Warrior",
@@ -122,6 +110,22 @@
     "478200978": {
         "name": "Cannon Turret",
         "plural": "Cannon Turrets"
+    },
+    "1939105083": {
+        "name": "Caustic Charger",
+        "plural": "Caustic Chargers"
+    },
+    "717622970": {
+        "name": "Caustic Spewer",
+        "plural": "Caustic Spewers"
+    },
+    "444529084": {
+        "name": "Caustic Spitter",
+        "plural": "Caustic Spitters"
+    },
+    "3365898186": {
+        "name": "Caustic Warrior",
+        "plural": "Caustic Warriors"
     },
     "1299714559": {
         "name": "Charger",
@@ -255,10 +259,6 @@
         "name": "Gunship",
         "plural": "Gunships"
     },
-    "3126357841": {
-        "name": "Heavy SEAF Presence",
-        "plural": "Heavy SEAF Presence"
-    },
     "1405979473": {
         "name": "Harvester",
         "plural": "Harvesters"
@@ -278,6 +278,10 @@
     "3257396446": {
         "name": "Heavy Devastator",
         "plural": "Heavy Devastators"
+    },
+    "3126357841": {
+        "name": "Heavy SEAF Presence",
+        "plural": "Heavy SEAF Presence"
     },
     "626718113": {
         "name": "Hive Guard",
@@ -367,6 +371,10 @@
         "name": "Incineration Corps",
         "plural": "Incineration Corps"
     },
+    "872028856": {
+        "name": "Invasion Fleet",
+        "plural": "Invasion Fleet"
+    },
     "2922304745": {
         "name": "Jet Brigade",
         "plural": "Jet Brigade"
@@ -406,6 +414,14 @@
     "35348659": {
         "name": "Mindless Masses",
         "plural": "Mindless Masses"
+    },
+    "3163013034": {
+        "name": "Noxious Scavenger",
+        "plural": "Noxious Scavengers"
+    },
+    "689411023": {
+        "name": "Noxious Spewer",
+        "plural": "Noxious Spewers"
     },
     "487985459": {
         "name": "Nursing Spewer",
@@ -607,10 +623,6 @@
         "name": "Spore Burst Warrior",
         "plural": "Spore Burst Warriors"
     },
-    "1939105083": {
-        "name": "Spore Charger",
-        "plural": "Spore Chargers"
-    },
     "3764892677": {
         "name": "Spore Charger",
         "plural": "Spore Chargers"
@@ -643,17 +655,13 @@
         "name": "Trooper",
         "plural": "Troopers"
     },
-    "872028856": {
-        "name": "Invasion Fleet",
-        "plural": "Invasion Fleet"
+    "3776682558": {
+        "name": "Veracitor",
+        "plural": "Veracitors"
     },
     "4253783814": {
         "name": "Vote Snatchers",
         "plural": "Vote Snatchers"
-    },
-    "3776682558": {
-        "name": "Veracitor",
-        "plural": "Veracitors"
     },
     "4211847317": {
         "name": "Voteless",

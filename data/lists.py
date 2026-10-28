@@ -194,6 +194,8 @@ STRATAGEM_ID_DICT = {
     3659583399: "M-1000 Maxigun",
     2427670661: "B/FLAM-80 Cremator",
     4080785205: "40-K Meltagun",
+    1160644752: "AMW-20 Apex",
+    2938888268: "LAS-44 Nova",
     1228689284: "A/MG-43 Machine Gun Sentry",
     2446402932: "A/G-16 Gatling Sentry",
     461790327: "A/M-12 Mortar Sentry",
@@ -210,6 +212,7 @@ STRATAGEM_ID_DICT = {
     841332828: "EXO-55 Breakthrough Exosuit",
     2437239365: "TD-220 Bastion MK XVI",
     2237630340: "TD-110 Maelstrom",
+    3796132384: "Orbital Walking Barrage Smoke",
 }
 
 CURRENCIES = {

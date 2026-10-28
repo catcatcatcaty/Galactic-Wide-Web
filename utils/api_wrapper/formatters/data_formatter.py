@@ -101,7 +101,7 @@ class FormattedDataContext:
     space_stations: list[dict]
     steam_news: list
     control_centre: dict[str, list[dict]]
-    superstore: list[dict]
+    superstore: dict
     warbonds: dict[int, dict]
     items_data: list[dict]
 
@@ -156,7 +156,7 @@ class FormattedData:
                             self.organised_items[i.mix_id]
                         )
 
-                if i.category == ItemCategory.ARMOR and i.parent_id is None:
+                if i.category == ItemCategory.CUSTOMISATION_KIT and i.parent_id is None:
                     self.organised_items[i.mix_id].category = ItemCategory.CAPE
 
                 if i.buy_price != []:
@@ -205,7 +205,9 @@ class FormattedData:
         if context.war_effects:
             for war_effect in context.war_effects:
                 self.war_effects[war_effect["id"]] = GalacticWarEffect(
-                    gwa=war_effect, json_dict=context.json_dict
+                    gwa=war_effect,
+                    json_dict=context.json_dict,
+                    endpoint_items=self.organised_items,
                 )
             self.war_effects = dict(
                 sorted(self.war_effects.items(), key=lambda x: x[0])
@@ -217,7 +219,7 @@ class FormattedData:
             ]
             for planet_status in context.war_status["en"]["planetStatus"]:
                 planet = self.planets.get(planet_status["index"])
-                if planet:
+                if planet is not None:
                     planet.add_data_from_status(raw_planet_status=planet_status)
                 else:
                     print(
@@ -305,7 +307,7 @@ class FormattedData:
                         )
 
             self.event_campaigns: list[Campaign] = sorted(
-                [c for c in self.campaigns if c.planet.event],
+                [c for c in self.campaigns if c.planet.event is not None],
                 key=lambda c: c.planet.stats.player_count,
                 reverse=True,
             )
@@ -358,7 +360,7 @@ class FormattedData:
                 for steam_news in context.steam_news
             ]
 
-        if context.assignments.get("en") != None:
+        if context.assignments.get("en") is not None:
             for lang, assignments in context.assignments.items():
                 self.assignments[lang] = sorted(
                     [
@@ -394,13 +396,13 @@ class FormattedData:
                 for task in assignment.tasks:
                     match task.type:
                         case (
-                            AssignmentTaskType.ExtractFromLocations
-                            | AssignmentTaskType.ExtractWithItem
-                            | AssignmentTaskType.CompleteObjectives
-                            | AssignmentTaskType.PlayObjectives
-                            | AssignmentTaskType.UseItems
-                            | AssignmentTaskType.ExtractFromMission
-                            | AssignmentTaskType.CompleteOperations
+                            AssignmentTaskType.Extract
+                            | AssignmentTaskType.ExtractWith
+                            | AssignmentTaskType.Objective
+                            | AssignmentTaskType.PlayMission
+                            | AssignmentTaskType.UseEquipment
+                            | AssignmentTaskType.MissionComplete
+                            | AssignmentTaskType.OperationComplete
                             | AssignmentTaskType.LiberateLocationsSpecific
                         ):
                             if task.progress_perc >= 1:
@@ -426,7 +428,7 @@ class FormattedData:
                                     and p.event.faction == task.faction
                                 ):
                                     planet.in_assignment = True
-                        case AssignmentTaskType.KillEnemies:
+                        case AssignmentTaskType.Kill:
                             if task.progress_perc >= 1:
                                 continue
                             if task.faction is None:
@@ -435,7 +437,7 @@ class FormattedData:
                                         planet.in_assignment = True
                             if (
                                 subfaction := Subfactions.get_from_enemy_id(
-                                    task.enemy_id
+                                    task.target_id
                                 )
                             ) is not None:
                                 for planet in self.planets.values():
@@ -452,7 +454,7 @@ class FormattedData:
                                     )
                                     if faction == task.faction:
                                         planet.in_assignment = True
-                        case AssignmentTaskType.DonateItems:
+                        case AssignmentTaskType.Donation:
                             if task.progress_perc >= 1:
                                 continue
                             pass
@@ -627,7 +629,7 @@ class FormattedData:
                 ),
                 None,
             )
-            if correct_po:
+            if correct_po is not None:
                 self.personal_order: PersonalOrder = PersonalOrder(
                     personal_order=correct_po, json_dict=context.json_dict
                 )
@@ -673,7 +675,7 @@ class FormattedData:
                 for lang, cc in context.control_centre.items()
             }
 
-        if context.superstore != []:
+        if context.superstore != {}:
             self.superstore = Superstore(
                 context.superstore,
                 context.json_dict["items"]["items"],

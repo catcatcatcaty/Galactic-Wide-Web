@@ -17,10 +17,8 @@ class GlobalEventsContainer(Container):
         attachment_url: str = None,
     ):
         components = []
-        if image_url:
-            components.append(MediaGallery(MediaGalleryItem(image_url)))
-        elif attachment_url:
-            components.append(MediaGallery(MediaGalleryItem(attachment_url)))
+        if (url := (image_url or attachment_url)) is not None:
+            components.append(MediaGallery(MediaGalleryItem(url)))
         title = TextDisplay(
             f"# {global_event.title if global_event.title else container_json['new_event']}"
         )
@@ -34,8 +32,12 @@ class GlobalEventsContainer(Container):
                 spec_planets_list = [
                     planets.get(index) for index in global_event.planet_indices
                 ]
-                specific_planets = "\n-# - " + "\n- ".join(
-                    [p.names.get(lang_code, p.name) for p in spec_planets_list if p]
+                specific_planets = "\n-# - " + "\n-# - ".join(
+                    [
+                        f"{p.names.get(lang_code, p.name)} {p.faction.emoji}"
+                        for p in spec_planets_list
+                        if p
+                    ]
                 )
             effects_text = ""
             for effect in global_event.effects:

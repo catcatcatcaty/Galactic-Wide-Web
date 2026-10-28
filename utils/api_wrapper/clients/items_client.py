@@ -8,5 +8,5 @@ class ItemsClient(BaseAPIClient):
             logger=logger,
         )
 
-    async def get_items(self) -> list[dict]:
+    async def get_items(self) -> list[dict] | None:
         return await self.get()

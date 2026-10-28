@@ -6,6 +6,7 @@ CATEGORY_REPLACEMENTS = {
     "Throwable Weapon": ItemCategory.THROWABLE_WEAPON,
     "Sidearm Weapon": ItemCategory.SIDEARM_WEAPON,
     "Helmet": ItemCategory.HELMET,
+    "Armor": ItemCategory.ARMOR,
 }
 
 PROPERTIES_TO_SKIP = [
@@ -50,12 +51,12 @@ class EndpointItem:
         self.required_level: int | None = self._json.get("requiredLevel")
         self._category: int = self._json.get("progressionCategory", -1)
         self.category: ItemCategory = ItemCategory(self._category)
-        if self.category in (ItemCategory.WEAPON, ItemCategory.ARMOR):
+        if self.category in (ItemCategory.LOADOUT_ITEM, ItemCategory.CUSTOMISATION_KIT):
             self.category = CATEGORY_REPLACEMENTS.get(
                 json_dict["items"]["items"].get(str(self.mix_id), {}).get("type"),
                 self.category,
             )
-        self.tags: list = self._json.get("tags", [])
+        self.tags: list[int] = self._json.get("tags", [])
         self.required_items: list = self._json.get("requiredItems", [])
         self.buy_price: list = self._json.get("buyPrice", [])
         self.buy_items: list[tuple[EndpointItem, int]] = []
@@ -79,13 +80,13 @@ class EndpointItem:
 
     @property
     def child_id(self):
-        return (self.child_item.mix_id) if self.child_item is not None else None
+        return self.child_item.mix_id if self.child_item is not None else None
 
     @property
     def name(self):
         if (
             self.child_item is not None
-            and self.category == ItemCategory.STRATAGEM_UNLOCK
+            and self.category == ItemCategory.STRATAGEM_PERMIT
         ):
             return self.child_name
         return self.mix_name or self.item_name or self.parent_name
@@ -106,7 +107,7 @@ class EndpointItem:
         return f"EndpointItem({fmt_text}\n)"
 
     def __repr__(self):
-        return f"EndpointItem('name': {self.name})"
+        return f"EndpointItem(item_id={self.item_id}, name={self.name})"
 
     def __eq__(self, value):
         if not isinstance(value, type(self)):

@@ -41,16 +41,16 @@ class SpaceStationType(Enum):
 class AssignmentTaskType(Enum):
     """The names I have given for Assignment Task Types\n
     UNKNOWN = -1\n
-    ExtractFromLocations = 1\n
-    ExtractWithItem = 2\n
-    KillEnemies = 3\n
-    CompleteObjectives = 4\n
-    PlayObjectives = 5\n
-    UseItems = 6\n
-    ExtractFromMission = 7\n
+    Extract = 1\n
+    ExtractWith = 2\n
+    Kill = 3\n
+    Objective = 4\n
+    PlayMission = 5\n
+    UseEquipment = 6\n
+    MissionComplete = 7\n
     PersonalOrder = 8\n
-    CompleteOperations = 9\n
-    DonateItems = 10\n
+    OperationComplete = 9\n
+    Donation = 10\n
     LiberateLocationsSpecific = 11\n
     DefendFromAttacks = 12\n
     HoldLocationsUntilEnd = 13\n
@@ -60,16 +60,16 @@ class AssignmentTaskType(Enum):
 
     UNKNOWN = -1
 
-    ExtractFromLocations = 1
-    ExtractWithItem = 2
-    KillEnemies = 3
-    CompleteObjectives = 4
-    PlayObjectives = 5
-    UseItems = 6
-    ExtractFromMission = 7
+    Extract = 1
+    ExtractWith = 2
+    Kill = 3
+    Objective = 4
+    PlayMission = 5
+    UseEquipment = 6
+    MissionComplete = 7
     PersonalOrder = 8
-    CompleteOperations = 9
-    DonateItems = 10
+    OperationComplete = 9
+    Donation = 10
     LiberateLocationsSpecific = 11
     DefendFromAttacks = 12
     HoldLocationsUntilEnd = 13
@@ -99,6 +99,7 @@ class ControlCentreStatus(Enum):
 
 
 class ItemCategory(Enum):
+    ARMOR = -7
     HELMET = -6
     CAPE = -5
     THROWABLE_WEAPON = -4
@@ -106,28 +107,30 @@ class ItemCategory(Enum):
     PRIMARY_WEAPON = -2
     UNKNOWN = -1
     UNOBTAINABLE = 0
-    WEAPON = 1
-    WEAPON_ATTACHMENT = 2
-    ARMOR = 3
-    SET_ITEM = 4
+    LOADOUT_ITEM = 1
+    WEAPON_CUSTOMISATION = 2
+    CUSTOMISATION_KIT = 3
+    CUSTOMISATION_SET = 4
     BOOSTER = 5
-    ITEM_PACK = 6
+    BOOSTER_PACK = 6
     VICTORY_POSE = 7
     EMOTE = 8
     PLAYER_CARD = 9
-    STRATAGEM_ITEM = 10
-    STRATAGEM_UNLOCK = 11
+    STRATAGEM = 10
+    STRATAGEM_PERMIT = 11
+    STRATAGEM_UPGRADE = 12
     VOICE_PACK = 13
-    DIFFICULTY_UNLOCK_PERMIT = 14
-    RESOURCE_EXCHANGE = 15
-    UNDERGARMENT = 17
+    PROGRESSION_PACKAGE_KEY = 14
+    SAMPLE = 15
+    DIFFICULTY_ITEM = 16
+    BODY = 17
     CURRENCY = 18
-    MODULE_BUFF = 19
-    MODULE_SHIP = 20
-    SUPER_CREDIT_PACK = 21
+    SHIP_MODULE_EFFECT = 19
+    PROGRESSION_PACKAGE_LEVEL = 20
+    ITEM_PACKAGE = 21
+    COUNT = 22
     TITLE = 23
 
     @classmethod
     def _missing_(cls, value):
         return cls.UNKNOWN
-

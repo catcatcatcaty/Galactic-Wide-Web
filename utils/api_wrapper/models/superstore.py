@@ -28,23 +28,26 @@ SUPERSTORE_PAGE_NAMES = {
     913805677: "HELLDIVERS MOBILIZE",
     820483819: "HELLDIVERS MOBILIZE",
     1789091844: "IRONCLAD DEMOCRACY",
+    688318704: "SCOPE OF AUTHORITY",
 }
 
 
 class Superstore:
     def __init__(
         self,
-        raw_superstore_data: dict,
+        raw_superstore_data: list[dict],
         items_json: dict,
         endpoint_items: dict[int, EndpointItem],
     ) -> None:
-        self.pages: list[Superstore.Page] = []
-        self.pages = [
+        self.pages: list[Superstore.Page] = [
             Superstore.Page(
                 raw_page_dict=page, endpoint_items=endpoint_items, items_json=items_json
             )
             for page in raw_superstore_data
         ]
+
+    def __repr__(self) -> str:
+        return f"Superstore(pages={len(self.pages)})"
 
     def get_page(self, page_id: int):
         return next((p for p in self.pages if p.id == page_id), None)
@@ -62,6 +65,8 @@ class Superstore:
                 self.id, f"UNKNOWN SUPERSTORE PAGE #{self.id}"
             )
             self.banner_image_id: int = raw_page_dict.get("bannerId32", 0)
+            if self.id == 688318704:
+                self.banner_image_id = 2512818458
             self.items: list[Superstore.Item] = []
 
             for i in raw_page_dict.get("items", []):
@@ -91,7 +96,7 @@ class Superstore:
             self.name: str = (
                 self.json_entry.get("name")
                 or (endpoint_item.name if endpoint_item else None)
-                or "Unknown Item"
+                or f"Unknown Item {self.id}"
             )
             self.description: str = self.json_entry.get("description", "")
             self.type: str = self.json_entry.get("type", "Unknown")

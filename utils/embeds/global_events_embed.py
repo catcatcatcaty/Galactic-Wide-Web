@@ -21,10 +21,8 @@ class global_events_embed(Embed, EmbedReprMixin):
             colour=Colour.from_rgb(*CUSTOM_COLOURS["MO"])
         )
         content = f""
-        if image_url:
-            self.set_image(image_url)
-        elif attachment_url:
-            self.set_image(attachment_url)
+        if (url := (image_url or attachment_url)) is not None:
+            self.set_image(url)
         title = f"{global_event.title if global_event.title else container_json['new_event']}"
         if global_event.assignment_id:
             title += f"\nRelated to Assignment #{global_event.assignment_id}"
@@ -35,8 +33,12 @@ class global_events_embed(Embed, EmbedReprMixin):
                 spec_planets_list = [
                     planets.get(index) for index in global_event.planet_indices
                 ]
-                specific_planets = "\n-# " + "\n- ".join(
-                    [p.names.get(lang_code, p.name) for p in spec_planets_list if p]
+                specific_planets = "\n-# - " + "\n-# - ".join(
+                    [
+                        f"{p.names.get(lang_code, p.name)} {p.faction.emoji}"
+                        for p in spec_planets_list
+                        if p
+                    ]
                 )
             effects_text = ""
             for effect in global_event.effects:

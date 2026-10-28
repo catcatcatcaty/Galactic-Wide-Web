@@ -4,6 +4,7 @@ from disnake import Embed, Colour, Color, File
 
 from utils.api_wrapper.models import Planet
 from utils.dataclasses import PlanetFeatures, Factions
+from utils.emojis import Emojis
 from utils.functions import get_end_time, short_format
 from utils.mixins import EmbedReprMixin
 
@@ -118,6 +119,12 @@ class PlanetEmbed(Embed, EmbedReprMixin):
                         ]
                     )
                     liberation_text += f"\n**{component_json['liberated']}** <t:{int(end_time_info.end_time.timestamp())}:R>\nIf the following regions are liberated:\n-# {regions_list}"
+                    liberation_text += (
+                        f"\nPlanet health: **`{planet.max_health:,.0f}`**"
+                        f"\nRegen: **`{planet.regen_perc_per_hour:+.2%}/hr`**"
+                        f"\n{Emojis.Icons.blank}{Emojis.Icons.blank}  **`{planet.regen_per_second * 3600:+.2f}/hr`**"
+                        f"\n{Emojis.Icons.blank}{Emojis.Icons.blank}  **`{((planet.regen_per_second * 3600) / 1_000_000):+.2%}/hr`** at 1m HP"
+                    )
             self.add_field(f"{component_json['heroes']}: **{planet.stats.player_count:,}**", liberation_text + f"\n")
             self.set_footer(text=f"https://helldivers.wiki.gg/wiki/{url_name}", icon_url=f"https://helldivers.wiki.gg/images/{url_name}_Planet_Icon.png")
 
