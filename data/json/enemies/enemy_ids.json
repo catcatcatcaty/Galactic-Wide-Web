@@ -55,18 +55,6 @@
         "name": "Berserker",
         "plural": "Berserkers"
     },
-    "1379865898": {
-        "name": "Bile Spewer",
-        "plural": "Bile Spewers"
-    },
-    "2255668545": {
-        "name": "Bile Spewer",
-        "plural": "Bile Spewers"
-    },
-    "843164597": {
-        "name": "Bile Spitter",
-        "plural": "Bile Spitters"
-    },
     "2514244534": {
         "name": "Bile Titan",
         "plural": "Bile Titans"
@@ -74,10 +62,6 @@
     "839087686": {
         "name": "Bile Titan",
         "plural": "Bile Titans"
-    },
-    "1453367020": {
-        "name": "Bile Warrior",
-        "plural": "Bile Warriors"
     },
     "1974334302": {
         "name": "Brawler",
@@ -622,10 +606,6 @@
     "512390556": {
         "name": "Spore Burst Warrior",
         "plural": "Spore Burst Warriors"
-    },
-    "3764892677": {
-        "name": "Spore Charger",
-        "plural": "Spore Chargers"
     },
     "2387277009": {
         "name": "Stalker",

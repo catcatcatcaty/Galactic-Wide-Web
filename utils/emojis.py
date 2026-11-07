@@ -179,6 +179,8 @@ class Emojis:
         invasion_fleet = "<:ss:1538843546428121088>"
         heavy_seaf_presence = "<:ss:1537390703330467840>"
         vote_snatchers = "<:ss:1537391055370977280>"
+        noxious_strain = "<:ss:1568674009069916161>"
+        caustic_strain = "<:ss:1568674009069916160>"
 
     @dataclass
     class PlanetFeatures:

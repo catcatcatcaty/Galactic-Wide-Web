@@ -8,7 +8,9 @@ class Subfaction:
     resource_hash: int
     eng_name: str
     emoji: str
+    # combatant force
     division_effect_id: int
+    # map marker
     token_effect_id: int
     faction: Faction
     enemy_ids: list[int] = field(default_factory=list)
@@ -186,6 +188,33 @@ class Subfactions:
             3922421925,
         ],
     )
+    NOXIOUS_STRAIN = Subfaction(
+        903954334,
+        "NOXIOUS STRAIN",
+        Emojis.Subfactions.noxious_strain,
+        1434,
+        1433,
+        Factions.terminids,
+        [
+            689411023,
+            3163013034,
+        ],
+    )
+    CAUSTIC_STRAIN = Subfaction(
+        585432236,
+        "CAUSTIC STRAIN",
+        Emojis.Subfactions.caustic_strain,
+        1430,
+        1431,
+        Factions.terminids,
+        [
+            444529084,
+            717622970,
+            1939105083,
+            3365898186,
+
+        ],
+    )
 
     _all: tuple[Subfaction] = (
         THE_JET_BRIGADE,
@@ -202,6 +231,8 @@ class Subfactions:
         INVASION_FLEET,
         HEAVY_SEAF_PRESENCE,
         VOTE_SNATCHERS,
+        NOXIOUS_STRAIN,
+        CAUSTIC_STRAIN,
     )
 
     @classmethod
