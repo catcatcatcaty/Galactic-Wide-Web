@@ -15,7 +15,7 @@
 	</a>
   <br>
   <a href="LICENSE">
-        <img alt="License" src="https://img.shields.io/github/license/Stonemercy/Galactic-Wide-Web?style=for-the-badge">
+        <img alt="License" src="https://img.shields.io/github/license/catcatcatcaty/Galactic-Wide-Web?style=for-the-badge">
 	</a>
 	<img alt="Commits made" src="https://img.shields.io/github/last-commit/catcatcatcaty/Galactic-Wide-Web?style=for-the-badge">
   <img alt="Code Size" src="https://img.shields.io/github/languages/code-size/catcatcatcaty/Galactic-Wide-Web?style=for-the-badge">
@@ -30,6 +30,8 @@
   Galactic Wide Web: Fluxer Port is a Fluxer bot for Helldivers 2 that provides real-time information on the Galactic War.
   <br>
   Disclaimer: This is a fork of the original Galactic Wide Web bot by StoneMercy. It is not feature complete and bugs are to be expected and reliability is not guaranteed. You have been warned!
+  <br>
+  Stonemercy has since taken the upstream repository offline. Leaving this as a standalone project, open source, without upstream support and remaining under the GPLv3 license.
   <br>
   It pulls live data from the official Helldivers 2 API and the Steam API, and keeps an auto-updating dashboard refreshed every 15 minutes with a strategic overview of the current war effort.<br><br>
   The bot includes commands, and embedded content. All interactions take place in text channels.
@@ -156,9 +158,9 @@ Available here: [Fluxer Support Server](https://fluxer.gg/m50i6kcZ)
 ## Contributing
 Contributions are welcome!
 
-To contribute to localization (upstream only):
+To contribute to localization:
 1. Open an issue with the Language Request template
-2. Create a pull request and add a .json file to the [data/languages/](https://github.com/Stonemercy/Galactic-Wide-Web/tree/main/data/languages) folder
+2. Create a pull request and add a .json file to the [data/languages/](https://github.com/catcatcatcaty/Galactic-Wide-Web/tree/main/data/languages) folder
 
 or just head to the Fluxer Support Server above
 <p align="right"><a href="#top">Back to Top ↑</a></p>

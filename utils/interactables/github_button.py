@@ -8,6 +8,6 @@ class GitHubButton(Button):
         super().__init__(
             style=ButtonStyle.secondary,
             label="GitHub",
-            url="https://github.com/Stonemercy/Galactic-Wide-Web",
+            url="https://github.com/catcatcatcaty/Galactic-Wide-Web",
             emoji=Emojis.Icons.github,
         )
