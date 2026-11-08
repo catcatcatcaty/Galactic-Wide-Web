@@ -24,5 +24,5 @@ class dispatch_embed(Embed, EmbedReprMixin):
         ) - timedelta(hours=1):
             time = dispatch_json["with_time"].format(
                 timestamp=int(dispatch.published_at.timestamp())) + " - "
-        self.set_footer(text=f"\n{dispatch_json['dispatch']} #{dispatch.id}" + time or "")
+        self.set_footer(text=f"\n{dispatch_json['dispatch']} #{dispatch.id}" + (time or ""))
 

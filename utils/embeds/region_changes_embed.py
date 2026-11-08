@@ -15,6 +15,7 @@ class region_changes_embed(Embed, EmbedReprMixin):
         super().__init__(
         color=Colour.dark_theme(),
         )
+        self.thumbnailurl = ""
         self.container_json = container_json
         self.title = f"{Emojis.Decoration.left_banner} {self.container_json.container['title']} {Emojis.Decoration.right_banner}"
 
@@ -56,6 +57,7 @@ class region_changes_embed(Embed, EmbedReprMixin):
         if self.planet_buttons:
             for planet_info in self.planet_buttons.keys():
                 self.add_field(f"{planet_info}:", f"{self.planet_buttons[planet_info]}", inline=False)
+        self.set_thumbnail(self.thumbnailurl)
 
     def update_containers(func):
         def wrapper(self, *args, **kwargs):
@@ -81,7 +83,7 @@ class region_changes_embed(Embed, EmbedReprMixin):
                     )
                 ],
         )
-        self.set_thumbnail(url=VICTORY_ICONS.get(
+        self.thumbnailurl = (VICTORY_ICONS.get(
             (
                 region.planet.faction.full_name.lower()
                 if not region.planet.event
@@ -121,7 +123,7 @@ class region_changes_embed(Embed, EmbedReprMixin):
         text_display += self.container_json.container["resistance"].format(
             regen=f"{region.regen_perc_per_hour:.2%}"
         )
-        self.set_thumbnail(url=
+        self.thumbnailurl = (
             ATTACK_EMBED_ICONS.get(
                 (
                     region.planet.faction.full_name.lower()

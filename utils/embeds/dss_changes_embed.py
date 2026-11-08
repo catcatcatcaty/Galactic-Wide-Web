@@ -23,9 +23,11 @@ class dss_changes_embed(Embed, EmbedReprMixin):
         self.json = json
         super().__init__(
         color=Colour.from_rgb(*CUSTOM_COLOURS["DSS"]),
-        title= f"{self.json.container['title']} {Emojis.SpaceStations.DSS.icon}"
+        title= f"{self.json.container['title']} {Emojis.SpaceStations.DSS.icon}",
+        url="https://helldiverscompanion.com/#hellpad/stations"
         )
     text_display = ""
+    thumbnailurl = ""
 
     def _add_subfactions(self, text_display: str, subfactions: set[Subfaction]):
         for sf in subfactions:
@@ -42,9 +44,7 @@ class dss_changes_embed(Embed, EmbedReprMixin):
             )
             text_display += f"\n-# {region.emoji} {region_type} **{region.names.get(self.json.lang_code_long, region.name)}**"
 
-    def _add_features(
-        self, text_display: str, planet_features: list[PlanetFeature]
-    ):
+    def _add_features(self, text_display: str, planet_features: list[PlanetFeature]):
         for feature in planet_features:
             text_display += f"\n-# {feature.emoji} {feature.name}"
 
@@ -63,6 +63,7 @@ class dss_changes_embed(Embed, EmbedReprMixin):
         )
         self.clear_fields()
         self.add_field("-", self.text_display)
+        self.set_thumbnail(url=self.thumbnailurl)
 
 
     def update_containers(func):
@@ -98,7 +99,7 @@ class dss_changes_embed(Embed, EmbedReprMixin):
 
         self.text_display += "\n"
         self.text_display += text_display
-        self.set_thumbnail(url="https://fluxerusercontent.com/attachments/1476525402340249794/1530876119425744896/1000108516.png")
+        self.thumbnailurl = "https://fluxerusercontent.com/attachments/1476525402340249794/1530876119425744896/1000108516.png"
 
     @update_containers
     def ta_status_changed(self, tactical_action: DSS.TacticalAction):
@@ -126,11 +127,11 @@ class dss_changes_embed(Embed, EmbedReprMixin):
 
         self.text_display += "\n"
         self.text_display += text_display
-        self.set_thumbnail(url=
+        self.thumbnailurl = (
                 DSSImages.get(
                     ta_name=tactical_action.name,
                     status=STATUSES.get(tactical_action.status),
                 )
                 if tactical_action.name.count("_") == 0
                 else "https://fluxerusercontent.com/attachments/1476525402340249794/1530876526021586944/1000108517.png"
-            )
+        )
