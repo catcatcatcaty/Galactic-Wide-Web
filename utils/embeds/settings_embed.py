@@ -31,11 +31,11 @@ class settings_embed(Embed, EmbedReprMixin):
 
         text_display = ""
         for feature_type in FEATURE_TYPES:
-            text_display += f"Feature `{feature_type}`: "
+            text_display += f"Feature `{feature_type}`: \n"
             features = [f for f in guild.features if f.name == feature_type]
             feature = features[0] if len(features) > 0 else None
-            text_display += f":white_check_mark: enabled in <#{feature.channel_id}>\n" if feature is not None else ":x: disabled \n"
+            text_display += f":white_check_mark: enabled in <#{feature.channel_id}>\n\n" if feature is not None else ":x: disabled \n\n"
 
-        self.add_field("Features:", text_display)
+        self.add_field("Features:", text_display, inline=False)
         self.add_field("Language:", f"{guild.language}", inline=False)
-        self.add_field("-", "Use: `!setup <feature>` (in relevant channel) or `!setup language <language>` to configure. \nOr use `!setup reset <feature>` or `!setup reset_all` to clear settings.", inline=False)
+        self.add_field("-", "Use: `!setup <feature>` (in relevant channel) \nor `!setup language <language>` to configure. \nOr use `!setup reset <feature>` \nor `!setup reset_all` to clear settings.", inline=False)

@@ -827,7 +827,7 @@ class APIChangesCog(Cog):
             for chunk in chunked_changes:
                 embed = Embed()
                 for field in chunk:
-                    embed.add_field(field.title, field.value)
+                    embed.add_field(field.title, field.value, inline=False)
                 embeds = {
                     "en": embed
                 }

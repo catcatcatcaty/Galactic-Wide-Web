@@ -49,9 +49,9 @@ class DSSEmbed(Embed, EmbedReprMixin):
         self.description += language_json["embeds"]["DSSEmbed"]["next_move"].format(
             timestamp=f"<t:{int(dss_data.move_timer_datetime.timestamp())}:R>"
         )
-        self.set_thumbnail(
+        self.set_thumbnail(url=
             "https://fluxerusercontent.com/attachments/1476525402340249794/1530880774960582656/1000108518.png"
-        ).set_image(
+        ).set_image(url=
             "https://fluxerusercontent.com/attachments/1476525402340249794/1530881335462199296/1000108519.jpg"
         )
         for tactical_action in dss_data.tactical_actions:

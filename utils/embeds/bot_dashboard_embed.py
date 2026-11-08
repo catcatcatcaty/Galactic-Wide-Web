@@ -25,12 +25,12 @@ class bot_dashboardEmbed(Embed, EmbedReprMixin):
         for global_command in sorted(public_commands, key=lambda sc: sc.name):
             if global_command.name not in ["gwe", "global_event"]:
                 commands_text += f"- {global_command.name}\n"
-        self.add_field( f"The GWW has {len(public_commands)} commands available", commands_text)
+        self.add_field( f"The GWW has {len(public_commands)} commands available", commands_text, inline=False)
         quickest_server = sorted(
             bot.guilds, key=lambda x: (x.me.joined_at - x.created_at)
         )[0]
         self.add_field(f"**Fastest server to add the bot after creation**",
-                       f"\n-# **{(quickest_server.me.joined_at - quickest_server.created_at).total_seconds():.0f} seconds**")
+                       f"\n-# **{(quickest_server.me.joined_at - quickest_server.created_at).total_seconds():.0f} seconds**", inline=False)
 
         servers_by_age = sorted(bot.guilds, key=lambda x: x.created_at)
         oldest_server = servers_by_age[0]
@@ -48,7 +48,7 @@ class bot_dashboardEmbed(Embed, EmbedReprMixin):
                         + f"\nTotal Channels"
                         + f"\n-# ├ Text: **{text_channels:,}**"
                         + f"\n-# └ Voice: **{voice_channels:,}**"
-                        + f"\nEmojis: **{total_emojis:,}**")
+                        + f"\nEmojis: **{total_emojis:,}**", inline=False)
 
         memory_used = Process(getpid()).memory_info().rss / 1024**3
         total_system_memory = virtual_memory().total / 1024**3
@@ -78,13 +78,13 @@ class bot_dashboardEmbed(Embed, EmbedReprMixin):
                     f"\n{cpu_text}"
                     f"\n\nRAM: {memory_bar} {memory_used:.2f}GB/{total_system_memory:.2f}GB```"
                     f"\n-# **Last restart**: <t:{int(bot.startup_time.timestamp())}:R>"
-                    f"\n-# **Latency**: {int(latency * 1000)}ms")
+                    f"\n-# **Latency**: {int(latency * 1000)}ms", inline=False)
 
         net_io = net_io_counters()
         bytes_sent_gb = net_io.bytes_sent / (1024**3)
         bytes_recv_gb = net_io.bytes_recv / (1024**3)
 
-        self.add_field(":satellite: Network Info", f"-# **Sent**: {bytes_sent_gb:.2f}GB\n-# **Received:** {bytes_recv_gb:.2f}GB")
+        self.add_field(":satellite: Network Info", f"-# **Sent**: {bytes_sent_gb:.2f}GB\n-# **Received:** {bytes_recv_gb:.2f}GB", inline=False)
 
         shardinfo = "\n".join(
             [
@@ -92,7 +92,7 @@ class bot_dashboardEmbed(Embed, EmbedReprMixin):
                 for shard in bot.shards.values()
             ]
         )
-        self.add_field(":jigsaw: Shards", f"{shardinfo}")
+        self.add_field(":jigsaw: Shards", f"{shardinfo}", inline=False)
 
         loop_errors = ""
         embed_colours = {
@@ -106,6 +106,6 @@ class bot_dashboardEmbed(Embed, EmbedReprMixin):
                 loop_errors += f"{loop.coro.__name__} - **__ERROR__**:warning:\n"
                 errors += 1
         if loop_errors:
-            self.add_field("LOOP ERRORS", f"{loop_errors}")
+            self.add_field("LOOP ERRORS", f"{loop_errors}", inline=False)
         self.colour = embed_colours.get(errors, Colour.from_rgb(0, 0, 0))
-        self.add_field(f"Updated", f"<t:{int(datetime.now(tz=timezone.utc).timestamp())}:R>")
+        self.add_field(f"Updated", f"<t:{int(datetime.now(tz=timezone.utc).timestamp())}:R>", inline=False)

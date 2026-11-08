@@ -63,7 +63,7 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
             ) not in [self.planet_buttons.keys()]:
                 self.planet_buttons.update(
                     {gambit_planet.names.get(self.json.lang_code_long, gambit_planet.name):
-                         f"https://helldiverscompanion.com/#hellpad/planets/{gambit_planet.index}"})
+                         f"[**{gambit_planet.name}**](<https://helldiverscompanion.com/#hellpad/planets/{gambit_planet.index}>)"})
 
     def _update_containers(self):
         colour = Colour.dark_theme()
@@ -118,7 +118,7 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
             self.json.lang_code_long, planet.name
         ) not in [self.planet_buttons.keys()]:
             self.planet_buttons.update({planet.names.get(self.json.lang_code_long, planet.name):
-                f"https://helldiverscompanion.com/#hellpad/planets/{planet.index}"})
+                f"[**{planet.name}**](<https://helldiverscompanion.com/#hellpad/planets/{planet.index}>)"})
 
     @update_containers
     def add_defence_victory(
@@ -150,7 +150,7 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
             self.json.lang_code_long, planet.name
         ) not in [self.planet_buttons.keys()]:
             self.planet_buttons.update({planet.names.get(self.json.lang_code_long, planet.name):
-                f"https://helldiverscompanion.com/#hellpad/planets/{planet.index}"})
+                f"[**{planet.name}**](<https://helldiverscompanion.com/#hellpad/planets/{planet.index}>)"})
 
     @update_containers
     def add_new_campaign(self, campaign: Campaign, gambit_planets: dict[int, Planet]):
@@ -204,7 +204,7 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
                     self.json.lang_code_long, campaign.planet.name
             ) not in [self.planet_buttons.keys()]:
                 self.planet_buttons.update({campaign.planet.names.get(self.json.lang_code_long, campaign.planet.name):
-                    f"https://helldiverscompanion.com/#hellpad/planets/{campaign.planet.index}"})
+                    f"[**{campaign.planet.name}**](<https://helldiverscompanion.com/#hellpad/planets/{campaign.planet.index}>)"})
         else:
             text_display = self.json.container["liberate"].format(
                 planet_name=campaign.planet.names.get(
@@ -241,7 +241,7 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
                     self.json.lang_code_long, campaign.planet.name
             ) not in [self.planet_buttons.keys()]:
                 self.planet_buttons.update({campaign.planet.names.get(self.json.lang_code_long, campaign.planet.name):
-                    f"https://helldiverscompanion.com/#hellpad/planets/{campaign.planet.index}"})
+                    f"[**{campaign.planet.name}**](<https://helldiverscompanion.com/#hellpad/planets/{campaign.planet.index}>)"})
 
     @update_containers
     def new_urgent_liberation(
@@ -296,7 +296,7 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
                 self.json.lang_code_long, campaign.planet.name
         ) not in [self.planet_buttons.keys()]:
             self.planet_buttons.update({campaign.planet.names.get(self.json.lang_code_long, campaign.planet.name):
-                f"https://helldiverscompanion.com/#hellpad/planets/{campaign.planet.index}"})
+                f"[**{campaign.planet.name}**](<https://helldiverscompanion.com/#hellpad/planets/{campaign.planet.index}>)"})
 
     @update_containers
     def add_planet_lost(self, planet: Planet):
@@ -323,4 +323,4 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
                 self.json.lang_code_long, planet.name
         ) not in [self.planet_buttons.keys()]:
             self.planet_buttons.update({planet.names.get(self.json.lang_code_long, planet.name):
-                f"https://helldiverscompanion.com/#hellpad/planets/{planet.index}"})
+                f"[**{planet.name}**](<https://helldiverscompanion.com/#hellpad/planets/{planet.index}>)"})

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from disnake import Embed
+from disnake import Embed, Colour
 
 from utils.api_wrapper.models import Planet
 from utils.dataclasses import Factions
@@ -15,6 +15,16 @@ class RegionEmbed(Embed, EmbedReprMixin):
         container_json: dict,
     ):
         super().__init__()
+        self.set_default_colour(Colour.from_rgb(
+                    *(
+                        planet.faction.colour
+                        if not planet.event
+                        else planet.event.faction.colour
+                    ),
+        ))
+        self.add_field(
+            f"{planet.faction.emoji} [**{planet.names.get(lang_code, planet.name)}**](<https://helldivers.wiki.gg/wiki/Special:Search?search={planet.name.replace(' ', '_')}>) {planet.exclamations}", "Regions:"
+        , inline=False)
         now_seconds = int(datetime.now(tz=timezone.utc).timestamp())
         regions = {}
         for region in sorted(planet.regions.values(), key=lambda x: x.size):
@@ -112,4 +122,4 @@ class RegionEmbed(Embed, EmbedReprMixin):
                     text_display.append(f"\n-# <t:{region_avail_timestamp}:R>")
             regions.update({title: "".join(text_display)})
         for k, v in regions.items():
-            self.add_field(k, v)
+            self.add_field(k, v, inline=False)

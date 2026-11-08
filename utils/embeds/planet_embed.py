@@ -70,21 +70,22 @@ class PlanetEmbed(Embed, EmbedReprMixin):
               f"\n{component_json['sector']}: **{planet.sector}**"
             + f"\n{component_json['owner']}: **{factions_json[planet.faction.full_name]}**{planet.faction.emoji}"
             + f"\n{description}"
-            + f"\n")
+            + f"\n"
+            , inline=False)
 
             #EFFECTS
             effects_text = f""
             for pf in planet.planet_features:
                 effects_text += f"\n-# {pf.emoji} {pf.name}"
             if effects_text != "":
-                self.add_field(f"Features:", effects_text + f"\n")
+                self.add_field(f"Features:", effects_text + f"\n", inline=False)
 
             #SUBFACTIONS
             sf_text = f""
             for sf in planet.subfactions:
                 sf_text += f"\n-# {sf.emoji} {sf.eng_name}"
             if sf_text != "":
-                self.add_field(f"Subfactions:", sf_text + f"\n")
+                self.add_field(f"Subfactions:", sf_text + f"\n", inline=False)
 
             #COMMUNITY TARGETS
             comm_target_text = f""
@@ -94,7 +95,7 @@ class PlanetEmbed(Embed, EmbedReprMixin):
                         f"\n-# {comm.full_name} [{comm.emoji}](<{comm.discord_link}>)"
                     )
             if comm_target_text != "":
-                self.add_field(f"Communities targeting this planet:", comm_target_text)
+                self.add_field(f"Communities targeting this planet:", comm_target_text, inline=False)
 
             #LIBERATION
             liberation_text = (
@@ -125,7 +126,7 @@ class PlanetEmbed(Embed, EmbedReprMixin):
                         f"\n{Emojis.Icons.blank}{Emojis.Icons.blank}  **`{planet.regen_per_second * 3600:+.2f}/hr`**"
                         f"\n{Emojis.Icons.blank}{Emojis.Icons.blank}  **`{((planet.regen_per_second * 3600) / 1_000_000):+.2%}/hr`** at 1m HP"
                     )
-            self.add_field(f"{component_json['heroes']}: **{planet.stats.player_count:,}**", liberation_text + f"\n")
+            self.add_field(f"{component_json['heroes']}: **{planet.stats.player_count:,}**", liberation_text + f"\n", inline=False)
             self.set_footer(text=f"https://helldivers.wiki.gg/wiki/{url_name}", icon_url=f"https://helldivers.wiki.gg/images/{url_name}_Planet_Icon.png")
 
     def add_mission_stats(self, planet: Planet, component_json: dict):
@@ -135,7 +136,7 @@ class PlanetEmbed(Embed, EmbedReprMixin):
         + f"\n{component_json['missions_winrate']}: **{planet.stats.mission_success_rate}%**"
         + f"\n{component_json['missions_time_spent']}: **{planet.stats.mission_time/31556952:.1f} {component_json['years']}**"
         + f"\n"
-        )
+        , inline=False)
 
     def add_hero_stats(self, planet: Planet, component_json: dict):
         self.add_field(f"{component_json['title']}",
@@ -146,7 +147,7 @@ class PlanetEmbed(Embed, EmbedReprMixin):
         + f"\n{component_json['shots_hit']}: **{short_format(planet.stats.bullets_hit)}**"
         + f"\n{component_json['accuracy']}: **{planet.stats.accuracy}%**"
         + f"\n"
-        )
+        , inline=False)
 
     def add_misc_stats(
             self, planet: Planet, component_json: dict, faction_json: dict
@@ -156,5 +157,5 @@ class PlanetEmbed(Embed, EmbedReprMixin):
             self.add_field(f"💀 {faction_json[faction.full_name]} {component_json['killed']}: ",
             f"**{short_format(getattr(planet.stats, f'{faction.singular}_kills'))}**"
             + f"\n"
-            )
+            , inline=False)
 

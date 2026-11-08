@@ -50,15 +50,12 @@ class region_changes_embed(Embed, EmbedReprMixin):
         )
         self.clear_fields()
         if self.victories != "":
-            self.add_field(f"{self.container_json.container['victories']} {Emojis.Icons.victory}", self.victories)
+            self.add_field(f"{self.container_json.container['victories']} {Emojis.Icons.victory}", self.victories, inline=False)
         if self.new_regions != "":
-            self.add_field(f"{self.container_json.container['new_regions']} {Emojis.Icons.new_icon}", self.new_regions)
+            self.add_field(f"{self.container_json.container['new_regions']} {Emojis.Icons.new_icon}", self.new_regions, inline=False)
         if self.planet_buttons:
-            planets_text = ""
             for planet_info in self.planet_buttons.keys():
-                planets_text += f"{planet_info}: {self.planet_buttons[planet_info]}\n"
-            self.add_field("-", planets_text)
-        self.set_thumbnail(self.thumbnail)
+                self.add_field(f"{planet_info}:", f"{self.planet_buttons[planet_info]}", inline=False)
 
     def update_containers(func):
         def wrapper(self, *args, **kwargs):
@@ -84,7 +81,7 @@ class region_changes_embed(Embed, EmbedReprMixin):
                     )
                 ],
         )
-        self.set_thumbnail(VICTORY_ICONS.get(
+        self.set_thumbnail(url=VICTORY_ICONS.get(
             (
                 region.planet.faction.full_name.lower()
                 if not region.planet.event
@@ -107,7 +104,7 @@ class region_changes_embed(Embed, EmbedReprMixin):
             self.container_json.lang_code_long, region.planet.name
         ) not in [self.planet_buttons.keys()]:
             self.planet_buttons.update({region.planet.names.get(self.container_json.lang_code_long, region.planet.name):
-                f"https://helldiverscompanion.com/#hellpad/planets/{region.planet.index}"})
+                f"[**{region.planet.name}**](<https://helldiverscompanion.com/#hellpad/planets/{region.planet.index}>)"})
 
 
     @update_containers
@@ -124,7 +121,7 @@ class region_changes_embed(Embed, EmbedReprMixin):
         text_display += self.container_json.container["resistance"].format(
             regen=f"{region.regen_perc_per_hour:.2%}"
         )
-        self.set_thumbnail(
+        self.set_thumbnail(url=
             ATTACK_EMBED_ICONS.get(
                 (
                     region.planet.faction.full_name.lower()
@@ -152,4 +149,4 @@ class region_changes_embed(Embed, EmbedReprMixin):
             self.container_json.lang_code_long, region.planet.name
         ) not in [self.planet_buttons.keys()]:
             self.planet_buttons.update({region.planet.names.get(self.container_json.lang_code_long, region.planet.name):
-                f"https://helldiverscompanion.com/#hellpad/planets/{region.planet.index}"})
+                f"[**{region.planet.name}**](<https://helldiverscompanion.com/#hellpad/planets/{region.planet.index}>)"})

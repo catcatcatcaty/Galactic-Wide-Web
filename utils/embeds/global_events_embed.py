@@ -22,7 +22,7 @@ class global_events_embed(Embed, EmbedReprMixin):
         )
         content = f""
         if (url := (image_url or attachment_url)) is not None:
-            self.set_image(url)
+            self.set_image(url=url)
         title = f"{global_event.title if global_event.title else container_json['new_event']}"
         if global_event.assignment_id:
             title += f"\nRelated to Assignment #{global_event.assignment_id}"
