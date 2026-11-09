@@ -34,6 +34,7 @@ class dss_changes_embed(Embed, EmbedReprMixin):
             text_display += (
                 f"\n-# {sf.emoji} **{self.json.subfactions.get(sf.eng_name, sf.eng_name)}**"
             )
+        return text_display
 
     def _add_regions(self, text_display: str, regions: list[Planet.Region]):
         for region in sorted(regions, key=lambda x: x.availability_factor):
@@ -43,10 +44,12 @@ class dss_changes_embed(Embed, EmbedReprMixin):
                 else self.json.regions["megafactory"].format(number=region.type.value)
             )
             text_display += f"\n-# {region.emoji} {region_type} **{region.names.get(self.json.lang_code_long, region.name)}**"
+        return text_display
 
     def _add_features(self, text_display: str, planet_features: list[PlanetFeature]):
         for feature in planet_features:
             text_display += f"\n-# {feature.emoji} {feature.name}"
+        return text_display
 
     def _add_gambit(
         self,
@@ -55,6 +58,7 @@ class dss_changes_embed(Embed, EmbedReprMixin):
     ):
         if gambit_planet.regen_perc_per_hour < 0.03:
             text_display += f"\n-# {self.json.container['gambit']}: {gambit_planet.names.get(self.json.lang_code_long, gambit_planet.name)}"
+        return text_display
 
     def _update_containers(self):
         super().__init__(
@@ -84,15 +88,15 @@ class dss_changes_embed(Embed, EmbedReprMixin):
             ),
             emojis=after_planet.exclamations,
             )
-        self._add_features(
+        text_display = self._add_features(
             text_display=text_display,
             planet_features=after_planet.planet_features,
         )
-        self._add_subfactions(
+        text_display = self._add_subfactions(
             text_display=text_display,
             subfactions=after_planet.subfactions,
         )
-        self._add_regions(
+        text_display = self._add_regions(
             text_display=text_display,
             regions=after_planet.regions.values(),
         )

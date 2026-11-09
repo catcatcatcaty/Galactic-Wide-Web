@@ -36,6 +36,7 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
             text_display += (
                 f"\n-# {sf.emoji} **{self.json.subfactions.get(sf.eng_name, sf.eng_name)}**"
             )
+        return text_display
 
     def _add_regions(self, text_display: str, regions: list[Planet.Region]):
         for region in regions:
@@ -45,12 +46,14 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
                 else self.json.regions["megafactory"].format(number=region.size)
             )
             text_display += f"\n-# {region.emoji} {descriptor} **{region.names.get(self.json.lang_code_long, region.name)}**"
+        return text_display
 
     def _add_features(
         self, text_display: str, planet_features: list[PlanetFeature]
     ):
         for feature in planet_features:
             text_display += f"\n-# {feature.emoji} **{feature.name}**"
+        return text_display
 
     def _add_gambit(
         self,
@@ -65,6 +68,7 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
                 self.planet_buttons.update(
                     {gambit_planet.names.get(self.json.lang_code_long, gambit_planet.name):
                          f"[**{gambit_planet.name}**](<https://helldiverscompanion.com/#hellpad/planets/{gambit_planet.index}>)"})
+        return text_display
 
     def _update_containers(self):
         colour = Colour.dark_theme()
@@ -104,14 +108,14 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
             faction_name=self.json.factions[f"{taken_from}_plural"],
         )
         self.thumbnailurl = VICTORY_ICONS.get(taken_from.lower(), VICTORY_ICONS["default"])
-        self._add_features(
+        text_display = (self._add_features(
             text_display=text_display,
             planet_features=planet.planet_features,
-        )
-        self._add_subfactions(
+        ))
+        text_display = (self._add_subfactions(
             text_display=text_display,
             subfactions=planet.subfactions,
-        )
+        ))
         self.victories += "\n"
         self.victories += text_display
 
@@ -136,14 +140,14 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
             ].format(
                 hours_remaining=f"{hours_remaining:.0f}",
             )
-        self._add_features(
+        text_display = (self._add_features(
             text_display=text_display,
             planet_features=planet.planet_features,
-        )
-        self._add_subfactions(
+        ))
+        text_display = (self._add_subfactions(
             text_display=text_display,
             subfactions=planet.subfactions,
-        )
+        ))
         self.victories += "\n"
         self.victories += text_display
 
@@ -176,26 +180,24 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
                     campaign.planet.event.faction.full_name.lower(),
                     DEFENCE_EMBED_ICONS["default"],
                 ))
-            self._add_features(
+            text_display = (self._add_features(
                 text_display=text_display,
                 planet_features=campaign.planet.planet_features,
-            )
-
-            self._add_subfactions(
+            ))
+            text_display = (self._add_subfactions(
                 text_display=text_display,
                 subfactions=campaign.planet.subfactions,
-            )
-
-            self._add_regions(
+            ))
+            text_display = (self._add_regions(
                 text_display=text_display,
                 regions=campaign.planet.regions.values(),
-            )
+            ))
 
             if campaign.planet.index in gambit_planets:
-                self._add_gambit(
+                text_display = (self._add_gambit(
                     text_display=text_display,
                     gambit_planet=gambit_planets[campaign.planet.index],
-                )
+                ))
 
             # last step
             self.new_campaigns += "\n"
@@ -220,18 +222,18 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
                     campaign.faction.full_name.lower(),
                     ATTACK_EMBED_ICONS["default"],
             )
-            self._add_features(
+            text_display = (self._add_features(
                 text_display=text_display,
                 planet_features=campaign.planet.planet_features,
-            )
-            self._add_subfactions(
+            ))
+            text_display = (self._add_subfactions(
                 text_display=text_display,
                 subfactions=campaign.planet.subfactions,
-            )
-            self._add_regions(
+            ))
+            text_display = (self._add_regions(
                 text_display=text_display,
                 regions=campaign.planet.regions.values(),
-            )
+            ))
 
             # last step
             self.new_campaigns += "\n"
@@ -266,26 +268,23 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
                 campaign.planet.event.faction.full_name.lower(),
                 URGENT_ICONS["default"],
         )
-        self._add_features(
+        text_display = (self._add_features(
             text_display=text_display,
             planet_features=campaign.planet.planet_features,
-        )
-
-        self._add_subfactions(
+        ))
+        text_display = (self._add_subfactions(
             text_display=text_display,
             subfactions=campaign.planet.subfactions,
-        )
-
-        self._add_regions(
+        ))
+        text_display = (self._add_regions(
             text_display=text_display,
             regions=campaign.planet.regions.values(),
-        )
-
+        ))
         if campaign.planet.index in gambit_planets:
-            self._add_gambit(
+            text_display = (self._add_gambit(
                 text_display=text_display,
                 gambit_planet=gambit_planets[campaign.planet.index],
-            )
+            ))
 
         # last step
         self.new_campaigns += "\n"
@@ -307,14 +306,14 @@ class campaign_changes_embed(Embed, EmbedReprMixin):
             ],
         )
         self.thumbnailurl = LOSS_ICONS.get(planet.faction.full_name.lower(), LOSS_ICONS["default"])
-        self._add_features(
+        text_display = (self._add_features(
             text_display=text_display,
             planet_features=planet.planet_features,
-        )
-        self._add_subfactions(
+        ))
+        text_display = (self._add_subfactions(
             text_display=text_display,
             subfactions=planet.subfactions,
-        )
+        ))
         self.losses += "\n"
         self.losses += text_display
 

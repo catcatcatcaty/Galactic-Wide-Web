@@ -33,10 +33,12 @@ class region_changes_embed(Embed, EmbedReprMixin):
     def _add_subfactions(self, text_display: str,  subfactions: set[Subfaction]):
         for sf in subfactions:
             text_display += f"\n-# {sf.emoji} **{self.container_json.subfactions.get(sf.eng_name, sf.eng_name)}**"
+        return text_display
 
     def _add_features(self, text_display: str, planet_features: list[PlanetFeature]):
         for feature in planet_features:
             text_display += f"\n-# {feature.emoji} {feature.name}"
+        return text_display
 
     def _update_containers(self):
         colour = Colour.dark_theme()
@@ -135,14 +137,14 @@ class region_changes_embed(Embed, EmbedReprMixin):
         ),
         if region.description:
             text_display += f"\n-# {region.descriptions[self.container_json.lang_code_long]}"
-        self._add_features(
+        text_display = (self._add_features(
             text_display=text_display,
             planet_features=region.planet.planet_features,
-        )
-        self._add_subfactions(
+        ))
+        text_display = (self._add_subfactions(
             text_display=text_display,
             subfactions=region.planet.subfactions,
-        )
+        ))
 
         self.new_regions += "\n"
         self.new_regions += text_display
