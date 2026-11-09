@@ -111,6 +111,10 @@
         "name": "Caustic Warrior",
         "plural": "Caustic Warriors"
     },
+    "585432236": {
+        "name": "Caustic Strain",
+        "plural": "Caustic Strains"
+    },
     "1299714559": {
         "name": "Charger",
         "plural": "Chargers"
@@ -406,6 +410,10 @@
     "689411023": {
         "name": "Noxious Spewer",
         "plural": "Noxious Spewers"
+    },
+    "903954334": {
+        "name": "Noxious Strain",
+        "plural": "Noxious Strains"
     },
     "487985459": {
         "name": "Nursing Spewer",

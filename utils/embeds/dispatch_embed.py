@@ -19,10 +19,7 @@ class dispatch_embed(Embed, EmbedReprMixin):
         if description:
             self.add_field(f"{title or "-"}", f"\n{description}")
         time = None
-        if with_time or dispatch.published_at < datetime.now(
-            tz=timezone.utc
-        ) - timedelta(hours=1):
-            time = dispatch_json["with_time"].format(
-                timestamp=int(dispatch.published_at.timestamp())) + " - "
-        self.set_footer(text=f"\n{dispatch_json['dispatch']} #{dispatch.id}" + (time or ""))
+        if with_time or dispatch.published_at < datetime.now(tz=timezone.utc) - timedelta(hours=1):
+            time = dispatch_json["with_time"].format(timestamp=int(dispatch.published_at.timestamp())) + " - "
+        self.set_footer(text=f"\n{dispatch_json['dispatch']} #{dispatch.id}" + time)
 
