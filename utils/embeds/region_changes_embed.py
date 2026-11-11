@@ -93,11 +93,11 @@ class region_changes_embed(Embed, EmbedReprMixin):
             ),
             VICTORY_ICONS["default"],
         ))
-        self._add_features(
+        text_display = self._add_features(
             text_display=text_display,
             planet_features=region.planet.planet_features,
         )
-        self._add_subfactions(
+        text_display = self._add_subfactions(
             text_display=text_display,
             subfactions=region.planet.subfactions,
         )
