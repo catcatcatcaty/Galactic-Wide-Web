@@ -206,6 +206,10 @@ class PlanetFeatures:
             "",
             Emojis.Factions.terminids,
         ),
+        1432: PlanetFeature(
+            "HIVE WORLD",
+            Emojis.PlanetFeatures.hive_world,
+        ),
     }
 
     def get_many(ids: list[int]) -> list[PlanetFeature]:
