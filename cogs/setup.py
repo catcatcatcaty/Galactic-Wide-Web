@@ -31,7 +31,6 @@ FEATURE_INDEXES = {
     "region_announcements": 9,
     "patch_notes": 11,
     "major_order_updates": 13,
-    "personal_order_updates": 15,
     "detailed_dispatches": 17,
 }
 
@@ -90,7 +89,7 @@ class SetupCog(Cog):
         default_member_permissions=Permissions(manage_guild=True),
         contexts=InteractionContextTypes(guild=True),
         extras={
-            "long_description": "Opens the server configuration panel. Requires Manage Server permission. Lets admins set channels for the auto-updating dashboard and map, toggle notification features (Major Orders, Personal Orders, dispatches, patch notes, DSS announcements, region changes, and detailed dispatches), and change the bot's language.",
+            "long_description": "Opens the server configuration panel. Requires Manage Server permission. Lets admins set channels for the auto-updating dashboard and map, toggle notification features (Major Orders, dispatches, patch notes, DSS announcements, region changes, and detailed dispatches), and change the bot's language.",
             "example_usage": "**`/setup`** opens the settings panel with buttons to configure dashboards, maps, notification features, and language.",
         },
     )

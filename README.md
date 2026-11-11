@@ -41,7 +41,6 @@
   The bot has a variety of Helldivers 2 data, including:
 </p>
 <p align="center">
-    - Personal Orders - <b>EXCLUSIVE!</b> - UNAVAILABLE on the Fluxer port due to private API usage<br>
     - DSS Vote counts - <b>EXCLUSIVE!</b> - UNAVAILABLE on the Fluxer port due to private API usage<br>
     - Major Orders<br>
     - Control Centre (campaigns) - NYI on the Fluxer port<br>
@@ -68,7 +67,7 @@
 | [`/check_missing_translations`](#check_missing_translations-language_to_check-fr) | [`/community_servers`](#community_servers) | [`/control_centre`](#control_centre) |
 | [`/dispatches`](#dispatches) | [`/dss`](#dss) | [`/dss_votes`](#dss_votes) |
 | [`/global_events`](#global_events) | [`/major_order`](#major_order) | [`/map`](#map) |
-| [`/personal_order`](#personal_order) | [`/planet`](#planet-planet-124-bore-rock) | [`/setup`](#setup) |
+| [``] | [`/planet`](#planet-planet-124-bore-rock) | [`/setup`](#setup) |
 | [`/steam`](#steam) | [`/subfaction`](#subfaction) | [`/superstore`](#superstore) |
 | [`/warbonds`](#warbonds) | [`/warfront`](#warfront-faction-automaton) | |
 
@@ -117,10 +116,6 @@ Want to try out the GWW on your server? [Invite Link](https://web.fluxer.app/oau
 
 ### `/map`
 <img src="resources/readme/map.png" width="500">
-<p align="right"><a href="#top">Back to Top ↑</a></p>
-
-### `/personal_order`
-<img src="resources/readme/personal_order.png">
 <p align="right"><a href="#top">Back to Top ↑</a></p>
 
 ### `/planet planet: 124-BORE ROCK`

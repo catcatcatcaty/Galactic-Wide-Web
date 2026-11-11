@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from utils.api_wrapper.clients import (
     AltDSSVotesAuthedClient,
-    AltPOAuthedClient,
     AltSuperstoreAuthedClient,
     AltWarbondsAuthedClient,
     ArsenalClient,
@@ -40,7 +39,6 @@ class DataService(ReprMixin):
         self._raw_war_stats: dict = {}
         self._raw_war_info: dict = {}
         self._raw_war_effects: list = []
-        self._raw_personal_order: dict = {}
         self._raw_stuperstore: list = {}
         self._raw_warbonds: dict[int, dict] = {}
         self._raw_steam_news: list = []
@@ -61,7 +59,6 @@ class DataService(ReprMixin):
         self._raw_war_stats.clear()
         self._raw_war_info.clear()
         self._raw_war_effects.clear()
-        self._raw_personal_order.clear()
         self._raw_steam_news.clear()
         self._raw_control_centre.clear()
 
@@ -214,12 +211,6 @@ class DataService(ReprMixin):
             if dss_votes:
                 self._raw_dss_votes = dss_votes
 
-            #TODO no api
-            # personal_order = await client.get_personal_order()
-            personal_order = None
-            if personal_order:
-                self._raw_personal_order = personal_order
-
         for space_station in self._raw_space_stations:
             if (
                 current_vote_id := space_station.get("currentElectionId", None)
@@ -231,14 +222,6 @@ class DataService(ReprMixin):
                     )
                     if space_station_votes is not None:
                         space_station["votes"] = space_station_votes
-
-        if not self._raw_personal_order:
-            async with AltPOAuthedClient(logger=self.logger) as client:
-                personal_order = await client.get_personal_order()
-                if personal_order is not None:
-                    self._raw_personal_order = personal_order
-                else:
-                    self.logger.error(f"pull_from_api | raw personal order is empty")
 
         if self.pull_start_time.minute == 0 or not self.loaded:
             async with ItemsClient(
@@ -321,7 +304,6 @@ class DataService(ReprMixin):
             war_stats=self._raw_war_stats,
             war_info=self._raw_war_info,
             war_effects=self._raw_war_effects,
-            personal_order=self._raw_personal_order,
             steam_news=self._raw_steam_news,
             control_centre=self._raw_control_centre,
             superstore=self._raw_stuperstore,

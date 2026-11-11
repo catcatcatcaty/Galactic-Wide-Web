@@ -48,7 +48,6 @@ class AssignmentTaskType(Enum):
     PlayMission = 5\n
     UseEquipment = 6\n
     MissionComplete = 7\n
-    PersonalOrder = 8\n
     OperationComplete = 9\n
     Donation = 10\n
     LiberateLocationsSpecific = 11\n
@@ -67,7 +66,6 @@ class AssignmentTaskType(Enum):
     PlayMission = 5
     UseEquipment = 6
     MissionComplete = 7
-    PersonalOrder = 8
     OperationComplete = 9
     Donation = 10
     LiberateLocationsSpecific = 11

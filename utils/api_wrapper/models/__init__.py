@@ -4,7 +4,6 @@ from .control_centre import ControlCentre
 from .dispatch import Dispatch
 from .endpoint_items import EndpointItem
 from .galactic_war import AcquiredE711, GalacticWarEffect, GlobalEvent, GlobalResource
-from .personal_order import PersonalOrder
 from .planet import Planet
 from .space_stations import DSS, SpaceStation
 from .steam_news import SteamNews
@@ -22,7 +21,6 @@ __all__ = [
     "GalacticWarEffect",
     "GlobalEvent",
     "GlobalResource",
-    "PersonalOrder",
     "Planet",
     "SpaceStation",
     "SteamNews",

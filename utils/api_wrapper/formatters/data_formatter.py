@@ -11,7 +11,6 @@ from utils.api_wrapper.models import (
     GalacticWarEffect,
     GlobalEvent,
     GlobalResource,
-    PersonalOrder,
     Planet,
     SpaceStation,
     SteamNews,
@@ -97,7 +96,6 @@ class FormattedDataContext:
     war_stats: dict
     war_info: dict
     war_effects: list
-    personal_order: dict
     space_stations: list[dict]
     steam_news: list
     control_centre: dict[str, list[dict]]
@@ -137,7 +135,6 @@ class FormattedData:
         self.warbonds: dict[int, Warbond] = {}
         self.items_data: list[dict] = []
         self.organised_items: dict[int, EndpointItem] = {}
-        self.personal_order: PersonalOrder = None
 
         if context.items_data != []:
             self.items_data = context.items_data
@@ -618,21 +615,6 @@ class FormattedData:
                     planet = self.planets.get(pstat["planetIndex"])
                     if planet:
                         planet.stats.update(raw_stats_info=pstat)
-
-        if context.personal_order:
-            correct_po = next(
-                (
-                    po
-                    for po in context.personal_order
-                    if po["setting"]["rewards"] != []
-                    and 8 not in (task["type"] for task in po["setting"]["tasks"])
-                ),
-                None,
-            )
-            if correct_po is not None:
-                self.personal_order: PersonalOrder = PersonalOrder(
-                    personal_order=correct_po, json_dict=context.json_dict
-                )
 
         if self.planets:
             for region in (

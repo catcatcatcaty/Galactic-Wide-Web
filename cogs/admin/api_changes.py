@@ -7,7 +7,6 @@ from disnake.ui import Container, TextDisplay
 from utils.api_wrapper.models import GalacticWarEffect
 from utils.bot import GalacticWideWebBot
 from utils.dataclasses import PlanetFeatures, Subfactions
-from utils.embeds import PersonalOrderCommandEmbed
 from utils.emojis import Emojis
 
 class FieldWrapper:
@@ -327,43 +326,6 @@ class APIChangesCog(Cog):
                     )
 
         # Assignments END
-
-        # Personal Assignments
-        # PO change
-        if (
-            self.bot.data.previous_data.personal_order
-            and self.bot.data.formatted_data.personal_order
-        ):
-            if (
-                self.bot.data.previous_data.personal_order.id
-                != self.bot.data.formatted_data.personal_order.id
-            ):
-                self.bot.logger.info(
-                    f"api_changes | Changed Personal Order: {self.bot.data.previous_data.personal_order.id} -> {self.bot.data.formatted_data.personal_order.id}"
-                )
-                old_po_text = (
-                    PersonalOrderCommandEmbed(
-                        self.bot.data.previous_data.personal_order,
-                        self.bot.json_dict,
-                    )
-                    .fields[0]
-                    .value
-                )
-                new_po_text = (
-                    PersonalOrderCommandEmbed(
-                        self.bot.data.formatted_data.personal_order,
-                        self.bot.json_dict,
-                    )
-                    .fields[0]
-                    .value
-                )
-                total_changes.append(FieldWrapper(f"PERSONAL ORDER CHANGED",
-                                                 f"\n-# {old_po_text}"
-                                                       f"\n{Emojis.Stratagems.down}"
-                                                       f"\n-# {new_po_text}")
-                )
-
-        # Personal Assignments END
 
         # Planets
         new_planets = current_data.planets.keys() - previous_data.planets.keys()

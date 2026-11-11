@@ -67,10 +67,7 @@ class HealthCheckCog(commands.Cog):
                     error=f"Data was last formatted <t:{int(self.bot.data.formatted_data.formatted_at.timestamp())}:R>"
                 )
             #we're not getting these any time soon
-            '''if not self.bot.data.formatted_data.personal_order:
-                await self.send_warning(
-                    error=f"PO is missing", vips_to_cc=[VIP.catcatcatcaty]
-                    )
+            '''
             if (
                 self.bot.data.formatted_data.dss is not None
                 and self.bot.data.formatted_data.dss.votes is None

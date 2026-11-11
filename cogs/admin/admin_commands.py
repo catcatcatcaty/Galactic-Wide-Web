@@ -43,7 +43,6 @@ class AdminCommandsCog(commands.Cog):
                 "Dashboard",
                 "Map",
                 "MO Update",
-                "PO Update",
                 "Global Event",
                 "Dispatch",
                 "DSS changes",
@@ -60,8 +59,6 @@ class AdminCommandsCog(commands.Cog):
                 await self.bot.get_cog(name="MapCog").map_poster()
             case "MO Update":
                 await self.bot.get_cog(name="MajorOrderCog").major_order_updates()
-            case "PO Update":
-                await self.bot.get_cog(name="PersonalOrderCog").personal_order_updates()
             case "Global Event":
                 self.bot.databases.war_info.global_event_id -= 1
                 self.bot.databases.war_info.save_changes()

@@ -13,10 +13,6 @@ class AuthedClient(BaseAPIClient):
     async def get_dss_votes(self) -> dict | None:
         return await self.get("/raw/election")
 
-    async def get_personal_order(self) -> dict | None:
-        return await self.get("/raw/assignment")
-
-
 class AltDSSVotesAuthedClient(BaseAPIClient):
     def __init__(self, logger):
         super().__init__(
@@ -29,19 +25,6 @@ class AltDSSVotesAuthedClient(BaseAPIClient):
         self, war_id: int, period_id: str
     ) -> dict | None:
         return await self.get(f"/{war_id}/{period_id}")
-
-
-class AltPOAuthedClient(BaseAPIClient):
-    def __init__(self, logger):
-        super().__init__(
-            base_url=Config.ALT_PO_ENDPOINT,
-            logger=logger,
-            headers=Config.ALT_AUTHED_API_HEADERS,
-        )
-
-    async def get_personal_order(self) -> dict | None:
-        return await self.get()
-
 
 class AltSuperstoreAuthedClient(BaseAPIClient):
     def __init__(self, logger):

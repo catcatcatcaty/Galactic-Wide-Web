@@ -65,7 +65,6 @@ class Assignment:
             self.faction: Faction | None = Factions.get_from_identifier(
                 number=self.values_dict.get(1)
             )
-            self.personal: bool = self.values_dict.get(2, 0) == 1
             self.goal: int | None = self.values_dict.get(3)
             self.target_id: int | None = self.values_dict.get(4)
             self.equipment_id: int | None = self.values_dict.get(5)

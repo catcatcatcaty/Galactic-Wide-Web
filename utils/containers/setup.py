@@ -314,44 +314,6 @@ class SetupContainer(Container):
                         container_json=container_json,
                     )
                 self.components.extend([Separator(), mo_updates_section])
-
-                # po updates
-                po_updates_section = Section(
-                    TextDisplay(
-                        f"{container_json['personal_order_updates_title']}\n{container_json['personal_order_updates_desc']}"
-                    ),
-                    accessory=Button(),
-                )
-                po_updates_feature = [
-                    f for f in guild.features if f.name == "personal_order_updates"
-                ]
-                if po_updates_feature:
-                    po_updates_section.children[0].content = (
-                        ":white_check_mark: " + po_updates_section.children[0].content
-                    )
-                    po_updates = po_updates_feature[0]
-                    po_updates_section.children[
-                        0
-                    ].content += (
-                        f"{container_json['channel']}: <#{po_updates.channel_id}>"
-                    )
-                    po_updates_section.accessory = Setup.Features.ClearFeatureButton(
-                        feature_type="personal_order_updates",
-                        container_json=container_json,
-                    )
-                else:
-                    po_updates_section.children[0].content = (
-                        ":x: " + po_updates_section.children[0].content
-                    )
-                    po_updates_section.children[
-                        0
-                    ].content += f"**{container_json['not_set']}**"
-                    po_updates_section.accessory = Setup.Features.SetFeatureButton(
-                        feature_type="personal_order_updates",
-                        container_json=container_json,
-                    )
-                self.components.extend([Separator(), po_updates_section])
-
                 # detailed dispatches
                 ddispatches_section = Section(
                     TextDisplay(
